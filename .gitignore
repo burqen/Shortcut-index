@@ -1,7 +1,13 @@
-*.class
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+target
+out
+**/resources
+.project
+.classpath
+.settings
+.idea
+.DS_Store
+*.iml
+Thumbs.db
 
 # Package Files #
 *.jar
