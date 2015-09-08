@@ -58,6 +58,15 @@ public class BenchLogger
         return measurement;
     }
 
+    public long duration()
+    {
+        if ( duration == 0 )
+        {
+            throw new IllegalStateException( "Need to start and end logger to measure duration" );
+        }
+        return duration;
+    }
+
     public void report()
     {
         if ( startTime == 0 || duration == 0 )

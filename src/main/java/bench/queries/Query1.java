@@ -5,7 +5,6 @@ import bench.BaseQuery;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
-import org.neo4j.kernel.impl.api.RelationshipDataExtractor;
 
 public abstract class Query1 extends BaseQuery
 {

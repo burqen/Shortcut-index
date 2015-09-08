@@ -13,9 +13,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 
 public class BenchmarkMain
 {
@@ -50,11 +47,11 @@ public class BenchmarkMain
 //            PrimitiveLongIterator persons =
 //                    readOperations.nodesGetForLabel( readOperations.labelGetForName( "Person" ) );
 //
-////            while ( persons.hasNext() )
-////            {
-////                long node = persons.next();
-////                printNode( graphDb.getNodeById( node ) );
-////            }
+//            while ( persons.hasNext() )
+//            {
+//                long node = persons.next();
+//                printNode( graphDb.getNodeById( node ) );
+//            }
 //            tx.success();
 //        }
         Query1Kernel kernelQuery = new Query1Kernel();
