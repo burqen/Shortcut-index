@@ -1,18 +1,34 @@
 package index.logical;
 
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 public class ShortcutIndexServiceTest
 {
-    @Mock
-    ShortcutStorage storage;
-    ShortcutIndexService<TKey<Long>, TValue> index = new ShortcutIndexService( TKey.class, TValue.class, 2 );
+    int order = 2;
+    ShortcutIndexService index;
+
+    @Before
+    public void setUpIndexClass()
+    {
+        index = new ShortcutIndexService( order );
+
+    }
 
     @Test
-    public void insertOneLeaf()
+    public void singleInsert()
     {
-        for ( int i = 0; i < 6; i++ )
+        long idFirstNode = System.currentTimeMillis();
+        Long prop = System.currentTimeMillis();
+        long idRel = System.currentTimeMillis();
+        long idOtherNode = System.currentTimeMillis();
+        index.insert( new TKey( idFirstNode, prop ), new TValue( idRel, idOtherNode ) );
+    }
+
+    @Test
+    public void multipleInserts()
+    {
+        for ( int i = 0; i < 1000; i++ )
         {
             long idFirstNode = System.currentTimeMillis();
             Long prop = System.currentTimeMillis();

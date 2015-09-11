@@ -35,8 +35,8 @@ public class LeafBTreeNode extends BTreeNode
         {
             // No overflow, insert key and value and move other keys and value accordingly.
 
-            int keyPos = pos;
             // Insert key
+            int keyPos = pos;
             while ( keyPos <= keyCount )
             {
                 key = replace( keyPos, key, keys );
@@ -55,7 +55,7 @@ public class LeafBTreeNode extends BTreeNode
         }
         else
         {
-            // Overflow
+            // Overflow, split
             LeafBTreeNode rightLeaf = splitLeafNode( key, value, pos );
 
             getParent().splitInChild( this, rightLeaf, rightLeaf.getKey( 0 ) );

@@ -63,22 +63,53 @@ public class InternalBTreeNode extends BTreeNode
         }
     }
 
-    private InternalBTreeNode splitInternalNode( TKey key, BTreeNode rightChild, int pos )
+    private InternalBTreeNode splitInternalNode( TKey newKey, BTreeNode newChild, int pos )
     {
         InternalBTreeNode rightInternalNode = new InternalBTreeNode( order );
 
-        // Insert key and children in order and keep the last key and child.
+
+        // Identify middle key, extract it and insert new key in correct order
+        TKey middleKey;
+        if ( pos == order )
+        {
+            // key is middle
+            middleKey = newKey;
+        }
+        else if ( pos < order )
+        {
+            // middle is at pos [order - 1]
+            middleKey = keys[order - 1];
+            for ( int i = pos; i < order; i++ )
+            {
+                newKey = replace( i, newKey, keys );
+            }
+        }
+        else // (pos > order
+        {
+            // middle is at pos [order + 1]
+            middleKey = keys[order + 1];
+            for ( int i = pos; i > order ; i-- )
+            {
+                newKey = replace( i, newKey, keys );
+            }
+        }
+
+        // Move right most keys from this (left node after split) to right (right node after split)
+        for ( int i = order; i < order*2; i++ )
+        {
+            rightInternalNode.keys[i - order] = this.keys[i];
+            this.keys[i] = null;
+        }
+
+        // Insert new child in correct order
         while ( pos < getKeyCount() )
         {
-            key = replace( pos, key, keys );
-            rightChild = replace( pos + 1, rightChild, children );
+            // New child should be put in on pos + 1 because it should be placed to the right of the new key
+            newChild = replace( pos + 1, newChild, children );
             pos++;
         }
 
-        // TODO: DONT USE THIS SPLIT HERE, IT'S WRONG! WE NEED 2 DIFFERENT SPLIT. ONE THAT KEEPS MIDDLE VALUE AND ONE THAT DON'T
-        // Split
-        split( keys, rightInternalNode.keys, key );
-        split( children, rightInternalNode.children, rightChild );
+        split( children, rightInternalNode.children, newChild );
 
         // Update key count
         setKeyCount( order );
@@ -91,6 +122,8 @@ public class InternalBTreeNode extends BTreeNode
         rightInternalNode.setRightSibling( this.getRightSibling() );
         rightInternalNode.setLeftSibling( this );
         this.setRightSibling( rightInternalNode );
+
+        getParent().splitInChild( this, rightInternalNode, middleKey );
 
         return rightInternalNode;
     }

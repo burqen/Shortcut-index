@@ -49,6 +49,7 @@ public abstract class BTreeNode
     /**
      * Assumes left is full and sorted. Right is empty.
      * Overflow comes last in sorting order compared to values in left.
+     * This should be used when splitting leaves of children arrays in internal nodes.
      * @param left
      * @param right
      * @param overflow
