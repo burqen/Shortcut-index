@@ -35,7 +35,7 @@ public class ShortcutIndexService
         }
     }
 
-    public void seek( BTSeeker seeker, List list )
+    public void seek( BTSeeker seeker, List<TResult> list )
     {
         seeker.seek( root, list );
     }

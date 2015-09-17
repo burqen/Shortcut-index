@@ -2,6 +2,7 @@ package bench.queries;
 
 import index.logical.BTSeeker;
 import index.logical.RangeSeeker;
+import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
 import index.logical.TResult;
@@ -34,7 +35,7 @@ public class Query1Shortcut extends Query1
         {
             final long maria = startNodes.next();
 
-            ShortcutIndexService index = indexes.get( null );
+            ShortcutIndexService index = indexes.get( new ShortcutIndexDescription( "query1" ) );
 
             BTSeeker seeker = new RangeSeeker( maria, null, null );
 

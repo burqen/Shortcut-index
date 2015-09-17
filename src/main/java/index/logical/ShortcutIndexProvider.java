@@ -6,7 +6,6 @@ import java.util.Map;
 public class ShortcutIndexProvider
 {
     Map<ShortcutIndexDescription, ShortcutIndexService> indexes;
-    ShortcutIndexService tmp;
 
     public ShortcutIndexProvider()
     {
@@ -15,13 +14,11 @@ public class ShortcutIndexProvider
 
     public ShortcutIndexService get( ShortcutIndexDescription description )
     {
-//        return indexes.get( description );
-        return tmp;
+        return indexes.get( description );
     }
 
     public void put( ShortcutIndexService index )
     {
-        //indexes.put( index.getDescription(), index );
-        tmp = index;
+        indexes.put( index.getDescription(), index );
     }
 }

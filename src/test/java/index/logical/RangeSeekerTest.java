@@ -10,7 +10,7 @@ import static junit.framework.Assert.assertEquals;
 
 public class RangeSeekerTest
 {
-    RangeSeeker<Long> rangeSeeker;
+    RangeSeeker rangeSeeker;
     int order = 2;
     ShortcutIndexService index;
     List<TResult> list;
@@ -25,7 +25,7 @@ public class RangeSeekerTest
     // Utility
     private void addEntryToLeaf( LeafBTreeNode leaf, long id, long prop )
     {
-        leaf.insert( new TKey<>( id, prop ), new TValue( prop, prop ) );
+        leaf.insert( new TKey( id, prop ), new TValue( prop, prop ) );
     }
 
     // DEFINED WHOLE RANGE
@@ -34,7 +34,7 @@ public class RangeSeekerTest
     @Before
     public void setupRangeSeeker()
     {
-        rangeSeeker = new RangeSeeker<>( 1, 1l, 3l );
+        rangeSeeker = new RangeSeeker( 1, 1l, 3l );
     }
 
     @Test
@@ -103,7 +103,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey<>( 1,2 ) );
+        root.setKey( 0, new TKey( 1,2 ) );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 
@@ -130,7 +130,7 @@ public class RangeSeekerTest
     @Before
     public void setupFromSeeker()
     {
-        fromSeeker = new RangeSeeker<>( 1, 1l, null );
+        fromSeeker = new RangeSeeker( 1, 1l, null );
     }
 
     @Test
@@ -202,7 +202,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey<>( 1, 2 ) );
+        root.setKey( 0, new TKey( 1, 2 ) );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 
@@ -232,7 +232,7 @@ public class RangeSeekerTest
     @Before
     public void setupToSeeker()
     {
-        toSeeker = new RangeSeeker<>( 1, null, 3l );
+        toSeeker = new RangeSeeker( 1, null, 3l );
     }
 
     @Test
@@ -304,7 +304,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey<>( 1,2 ) );
+        root.setKey( 0, new TKey( 1,2 ) );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 
@@ -440,7 +440,7 @@ public class RangeSeekerTest
         TValue startValue = new TValue( 1, 1 );
         index.insert( startPoint, startValue );
 
-        rangeSeeker = new RangeSeeker( 1, 1, null );
+        rangeSeeker = new RangeSeeker( 1l, 1l, null );
         index.seek( rangeSeeker, list );
 
         assertEquals( "Expected exactly one result", 1, list.size() );
@@ -457,8 +457,8 @@ public class RangeSeekerTest
 
         for ( int i = 0; i < 100; i++ )
         {
-            list = new ArrayList();
-            rangeSeeker = new RangeSeeker( 1, 0, i );
+            list = new ArrayList<>();
+            rangeSeeker = new RangeSeeker( 1l, 0l, (long)i );
             index.seek( rangeSeeker, list );
             assertEquals( "Expected to find " + i + " results.", i, list.size() );
             for ( int j = 0; j < i; j++ )

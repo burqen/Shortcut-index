@@ -10,15 +10,13 @@ public class TKeyTest
     @Test
     public void equalsAndHash()
     {
-        TKey<Long> key = new TKey<>( 1l, 1l );
-        TKey same = new TKey( 1, new Long( 1 ) );
-        TKey similarId = new TKey( 1, new Long( 2 ) );
-        TKey similarProp = new TKey( 2, new Long( 1 ) );
+        TKey key = new TKey( 1l, 1l );
+        TKey same = new TKey( 1, 1l );
+        TKey similarId = new TKey( 1, 2l );
+        TKey similarProp = new TKey( 2, 1l );
 
         assertTrue( key.equals( same ) );
         assertTrue( key.hashCode() == same.hashCode() );
-
-        assertFalse( key.equals( null ) );
 
         // Similar id
         assertFalse( key.equals( similarId ) );
@@ -32,12 +30,12 @@ public class TKeyTest
     @Test
     public void compareTo()
     {
-        TKey key = new TKey( 2, new Long( 2 ) );
-        TKey same = new TKey( 2, new Long( 2 ) );
-        TKey sameIdlowerProp = new TKey( 2, new Long( 1 ) );
-        TKey sameIdhigherProp = new TKey( 2, new Long( 3) );
-        TKey higherIdLowerProp = new TKey( 3, new Long( 1 ) );
-        TKey lowerIdHigherProp = new TKey( 1, new Long( 3 ) );
+        TKey key = new TKey( 2, 2l );
+        TKey same = new TKey( 2, 2l );
+        TKey sameIdlowerProp = new TKey( 2, 1l );
+        TKey sameIdhigherProp = new TKey( 2, 3l );
+        TKey higherIdLowerProp = new TKey( 3, 1l );
+        TKey lowerIdHigherProp = new TKey( 1, 3l );
 
         assertTrue( key.compareTo( same ) == 0 );
 

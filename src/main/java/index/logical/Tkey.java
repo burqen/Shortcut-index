@@ -1,11 +1,13 @@
 package index.logical;
 
-public class TKey<PROP extends Comparable<PROP>> implements Comparable<TKey<PROP>>
+import java.util.Objects;
+
+public class TKey implements Comparable<TKey>
 {
     private long id;
-    private PROP prop;
+    private long prop;
 
-    public TKey( long id, PROP prop )
+    public TKey( long id, long prop )
     {
         this.id = id;
         this.prop = prop;
@@ -16,20 +18,21 @@ public class TKey<PROP extends Comparable<PROP>> implements Comparable<TKey<PROP
         return id;
     }
 
-    public PROP getProp()
+    public long getProp()
     {
         return prop;
     }
 
     @Override
-    public int compareTo( TKey<PROP> o )
+    public int compareTo( TKey o )
     {
-        return id == o.id ? prop.compareTo( o.prop ) : Long.compare( id, o.id );
+        Objects.requireNonNull( o );
+        return id == o.id ? Long.compare( prop, o.prop ) : Long.compare( id, o.id );
     }
 
     @Override
     public int hashCode() {
-        return (int) id * 23 + prop.hashCode();
+        return (int) ( id * 23 + prop );
     }
 
     @Override
@@ -46,6 +49,7 @@ public class TKey<PROP extends Comparable<PROP>> implements Comparable<TKey<PROP
     @Override
     public String toString()
     {
-        return String.format( "(%d,%s)", id, prop );
+        return String.format( "(%d,%d)", id, prop );
     }
+
 }

@@ -5,11 +5,11 @@ import java.util.List;
 
 public interface BTSeeker
 {
-    void seek( BTreeNode node, List resultList );
+    void seek( BTreeNode node, List<TResult> resultList );
 
     public abstract class CommonSeeker implements BTSeeker
     {
-        public void seek( BTreeNode node, List resultList )
+        public void seek( BTreeNode node, List<TResult> resultList )
         {
             if ( node.getNodeType() == BTreeNode.BTreeNodeType.InternalNode )
             {
@@ -28,8 +28,8 @@ public interface BTSeeker
             }
         }
 
-        protected abstract void seekLeaf( LeafBTreeNode leaf, List resultList );
+        protected abstract void seekLeaf( LeafBTreeNode leaf, List<TResult> resultList );
 
-        protected abstract void seekInternal( InternalBTreeNode internal, List resultList );
+        protected abstract void seekInternal( InternalBTreeNode internal, List<TResult> resultList );
     }
 }

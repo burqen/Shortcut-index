@@ -21,7 +21,7 @@ public class Query1Kernel extends Query1
                 final long maria = startNodes.next();
 
                 RelationshipIterator createdIterator;
-                createdIterator = operations.nodeGetRelationships( maria, INCOMING, new int[]{createdTypeId} );
+                createdIterator = operations.nodeGetRelationships( maria, INCOMING, createdTypeId );
 
                 RelationshipDataExtractor visitor = new RelationshipDataExtractor();
                 while ( createdIterator.hasNext() )
@@ -41,10 +41,6 @@ public class Query1Kernel extends Query1
                     {
                         // Valid result. Report
                         measurement.countSuccesses();
-                    }
-                    else
-                    {
-                        // Sad. Report?
                     }
                 }
             }

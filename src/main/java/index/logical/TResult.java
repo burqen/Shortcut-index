@@ -1,17 +1,17 @@
 package index.logical;
 
-public class TResult<prop extends Comparable<prop>>
+public class TResult
 {
-    private final TKey<prop> key;
+    private final TKey key;
     private final TValue value;
 
-    public TResult( TKey<prop> key, TValue value )
+    public TResult( TKey key, TValue value )
     {
         this.key = key;
         this.value = value;
     }
 
-    public TKey<prop> getKey()
+    public TKey getKey()
     {
         return key;
     }

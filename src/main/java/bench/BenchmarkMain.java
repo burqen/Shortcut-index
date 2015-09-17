@@ -11,7 +11,6 @@ import index.logical.TValue;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -20,13 +19,11 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 public class BenchmarkMain
@@ -55,10 +52,6 @@ public class BenchmarkMain
         {
             try ( Transaction tx = graphDb.beginTx() )
             {
-                ReadOperations readOperations = ((GraphDatabaseAPI) graphDb).getDependencyResolver()
-                        .resolveDependency( ThreadToStatementContextBridge.class )
-                        .get().readOperations();
-
                 System.out.println( "ALL PROPERTY KEYS" );
                 ResourceIterable<String> allPropertyKeys = GlobalGraphOperations.at( graphDb ).getAllPropertyKeys();
                 for ( String propKey : allPropertyKeys )
@@ -68,23 +61,15 @@ public class BenchmarkMain
                 System.out.println();
 
                 System.out.println( "ALL RELATIONSHIP TYPES" );
-                Iterator<RelationshipType> allTypes =
-                        GlobalGraphOperations.at( graphDb ).getAllRelationshipTypes().iterator();
-                while ( allTypes.hasNext() )
+                for ( RelationshipType next : GlobalGraphOperations.at( graphDb ).getAllRelationshipTypes() )
                 {
-                    RelationshipType next = allTypes.next();
                     System.out.println( next.name() );
                 }
                 System.out.println();
-//
-//                PrimitiveLongIterator persons =
-//                        readOperations.nodesGetForLabel( readOperations.labelGetForName( "Comment" ) );
-//
-//                while ( persons.hasNext() )
-//                {
-//                    long node = persons.next();
-//                    printNode( graphDb.getNodeById( node ) );
-//                }
+
+                System.out.println( "ALL COMMENT" );
+                printNodesWithLabel( graphDb, "Comment" );
+
                 tx.success();
             }
 
@@ -93,8 +78,8 @@ public class BenchmarkMain
 
     private void benchRun( GraphDatabaseService graphDb )
     {
-        int order = 2;
-        ShortcutIndexDescription description = new ShortcutIndexDescription( "simple" );
+        int order = 64;
+        ShortcutIndexDescription description = new ShortcutIndexDescription( "query1" );
         ShortcutIndexService index = new ShortcutIndexService( order, description );
 
         populateShortcutIndex( graphDb, index,
@@ -152,8 +137,8 @@ public class BenchmarkMain
                     if ( first.hasLabel( firstLabel ) && second.hasLabel( secondLabel ) )
                     {
                         numberOfInsert++;
-                        Comparable prop = propOnRel ? (Comparable) rel.getProperty( propName ) :
-                                          (Comparable) second.getProperty( propName );
+                        long prop = propOnRel ? (long) rel.getProperty( propName ) :
+                                          (long) second.getProperty( propName );
                         index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
                     }
                 }
@@ -218,24 +203,31 @@ public class BenchmarkMain
                 Schema schema = graphDb.schema();
                 schema.awaitIndexOnline( indexDefinition, 10, TimeUnit.SECONDS );
                 System.out.printf( "Lucene index online - %s: %s ", label, prop );
+                tx.success();
             }
         }
     }
 
+    private void printNodesWithLabel( GraphDatabaseService graphDb, String label )
+    {
+        ResourceIterator<Node> nodes = graphDb.findNodes( DynamicLabel.label( label ) );
+        while ( nodes.hasNext() )
+        {
+            printNode( nodes.next() );
+        }
+    }
+
+
     private void printNode( Node node )
     {
-        Iterator<Label> labels = node.getLabels().iterator();
-        while ( labels.hasNext() )
+        for ( Label label : node.getLabels() )
         {
-            Label label = labels.next();
             System.out.print( label.name() + " " );
         }
         System.out.println();
 
-        Iterator<String> propKeys = node.getPropertyKeys().iterator();
-        while ( propKeys.hasNext() )
+        for ( String propKey : node.getPropertyKeys() )
         {
-            String propKey = propKeys.next();
             System.out.print( "    " + propKey + ": " );
             System.out.println( node.getProperty( propKey ) );
         }

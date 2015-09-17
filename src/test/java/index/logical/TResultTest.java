@@ -18,8 +18,6 @@ public class TResultTest
         assertTrue( result.equals( same ) );
         assertTrue( result.hashCode() == same.hashCode() );
 
-        assertFalse( result.equals( null ) );
-
         // Similar key
         assertFalse( result.equals( similarKey ) );
         assertFalse( result.hashCode() == similarKey.hashCode() );

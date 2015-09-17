@@ -2,11 +2,11 @@ package index.logical;
 
 import java.util.List;
 
-public class RangeSeeker<Prop extends Comparable<Prop>> extends BTSeeker.CommonSeeker
+public class RangeSeeker extends BTSeeker.CommonSeeker
 {
     private final long id;
-    private final Prop from;
-    private final Prop to;
+    private final Long from;
+    private final Long to;
 
     /**
      * Searching for keys with id and prop in range [from,to). Including from, excluding to.
@@ -15,7 +15,7 @@ public class RangeSeeker<Prop extends Comparable<Prop>> extends BTSeeker.CommonS
      * @param from  from in range or null if range has no min value
      * @param to    to in range or null if range has no to value
      */
-    public RangeSeeker( long id, Prop from, Prop to )
+    public RangeSeeker( long id, Long from, Long to )
     {
         this.id = id;
         this.from = from;
@@ -23,7 +23,7 @@ public class RangeSeeker<Prop extends Comparable<Prop>> extends BTSeeker.CommonS
     }
 
     @Override
-    protected void seekInternal( InternalBTreeNode internal, List resultList )
+    protected void seekInternal( InternalBTreeNode internal, List<TResult> resultList )
     {
         BTreeNode child = null;
 
@@ -48,13 +48,13 @@ public class RangeSeeker<Prop extends Comparable<Prop>> extends BTSeeker.CommonS
     }
 
     @Override
-    protected void seekLeaf( LeafBTreeNode leaf, List resultList )
+    protected void seekLeaf( LeafBTreeNode leaf, List<TResult> resultList )
     {
         for ( int i = 0; i < leaf.getKeyCount(); i++ )
         {
             TKey key = leaf.getKey( i );
             long keyId = key.getId();
-            Comparable prop = key.getProp();
+            long prop = key.getProp();
 
             if ( keyId == id && nullSafeCompare( prop, from, false ) >= 0 )
             {
@@ -78,20 +78,16 @@ public class RangeSeeker<Prop extends Comparable<Prop>> extends BTSeeker.CommonS
         {
             seekLeaf( rightSibling, resultList );
         }
-        else
-        {
-            return;
-        }
     }
 
-    public static int nullSafeCompare( Comparable first, Comparable other, boolean nullIsHigh )
+    public static int nullSafeCompare( Long first, Long other, boolean nullIsHigh )
     {
+        if ( first == null && other == null)
+        {
+            return 0;
+        }
         if ( first == null ^ other == null )
         {
-            if ( first == null && other == null)
-            {
-                return 0;
-            }
             if ( nullIsHigh )
             {
                 return (first == null) ? 1 : -1;

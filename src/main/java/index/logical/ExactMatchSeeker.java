@@ -11,7 +11,7 @@ public class ExactMatchSeeker extends BTSeeker.CommonSeeker
         this.matchKey = matchKey;
     }
 
-    protected void seekInternal( InternalBTreeNode internal, List resultList )
+    protected void seekInternal( InternalBTreeNode internal, List<TResult> resultList )
     {
         BTreeNode child = null;
 
@@ -32,7 +32,7 @@ public class ExactMatchSeeker extends BTSeeker.CommonSeeker
         seek( child, resultList );
     }
 
-    protected void seekLeaf( LeafBTreeNode leaf, List resultList )
+    protected void seekLeaf( LeafBTreeNode leaf, List<TResult> resultList )
     {
         for ( int i = 0; i < leaf.getKeyCount(); i++ )
         {
@@ -50,10 +50,6 @@ public class ExactMatchSeeker extends BTSeeker.CommonSeeker
         if ( rightSibling != null )
         {
             seekLeaf( rightSibling, resultList );
-        }
-        else
-        {
-            return;
         }
     }
 }

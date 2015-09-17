@@ -8,7 +8,6 @@ import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
 
 public abstract class Query1 extends BaseQuery
 {
-    private String query = "MATCH (m:Person {name:\"Maria\"}) - [:CREATED] -> (c:Comment)";
     int personLabelId;
     int namePropertyKey;
     int createdTypeId;
@@ -17,7 +16,7 @@ public abstract class Query1 extends BaseQuery
     @Override
     public String query()
     {
-        return query;
+        return "MATCH (m:Person {name:\"Maria\"}) - [:CREATED] -> (c:Comment)";
     }
 
     @Override

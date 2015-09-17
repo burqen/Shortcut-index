@@ -10,15 +10,13 @@ public class TValueTest
     @Test
     public void equalsAndHash()
     {
-        TValue key = new TValue( 1, new Long( 1 ) );
-        TValue same = new TValue( 1, new Long( 1 ) );
-        TValue similarId = new TValue( 1, new Long( 2 ) );
-        TValue similarProp = new TValue( 2, new Long( 1 ) );
+        TValue key = new TValue( 1, 1l );
+        TValue same = new TValue( 1, 1l );
+        TValue similarId = new TValue( 1, 2l );
+        TValue similarProp = new TValue( 2, 1l );
 
         assertTrue( key.equals( same ) );
         assertTrue( key.hashCode() == same.hashCode() );
-
-        assertFalse( key.equals( null ) );
 
         // Similar id
         assertFalse( key.equals( similarId ) );

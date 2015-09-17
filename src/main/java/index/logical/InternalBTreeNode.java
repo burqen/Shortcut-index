@@ -1,7 +1,5 @@
 package index.logical;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.io.PrintStream;
 
 public class InternalBTreeNode extends BTreeNode
@@ -57,9 +55,10 @@ public class InternalBTreeNode extends BTreeNode
     }
 
     /**
-     * Child calls this method when a split occurs.
-     * @param rightChild
-     * @param key
+     * On split, child will call this method to inform it's parent that a split has occurred and tell what key to be
+     * inserted and what the new right child is.
+     * @param rightChild    Right child after split in child, to be added as child in this internal node.
+     * @param key           Key sent from child after split.
      */
     public void splitInChild( BTreeNode rightChild, TKey key )
     {

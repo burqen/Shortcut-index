@@ -44,8 +44,8 @@ public abstract class BTreeNode
 
 
     /**
-     * Search for the first position where the key on that position is greater than or equal to key.
-     * @param key
+     * Search for the first position where the key on that position is greater than or equal to provided key.
+     * @param key   Provided key
      * @return the lowest i for which getKey( i ).compareTo( key ) >= 0 or position just outside of array range if key
      * is greater than every key.
      */
@@ -61,7 +61,7 @@ public abstract class BTreeNode
 
     /**
      * Search for the first position where the key on that position is greater than key.
-     * @param key
+     * @param key   Provided key
      * @return the lowest i for which getKey( i ).compareTo( key ) > 0 or position just outside of array range if key
      * is greater than or equal to every key.
      */
@@ -77,7 +77,7 @@ public abstract class BTreeNode
 
     /**
      * Search for the first position where key is equal to the current key on that position.
-     * @param key
+     * @param key   Provided key
      * @return i for which getKey( i ).compareTo( key ) == 0 or -1 if no such match is found.
      */
     public int searchExactMatch( TKey key )
@@ -96,11 +96,10 @@ public abstract class BTreeNode
 
     /**
      *
-     * @param pos
-     * @param object
-     * @param array
-     * @param <T>
-     * @return
+     * @param pos       Position of element to be replaced
+     * @param object    Element to insert on position, pos
+     * @param array     Target array
+     * @return          Element that was removed from array in favour for object
      */
     public static <T> T replace( int pos, T object, T[] array )
     {
@@ -113,10 +112,9 @@ public abstract class BTreeNode
      * Assumes left is full and sorted. Right is empty.
      * Overflow comes last in sorting order compared to values in left.
      * This should be used when splitting leaves of children arrays in internal nodes.
-     * @param left
-     * @param right
-     * @param overflow
-     * @param <T>
+     * @param left      Contains the left most elements after split
+     * @param right     Contains the right most elements after split
+     * @param overflow  Overflowing element is right most element
      */
     public static <T> void split( T[] left, T[] right, T overflow )
     {
