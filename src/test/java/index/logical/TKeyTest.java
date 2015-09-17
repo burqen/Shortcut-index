@@ -10,7 +10,7 @@ public class TKeyTest
     @Test
     public void equalsAndHash()
     {
-        TKey key = new TKey( 1, new Long( 1 ) );
+        TKey<Long> key = new TKey<>( 1l, 1l );
         TKey same = new TKey( 1, new Long( 1 ) );
         TKey similarId = new TKey( 1, new Long( 2 ) );
         TKey similarProp = new TKey( 2, new Long( 1 ) );

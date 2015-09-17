@@ -2,13 +2,23 @@ package index.logical;
 
 public class TValue
 {
-    long relId;
-    long nodeId;
+    private long relId;
+    private long nodeId;
 
     public TValue( long relId, long nodeId )
     {
         this.relId = relId;
         this.nodeId = nodeId;
+    }
+
+    public long getRelId()
+    {
+        return relId;
+    }
+
+    public long getNodeId()
+    {
+        return nodeId;
     }
 
     @Override
@@ -25,5 +35,11 @@ public class TValue
 
         TValue rhs = (TValue) obj;
         return relId == rhs.relId && nodeId == rhs.nodeId;
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.format( "(%d,%d)", relId, nodeId );
     }
 }

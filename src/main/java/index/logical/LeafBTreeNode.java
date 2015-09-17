@@ -1,5 +1,7 @@
 package index.logical;
 
+import java.io.PrintStream;
+
 public class LeafBTreeNode extends BTreeNode
 {
     private TValue[] values;
@@ -30,7 +32,7 @@ public class LeafBTreeNode extends BTreeNode
     public void insert( TKey key, TValue value )
     {
         int keyCount = getKeyCount();
-        int pos = search( key );
+        int pos = searchFirstGreaterThanOrEqualTo( key );
         if ( keyCount < order*2 )
         {
             // No overflow, insert key and value and move other keys and value accordingly.
@@ -56,10 +58,41 @@ public class LeafBTreeNode extends BTreeNode
         else
         {
             // Overflow, split
+            InternalBTreeNode parent = getParentInMiddleOfSplit();
+
             LeafBTreeNode rightLeaf = splitLeafNode( key, value, pos );
 
-            getParent().splitInChild( this, rightLeaf, rightLeaf.getKey( 0 ) );
+
+            parent.splitInChild( rightLeaf, rightLeaf.getKey( 0 ) );
         }
+    }
+
+    @Override
+    public int height()
+    {
+        return 0;
+    }
+
+    @Override
+    public long totalKeyCount()
+    {
+        BTreeNode rightSibling = getRightSibling();
+        if ( rightSibling != null )
+        {
+            return getKeyCount() + rightSibling.totalKeyCount();
+
+        }
+        else
+        {
+            return getKeyCount();
+        }
+    }
+
+    @Override
+    public void printTree( PrintStream out )
+    {
+        printKeys( out );
+        out.print( "\n" );
     }
 
     /**
@@ -94,7 +127,6 @@ public class LeafBTreeNode extends BTreeNode
 
         // Update siblings
         rightLeaf.setRightSibling( this.getRightSibling() );
-        rightLeaf.setLeftSibling( this );
         this.setRightSibling( rightLeaf );
 
         return rightLeaf;

@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import org.neo4j.register.Register;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class LeafBTreeNodeTest
@@ -60,5 +61,6 @@ public class LeafBTreeNodeTest
 
         leaf.insert( new TKey( order*2, order*2 ), new TValue( order*2, order*2 ) );
         assertEquals( order, leaf.getKeyCount() );
+        assertNotNull( "Expected to have a right sibling after split", leaf.getRightSibling() );
     }
 }

@@ -26,10 +26,10 @@ public class Query1Kernel extends Query1
                 RelationshipDataExtractor visitor = new RelationshipDataExtractor();
                 while ( createdIterator.hasNext() )
                 {
-                    long created = createdIterator.next();
+                    long relId = createdIterator.next();
                     try
                     {
-                        operations.relationshipVisit( created, visitor );
+                        operations.relationshipVisit( relId, visitor );
                     }
                     catch ( Exception e )
                     {

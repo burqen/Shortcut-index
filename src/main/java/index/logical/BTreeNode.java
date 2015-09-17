@@ -1,11 +1,10 @@
 package index.logical;
 
-import java.lang.reflect.Array;
+import java.io.PrintStream;
 
 public abstract class BTreeNode
 {
     protected final int order;
-    private BTreeNode leftSibling;
     private BTreeNode rightSibling;
     private InternalBTreeNode parent;
     protected TKey[] keys;
@@ -21,14 +20,78 @@ public abstract class BTreeNode
 
     public abstract void insert( TKey key, TValue value );
 
-    public int search( TKey key )
+    public abstract int height();
+
+    public abstract long totalKeyCount();
+
+    /**
+     * This function should be used when getting parent in a split.
+     * It makes sure if a split occurs in root a new root will be created.
+     * @return The parent after split
+     */
+    protected InternalBTreeNode getParentInMiddleOfSplit()
+    {
+        InternalBTreeNode parent = getParent();
+        if ( parent == null )
+        {
+            // This node is missing parent, this is natural if node is currently root
+            parent = new InternalBTreeNode( order );
+            parent.setChild( 0, this );
+            setParent( parent );
+        }
+        return parent;
+    }
+
+
+    /**
+     * Search for the first position where the key on that position is greater than or equal to key.
+     * @param key
+     * @return the lowest i for which getKey( i ).compareTo( key ) >= 0 or position just outside of array range if key
+     * is greater than every key.
+     */
+    public int searchFirstGreaterThanOrEqualTo( TKey key )
     {
         int i = 0;
         while ( i < getKeyCount() && getKey( i ).compareTo( key ) < 0 )
         {
             i++;
         }
-        return 0;
+        return i;
+    }
+
+    /**
+     * Search for the first position where the key on that position is greater than key.
+     * @param key
+     * @return the lowest i for which getKey( i ).compareTo( key ) > 0 or position just outside of array range if key
+     * is greater than or equal to every key.
+     */
+    public int searchFirstGreaterThan( TKey key )
+    {
+        int i = 0;
+        while ( i < getKeyCount() && getKey( i ).compareTo( key ) <= 0 )
+        {
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * Search for the first position where key is equal to the current key on that position.
+     * @param key
+     * @return i for which getKey( i ).compareTo( key ) == 0 or -1 if no such match is found.
+     */
+    public int searchExactMatch( TKey key )
+    {
+        int i = 0;
+        while ( i < getKeyCount() && getKey( i ).compareTo( key ) < 0 )
+        {
+            i++;
+        }
+        if ( i == getKeyCount() )
+        {
+            return -1;
+        }
+        return getKey( i ).compareTo( key ) == 0 ? i : -1;
     }
 
     /**
@@ -150,11 +213,6 @@ public abstract class BTreeNode
         return keyCount;
     }
 
-    public void setLeftSibling( BTreeNode leftSibling )
-    {
-        this.leftSibling = leftSibling;
-    }
-
     public InternalBTreeNode getParent()
     {
         return parent;
@@ -163,11 +221,6 @@ public abstract class BTreeNode
     public void setParent( InternalBTreeNode parent )
     {
         this.parent = parent;
-    }
-
-    public BTreeNode getLeftSibling()
-    {
-        return leftSibling;
     }
 
     public void setRightSibling( BTreeNode rightSibling )
@@ -179,6 +232,25 @@ public abstract class BTreeNode
     {
         return rightSibling;
     }
+
+    protected void printKeys( PrintStream out )
+    {
+        out.print( "| " );
+        for ( int i = 0; i < getKeyCount(); i++ )
+        {
+            out.print( keys[i] + " " );
+        }
+
+        out.print( "| " );
+
+        BTreeNode sibling = getRightSibling();
+        if ( sibling != null )
+        {
+            sibling.printKeys( out );
+        }
+    }
+
+    public abstract void printTree( PrintStream out );
 
     public enum BTreeNodeType
     { InternalNode, LeafNode }

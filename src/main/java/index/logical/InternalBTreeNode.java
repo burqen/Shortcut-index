@@ -1,6 +1,8 @@
 package index.logical;
 
-import org.neo4j.register.Register;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.io.PrintStream;
 
 public class InternalBTreeNode extends BTreeNode
 {
@@ -31,18 +33,37 @@ public class InternalBTreeNode extends BTreeNode
     @Override
     public void insert( TKey key, TValue value )
     {
-        children[search( key )].insert( key, value );
+        children[searchFirstGreaterThanOrEqualTo( key )].insert( key, value );
+    }
+
+    @Override
+    public int height()
+    {
+        return 1 + getChild( 0 ).height();
+    }
+
+    @Override
+    public long totalKeyCount()
+    {
+        return getChild( 0 ).totalKeyCount();
+    }
+
+    @Override
+    public void printTree( PrintStream out )
+    {
+        printKeys( out );
+        out.print( "\n" );
+        children[0].printTree( out );
     }
 
     /**
      * Child calls this method when a split occurs.
-     * @param leftChild
      * @param rightChild
      * @param key
      */
-    public void splitInChild( BTreeNode leftChild, BTreeNode rightChild, TKey key )
+    public void splitInChild( BTreeNode rightChild, TKey key )
     {
-        int pos = search( key );
+        int pos = searchFirstGreaterThanOrEqualTo( key );
         int keyCount = getKeyCount();
         if ( keyCount < order*2 )
         {
@@ -53,22 +74,22 @@ public class InternalBTreeNode extends BTreeNode
                 rightChild = replace( pos+1, rightChild, children );
                 pos++;
             }
+
+            incrementKeyCount();
         }
         else
         {
             // Overflow
-            InternalBTreeNode rightInternalNode = splitInternalNode( key, rightChild, pos );
-
-            getParent().splitInChild( this, rightInternalNode, rightInternalNode.getKey( 0 ) );
+            splitInternalNode( key, rightChild, pos );
         }
     }
 
-    private InternalBTreeNode splitInternalNode( TKey newKey, BTreeNode newChild, int pos )
+    private void splitInternalNode( TKey newKey, BTreeNode newChild, int pos )
     {
         InternalBTreeNode rightInternalNode = new InternalBTreeNode( order );
 
-
         // Identify middle key, extract it and insert new key in correct order
+
         TKey middleKey;
         if ( pos == order )
         {
@@ -77,21 +98,22 @@ public class InternalBTreeNode extends BTreeNode
         }
         else if ( pos < order )
         {
-            // middle is at pos [order - 1]
-            middleKey = keys[order - 1];
             for ( int i = pos; i < order; i++ )
             {
                 newKey = replace( i, newKey, keys );
+
             }
+            middleKey = newKey;
         }
         else // (pos > order
         {
-            // middle is at pos [order + 1]
-            middleKey = keys[order + 1];
-            for ( int i = pos; i > order ; i-- )
+            for ( int i = pos-1; i >= order; i-- )
             {
                 newKey = replace( i, newKey, keys );
             }
+
+            // middle is at pos [order + 1]
+            middleKey = newKey;
         }
 
         // Move right most keys from this (left node after split) to right (right node after split)
@@ -109,22 +131,29 @@ public class InternalBTreeNode extends BTreeNode
             pos++;
         }
 
-        split( children, rightInternalNode.children, newChild );
-
         // Update key count
         setKeyCount( order );
         rightInternalNode.setKeyCount( order );
 
+        // Split children array
+        split( children, rightInternalNode.children, newChild );
+
+        // Update parent in children
+        for ( int i = 0; i <= rightInternalNode.getKeyCount(); i++ )
+        {
+            rightInternalNode.children[i].setParent( rightInternalNode );
+        }
+
+        InternalBTreeNode parent = getParentInMiddleOfSplit();
+
         // Set parent
-        rightInternalNode.setParent( this.getParent() );
+        rightInternalNode.setParent( parent );
 
         // Update siblings
         rightInternalNode.setRightSibling( this.getRightSibling() );
-        rightInternalNode.setLeftSibling( this );
         this.setRightSibling( rightInternalNode );
 
-        getParent().splitInChild( this, rightInternalNode, middleKey );
 
-        return rightInternalNode;
+        parent.splitInChild( rightInternalNode, middleKey );
     }
 }
