@@ -8,11 +8,6 @@ public class ShortcutIndexService
     private final ShortcutIndexDescription description;
     private BTreeNode root;
 
-    public ShortcutIndexService( int order )
-    {
-        this( order, new ShortcutIndexDescription( "" ) );
-    }
-
     public ShortcutIndexService( int order, ShortcutIndexDescription description )
     {
         this.description = description;

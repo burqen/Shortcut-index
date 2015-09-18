@@ -2,6 +2,7 @@ package index.logical;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.util.Random;
 
@@ -13,11 +14,13 @@ public class ShortcutIndexServiceInsertTest
     int order = 2;
     ShortcutIndexService index;
     Random rng = new Random();
+    @Mock
+    ShortcutIndexDescription desc;
 
     @Before
     public void setUpIndexClass()
     {
-        index = new ShortcutIndexService( order );
+        index = new ShortcutIndexService( order, desc );
 
     }
 
@@ -71,7 +74,7 @@ public class ShortcutIndexServiceInsertTest
     public void height()
     {
         int order = 2;
-        index = new ShortcutIndexService( order );
+        index = new ShortcutIndexService( order, desc );
 
         int maxNumberOfKeys;
         for ( int i = 0; i < 1000; i++ )

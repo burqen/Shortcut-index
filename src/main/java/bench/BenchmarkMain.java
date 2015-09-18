@@ -1,5 +1,6 @@
 package bench;
 
+import bench.queries.Query1;
 import bench.queries.Query1Kernel;
 import bench.queries.Query1Shortcut;
 import index.logical.ShortcutIndexDescription;
@@ -79,7 +80,7 @@ public class BenchmarkMain
     private void benchRun( GraphDatabaseService graphDb )
     {
         int order = 64;
-        ShortcutIndexDescription description = new ShortcutIndexDescription( "query1" );
+        ShortcutIndexDescription description = Query1.indexDescription;
         ShortcutIndexService index = new ShortcutIndexService( order, description );
 
         populateShortcutIndex( graphDb, index,
@@ -102,6 +103,54 @@ public class BenchmarkMain
         logger = new BenchLogger( System.out );
         shortcutQuery.runQuery( graphDb, logger );
         logger.report();
+    }
+
+    private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index,
+            ShortcutIndexDescription desc )
+    {
+        try ( Transaction tx = graphDb.beginTx() )
+        {
+            Label firstLabel = DynamicLabel.label( desc.firstLabel );
+            Label secondLabel = DynamicLabel.label( desc.secondLabel );
+
+            Iterator<Relationship> allRelationships =
+                    GlobalGraphOperations.at( graphDb ).getAllRelationships().iterator();
+            int numberOfInsert = 0;
+            int numberOfRelationships = 0;
+            while ( allRelationships.hasNext() )
+            {
+                Relationship rel = allRelationships.next();
+                numberOfRelationships++;
+                if ( rel.getType().name().equals( desc.relationshipType ) )
+                {
+                    Node first;
+                    Node second;
+                    if ( desc.direction == Direction.OUTGOING )
+                    {
+                        first = rel.getStartNode();
+                        second = rel.getEndNode();
+                    }
+                    else
+                    {
+                        first = rel.getEndNode();
+                        second = rel.getStartNode();
+                    }
+                    if ( first.hasLabel( firstLabel ) && second.hasLabel( secondLabel ) )
+                    {
+                        numberOfInsert++;
+                        long prop = desc.relationshipPropertyKey != null ?
+                                    (long) rel.getProperty( desc.relationshipPropertyKey ) :
+                                    (long) second.getProperty( desc.nodePropertyKey );
+                        index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
+                    }
+                }
+                if ( numberOfRelationships % 10000 == 0 )
+                {
+                    System.out.printf( "# relationships: %d, # inserts: %d\n", numberOfRelationships, numberOfInsert );
+                }
+            }
+            tx.success();
+        }
     }
 
     private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index, String firstLabelName,

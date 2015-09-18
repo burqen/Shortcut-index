@@ -2,6 +2,7 @@ package index.logical;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +15,13 @@ public class RangeSeekerTest
     int order = 2;
     ShortcutIndexService index;
     List<TResult> list;
+    @Mock
+    ShortcutIndexDescription desc;
 
     @Before
     public void setup()
     {
-        index = new ShortcutIndexService( order );
+        index = new ShortcutIndexService( order, desc );
         list = new ArrayList<>();
     }
 

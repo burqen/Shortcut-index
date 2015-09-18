@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.api.RelationshipDataExtractor;
@@ -35,7 +36,7 @@ public class Query1Shortcut extends Query1
         {
             final long maria = startNodes.next();
 
-            ShortcutIndexService index = indexes.get( new ShortcutIndexDescription( "query1" ) );
+            ShortcutIndexService index = indexes.get( indexDescription );
 
             BTSeeker seeker = new RangeSeeker( maria, null, null );
 

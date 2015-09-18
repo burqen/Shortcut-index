@@ -1,13 +1,17 @@
 package bench.queries;
 
 import bench.BaseQuery;
+import index.logical.ShortcutIndexDescription;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
 
 public abstract class Query1 extends BaseQuery
 {
+    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "Person", "Comment",
+        "COMMENT_HAS_CREATOR", Direction.INCOMING, null, "creationDate" );
     int personLabelId;
     int namePropertyKey;
     int createdTypeId;
