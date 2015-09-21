@@ -1,50 +1,31 @@
 package bench.queries;
 
 import bench.BaseQuery;
-import index.logical.ShortcutIndexDescription;
 
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
 
 public abstract class Query1 extends BaseQuery
 {
-    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "Person", "Comment",
-        "COMMENT_HAS_CREATOR", Direction.INCOMING, null, "creationDate" );
-    int personLabelId;
-    int namePropertyKey;
-    int createdTypeId;
-    int commentLabelId;
+    private final String[] inputDataHeader = NO_HEADER;
 
     @Override
     public String query()
     {
-        return "MATCH (m:Person {name:\"Maria\"}) - [:CREATED] -> (c:Comment)";
+        return "// QUERY 1 - SCAN" +
+               "// All comments written by all persons\n" +
+               "MATCH (p:Person) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)\n" +
+               "RETURN id(p), id(r), id(c), c.creationDate;";
     }
 
     @Override
-    protected void doRunQuery( ReadOperations operations, Measurement measurement )
+    protected void doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
     {
-        personLabelId = operations.labelGetForName( "Person" );
-        namePropertyKey = operations.propertyKeyGetForName( "firstName" );
-        createdTypeId = operations.relationshipTypeGetForName( "COMMENT_HAS_CREATOR" );
-        commentLabelId = operations.labelGetForName( "Comment" );
 
-        try
-        {
-            PrimitiveLongIterator startNodes = getNodeFromIndexLookup( operations,
-                    personLabelId,
-                    namePropertyKey,
-                    "Maria" );
-            doTraverseFromStart( startNodes, operations, measurement );
-        }
-        catch ( IndexNotFoundKernelException e )
-        {
-            e.printStackTrace();
-        }
     }
 
-    protected abstract void doTraverseFromStart( PrimitiveLongIterator startNodes, ReadOperations operations,
-            Measurement measurement );
+    @Override
+    public String[] inputDataHeader()
+    {
+        return inputDataHeader;
+    }
 }

@@ -1,87 +1,108 @@
 package bench;
 
 import bench.queries.Measurement;
+import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 public class BenchLogger
 {
-    private final Measurement measurement = new Measurement()
-    {
-        private long successes = 0;
-
-        public void countSuccesses()
-        {
-            successes++;
-        }
-
-        public long getSuccesses()
-        {
-            return successes;
-        }
-
-        public void reset()
-        {
-            successes = 0;
-        }
-    };
+    private Queue<Measurement> measurementsToReport;
     private final PrintStream out;
-    private long startTime = 0;
-    private long duration = 0;
-    private String query;
+    private String logHeader;
+    private boolean hasWrittenHeader;
 
-    public BenchLogger( PrintStream out ) {
+    public BenchLogger( PrintStream out, String logHeader ) {
         this.out = out;
+        this.logHeader = logHeader;
+        measurementsToReport = new LinkedList<>();
     }
 
-    public void start( String query )
+    public Measurement startQuery( String queryToMeasure )
     {
-        this.query = query;
-        startTime = System.currentTimeMillis();
-    }
-
-    public void end()
-    {
-        if ( startTime == 0 )
+        Measurement measurement = new Measurement()
         {
-            throw new IllegalStateException( "Need to start log before calling end" );
-        }
-        duration = System.currentTimeMillis() - startTime;
-    }
+            boolean closed;
+            String query = queryToMeasure;
+            Histogram timeHistogram = new Histogram( TimeUnit.MILLISECONDS.convert( 10, TimeUnit.MINUTES ), 5 );
+            Histogram rowHistogram = new Histogram( 5 );
+            long rows;
 
-    public Measurement measurement()
-    {
-        if ( startTime == 0 )
-        {
-            throw new IllegalStateException( "Need to start before counting successes" );
-        }
+            @Override
+            public void countSuccess( long elapsedTime )
+            {
+                timeHistogram.recordValue( elapsedTime );
+                rowHistogram.recordValue( rows );
+                rows = 0;
+            }
+
+            @Override
+            public void row()
+            {
+                rows++;
+            }
+
+            @Override
+            public void close()
+            {
+                closed = true;
+            }
+
+            @Override
+            public boolean isClosed()
+            {
+                return closed;
+            }
+
+            @Override
+            public String query()
+            {
+                return query;
+            }
+
+            @Override
+            public void report( PrintStream out )
+            {
+                out.print( query + "\n" );
+                out.print( histogramString( timeHistogram, "Run Time (ms)" ) );
+                out.print( "\n" );
+            }
+        };
+        measurementsToReport.add( measurement );
         return measurement;
     }
 
-    public long duration()
+    public boolean report()
     {
-        if ( duration == 0 )
+        while ( !measurementsToReport.isEmpty() && measurementsToReport.peek().isClosed() )
         {
-            throw new IllegalStateException( "Need to start and end logger to measure duration" );
+            if ( !hasWrittenHeader )
+            {
+                out.print( logHeader );
+                hasWrittenHeader = true;
+            }
+            Measurement measurement = measurementsToReport.poll();
+            measurement.report( out );
         }
-        return duration;
+        return measurementsToReport.isEmpty();
     }
 
-    public void report()
+    public static String histogramString( Histogram histogram, String name )
     {
-        if ( startTime == 0 || duration == 0 )
-        {
-            throw new IllegalStateException( "Need to start and end log before reporting" );
-        }
-        out.print( String.format( "%s\n\t%-15s\t%-15s\n\t%-15d\t%-15d\n",
-                query, "Time (ms)", "Successes", duration, measurement.getSuccesses() ) );
-    }
-
-    public void reset()
-    {
-        measurement.reset();
-        startTime = 0;
-        duration = 0;
-        query = "";
+        StringBuilder sb = new StringBuilder();
+        sb.append( String.format( "\t\t%15s\n", name ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "COUNT", histogram.getTotalCount() ) )
+                .append( String.format( "\t\t%15s\t: %f\n", "MEAN", histogram.getMean() ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "MIN", histogram.getMinValue() ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "MAX", histogram.getMaxValue() ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "50th PERCENTILE", histogram.getValueAtPercentile( 50 ) ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "90th PERCENTILE", histogram.getValueAtPercentile( 90 ) ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "95th PERCENTILE", histogram.getValueAtPercentile( 95 ) ) )
+                .append( String.format( "\t\t%15s\t: %d\n", "99th PERCENTILE", histogram.getValueAtPercentile( 99 ) ) )
+                ;
+        return sb.toString();
     }
 }

@@ -1,15 +1,23 @@
 package bench;
 
-import bench.queries.Query1;
-import bench.queries.Query1Kernel;
-import bench.queries.Query1Shortcut;
+import au.com.bytecode.opencsv.CSVReader;
+import bench.queries.Measurement;
+import bench.queries.QueryX;
+import bench.queries.QueryXKernel;
+import bench.queries.QueryXShortcut;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
 import index.logical.TKey;
 import index.logical.TValue;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.neo4j.graphdb.Direction;
@@ -29,6 +37,11 @@ import org.neo4j.tooling.GlobalGraphOperations;
 
 public class BenchmarkMain
 {
+    private static String NO_INPUT = "";
+    private char csvSeparator = ',';
+    private String resourcePath = "src/main/resources/";
+    private String dbPath = "ldbc_sf001_p006_Neo4jDb";
+
     public static void main( String[] argv )
     {
         new BenchmarkMain().run( argv );
@@ -36,8 +49,6 @@ public class BenchmarkMain
 
     private void run( String[] argv )
     {
-        String resourcePath = "src/main/resources/";
-        String dbPath = "ldbc_sf001_p006_Neo4jDb";
 
         GraphDatabaseService graphDb = new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder( resourcePath + dbPath )
@@ -80,7 +91,7 @@ public class BenchmarkMain
     private void benchRun( GraphDatabaseService graphDb )
     {
         int order = 64;
-        ShortcutIndexDescription description = Query1.indexDescription;
+        ShortcutIndexDescription description = QueryX.indexDescription;
         ShortcutIndexService index = new ShortcutIndexService( order, description );
 
         populateShortcutIndex( graphDb, index,
@@ -91,18 +102,78 @@ public class BenchmarkMain
 
         initiateLuceneIndex( graphDb, "Person", "firstName" );
 
-        // --- QUERY 1 ---
-        // --- WITH KERNEL ---
-        Query1Kernel kernelQuery = new Query1Kernel();
+        // Logger
         BenchLogger logger = new BenchLogger( System.out );
-        kernelQuery.runQuery( graphDb, logger );
+
+        // *** QUERY X ***
+        // --- WITH KERNEL ---
+        QueryXKernel kernelQuery = new QueryXKernel();
+        benchmarkQuery( kernelQuery, logger, graphDb, NO_INPUT );
         logger.report();
 
         // --- WITH SHORTCUT ---
-        Query1Shortcut shortcutQuery = new Query1Shortcut( indexes );
-        logger = new BenchLogger( System.out );
-        shortcutQuery.runQuery( graphDb, logger );
+        QueryXShortcut shortcutQuery = new QueryXShortcut( indexes );
+        benchmarkQuery( shortcutQuery, logger, graphDb, NO_INPUT );
         logger.report();
+    }
+
+    private void benchmarkQuery( BaseQuery query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
+    {
+        // Load input data
+        List<long[]> inputData = loadInputData( dataFileName, query.inputDataHeader() );
+
+        // Start logging
+        Measurement measurement = logger.startQuery( query.query() );
+
+        // Run query
+        for ( long[] input : inputData )
+        {
+            query.runQuery( graphDb, measurement, input );
+        }
+        measurement.close();
+    }
+
+    private List<long[]> loadInputData( String dataFileName, String[] expectedHeader )
+    {
+        List<long[]> inputData = new ArrayList<>();
+        if ( !dataFileName.equals( NO_INPUT ) )
+        {
+            InputStream in = getClass().getResourceAsStream( resourcePath + dataFileName );
+            BufferedReader reader = new BufferedReader( new InputStreamReader( in ) );
+            String[] line;
+
+            try ( CSVReader csvReader = new CSVReader( reader, csvSeparator ) )
+            {
+                String[] actualHeader = csvReader.readNext();
+                if ( !Arrays.equals( expectedHeader, actualHeader ) )
+                {
+                    throw new RuntimeException(
+                            String.format( "Input has wrong header. Expected header: %s, Actual header%s\n",
+                                    expectedHeader, actualHeader ) );
+                }
+
+                // Ready to read input
+                while ( (line = csvReader.readNext()) != null )
+                {
+                    long[] input = new long[line.length];
+                    for ( int i = 0; i < line.length; i++ )
+                    {
+                        input[i] = Long.parseLong( line[i] );
+                    }
+                    inputData.add( input );
+                }
+            }
+            catch ( Exception e )
+            {
+                e.printStackTrace();
+                throw new RuntimeException( e.getCause() );
+            }
+        }
+        else
+        {
+            inputData.add( BaseQuery.NO_DATA );
+        }
+        return inputData;
     }
 
     private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index,
