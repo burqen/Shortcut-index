@@ -1,0 +1,157 @@
+Property on relationship or node
+
+Potentially good at
+SEEK
+Range prop >=
+Range prop <
+Range prop =
+Order by natural order, reverse order
+Exact match
+SCAN
+
+Potentially bad at
+
+---
+
+// PART ONE. Simple, illustrate one use case with one hop.
+
+QUERY 1 - SCAN
+// All comments written by all persons
+MATCH (p:Person) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)
+RETURN id(p), id(r), id(c), c.creationDate
+
+QUERY 2 - SEEK
+// All comments written by person
+MATCH (p:Person {id:{1}}) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)
+RETURN id(p), id(r), id(c), c.creationDate
+
+QUERY 3 - ORDER BY
+// Most recently liked post by person
+MATCH (p:Person {id:{1}} -[r:LIKES]-> (o:Post)
+RETURN id(p), id(r), id(o), r.creationDate
+ORDER BY r.creationDate DESC
+
+QUERY 4 - EXACT MATCH
+// Number of students studying at university 2010
+MATCH (u:University {id:{1}} <-[r:STUDY_AT]- (p:Person)
+WHERE r.classYear = 2010
+RETURN id(u), count(p), r.classYear
+
+QUERY 5 - RANGE prop <
+// Employees since before 2010
+MATCH (c:Company {id:{1}}) <-[r:WORKS_AT]- (p:Person)
+WHERE r.workFrom < 2010
+RETURN id(c), id(p), r.workYear
+
+QUERY 6 - RANGE <= prop <
+// Posts posted to a forum in a time interval
+MATCH (f:Forum {id:{1}}) -[r:CONTAINER_OF]-> (p:Post)
+WHERE {2} <= p.creationDate < {3}
+RETURN id(f), id(r), id(p), p.creationDate
+
+// PART TWO. Two hops away. Combining use cases. Illustrate performance difference more (possibly).
+
+// MOTIVATIONAL QUERY (LDBC 2) the holy grail
+MATCH (:Person {id:{1}})-[:KNOWS]-(friend:Person)<-[:POST_HAS_CREATOR|COMMENT_HAS_CREATOR]-(message:Message)
+WHERE message.creationDate <= {2}
+RETURN friend.id AS personId, friend.firstName AS personFirstName, friend.lastName AS personLastName, message.id AS messageId, CASE has(message.content) WHEN true THEN message.content ELSE message.imageFile END AS messageContent,
+ message.creationDate AS messageDate
+ORDER BY messageDate DESC, messageId ASC
+LIMIT {3}
+
+
+ *************
+*             *
+*  LDBC read  *
+*             *
+ *************
+
+--- Query length 1 ---
+
+// COMPLETE SCAN
+MATCH (p:Person)<-[:COMMENT_HAS_CREATOR]-(c:Comment)
+RETURN id(p),id(c),c.creationDate
+
+// COMPLETE SCAN and ORDER
+MATCH (p:Person)<-[:COMMENT_HAS_CREATOR]-(c:Comment)
+RETURN id(p), id(c), c.creationDate
+ORDER BY c.creationDate
+
+// SEEK ON ONE SOURCE
+MATCH (p:Person {id:{1}})<-[:COMMENT_HAS_CREATOR]-(c.Comment)
+RETURN id(p), id(c), c.creationDate
+
+// SEEK ON ONE SOURCE and ORDER
+MATCH (p:Person {id:{1}})<-[:COMMENT_HAS_CREATOR]-(c.Comment)
+RETURN id(p), id(c), c.creationDate
+ORDER BY c.creationDate
+
+// SEEK ON ONE SOURCE, ORDER and TOP
+MATCH (p:Person {id:{1}})<-[:COMMENT_HAS_CREATOR]-(c.Comment)
+RETURN id(p), id(c), c.creationDate
+ORDER BY c.creationDate
+LIMIT 1
+
+// COMPLETE SCAN
+MATCH (u:University)<-[r:STUDY_AT]-(p:Person)
+RETURN id(u), id(p), r.classYear
+
+// COMPELTE SCAN with filter
+MATCH (u:University)<-[r:STUDY_AT]-(p:Person)
+WHERE r.classYear = 2010
+RETURN id(u), id(p), r.classYear
+
+// SEEK with EQUALS RANGE
+MATCH (u:University {id:{1}})<-[r:STUDY_AT]-(p:Person)
+WHERE r.classYear = 2010
+RETURN id(u), id(p), r.classYear
+
+
+--- Query length 2  ---
+
+// SEEK with COMPLETE RANGE
+MATCH (p:Person {id:{1}})-[:KNOWS]-(o:Person)<-[:COMMENT_HAS_CREATOR]-(c:Comment)
+WHERE 2013 <= c.creationDate AND c.creationDate < 2015
+RETURN id(o), c.creationDate, c.content
+
+// COMPLETE RANGE and ORDER
+MATCH (p:Person {id:{1}})-[:KNOWS]-(o:Person)<-[:COMMENT_HAS_CREATOR]-(c:Comment)
+WHERE 2013 <= c.creationDate AND c.creationDate < 2015
+RETURN id(o), c.creationDate, c.content
+ORDER BY c.creationDate
+
+// UPPER RANGE and ORDER
+MATCH (p:Person {id:{1}})-[:KNOWS]-(o:Person)<-[:COMMENT_HAS_CREATOR]-(c:Comment)
+WHERE c.creationDate < 2015
+RETURN id(o), c.creationDate, c.content
+ORDER BY c.creationDate
+
+// LOWER RANGE and ORDER
+MATCH (p:Person {id:{1}})-[:KNOWS]-(o:Person)<-[:COMMENT_HAS_CREATOR]-(c:Comment)
+WHERE 2013 <= c.creationDate
+RETURN id(o), c.creationDate, c.content
+ORDER BY c.creationDate
+
+--- LIKELY SCENARIOS ---
+
+// Get persons recently liked posts and author of that post. Hmm... maybe not.
+
+// Maybe do one query and try how different indexes affect result.
+// That would be quite interesting. Can we improve much by using multiple indexes in same query?
+// INDEX ALL THE THINGS!
+
+// Most active forum
+MATCH (f:Forum)-[:CONTAINER_OF]->(Post)<-[r1:REPLY_OF_POST]-(:Comment)<-[r2:REPLY_OF_COMMENT*]-(:Comment)
+RETURN f,count(r1)+count(r2) as count
+ORDER BY count DESC 
+LIMIT 100
+
+
+ **************
+*              *
+*  LDBC write  *
+*              *
+ **************
+
+MATCH (p:Person)-[:KNOWS]->(o:Person)
+

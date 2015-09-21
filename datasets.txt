@@ -1,0 +1,17 @@
+LDBC
+
+sf001 p006
+nodes: 3'158'994
+relationship: 33'601'872
+
+[Comment, Message]	2015590
+[Message, Post]	    1015594
+[Forum]	            92210
+[Tag]	            16080
+[Person]	        9987
+[University]	    6421
+[Company]	        1575
+[City]	            1349
+[Country]	        111
+[TagClass]	        71
+[Continent]	        6
