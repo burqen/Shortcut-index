@@ -1,21 +1,19 @@
 package bench;
 
-import au.com.bytecode.opencsv.CSVReader;
 import bench.queries.Measurement;
-import bench.queries.QueryX;
-import bench.queries.QueryXKernel;
-import bench.queries.QueryXShortcut;
+import bench.queries.Query1;
+import bench.queries.Query2;
+import bench.queries.framework.BaseQuery;
+import bench.util.Config;
+import bench.util.GraphDatabaseProvider;
+import bench.util.InputDataLoader;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
 import index.logical.TKey;
 import index.logical.TValue;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.FileNotFoundException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,31 +28,26 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.tooling.GlobalGraphOperations;
 
+import static bench.util.Config.GRAPH_DB_FOLDER;
+
 public class BenchmarkMain
 {
-    private static String NO_INPUT = "";
-    private char csvSeparator = ',';
-    private String resourcePath = "src/main/resources/";
-    private String dbPath = "ldbc_sf001_p006_Neo4jDb";
+    private String dbName;
 
-    public static void main( String[] argv )
+    public static void main( String[] argv ) throws FileNotFoundException
     {
         new BenchmarkMain().run( argv );
     }
 
-    private void run( String[] argv )
+    private void run( String[] argv ) throws FileNotFoundException
     {
+        dbName = Config.LDBC_SF001;
 
-        GraphDatabaseService graphDb = new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder( resourcePath + dbPath )
-                .setConfig( "allow_store_upgrade", "true" )
-                .newGraphDatabase();
-        registerShutdownHook( graphDb );
+        GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( GRAPH_DB_FOLDER, dbName );
 
         if ( argv[0].equals( "bench" ) )
         {
@@ -88,10 +81,10 @@ public class BenchmarkMain
         }
     }
 
-    private void benchRun( GraphDatabaseService graphDb )
+    private void benchRun( GraphDatabaseService graphDb ) throws FileNotFoundException
     {
         int order = 64;
-        ShortcutIndexDescription description = QueryX.indexDescription;
+        ShortcutIndexDescription description = Query1.indexDescription;
         ShortcutIndexService index = new ShortcutIndexService( order, description );
 
         populateShortcutIndex( graphDb, index,
@@ -103,124 +96,83 @@ public class BenchmarkMain
         initiateLuceneIndex( graphDb, "Person", "firstName" );
 
         // Logger
-        BenchLogger logger = new BenchLogger( System.out );
+        BenchLogger logger = new BenchLogger( System.out, " -~~- KERNEL -~~-" );
 
-        // *** QUERY X ***
         // --- WITH KERNEL ---
-        QueryXKernel kernelQuery = new QueryXKernel();
-        benchmarkQuery( kernelQuery, logger, graphDb, NO_INPUT );
-        logger.report();
+        runKernelQueries( graphDb, logger );
+
+        logger = new BenchLogger( System.out, "-~~- SHORTCUT -~~-" );
 
         // --- WITH SHORTCUT ---
-        QueryXShortcut shortcutQuery = new QueryXShortcut( indexes );
-        benchmarkQuery( shortcutQuery, logger, graphDb, NO_INPUT );
+        runShortcutQueries( graphDb, logger, indexes );
+    }
+
+    private void runKernelQueries( GraphDatabaseService graphDb, BenchLogger logger ) throws FileNotFoundException
+    {
+        // *** QUERY 1 ***
+        BaseQuery query1 = new Query1();
+        benchmarkQuery( query1, logger, graphDb, query1.inputFile() );
+
+        // *** QUERY 2 ***
+        BaseQuery query2 = new Query2();
+        benchmarkQuery( query2, logger, graphDb, query2.inputFile() );
+
         logger.report();
     }
 
-    private void benchmarkQuery( BaseQuery query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
+    private void runShortcutQueries( GraphDatabaseService graphDb, BenchLogger logger, ShortcutIndexProvider indexes )
+            throws FileNotFoundException
     {
-        // Load input data
-        List<long[]> inputData = loadInputData( dataFileName, query.inputDataHeader() );
+        // *** QUERY 1 ***
+        BaseQuery query1 = new Query1( indexes );
+        benchmarkQuery( query1, logger, graphDb, query1.inputFile() );
 
-        // Start logging
-        Measurement measurement = logger.startQuery( query.query() );
+        // *** QUERY 2 ***
+        BaseQuery query2 = new Query2( indexes );
+        benchmarkQuery( query2, logger, graphDb, query2.inputFile() );
 
-        // Run query
-        for ( long[] input : inputData )
-        {
-            query.runQuery( graphDb, measurement, input );
-        }
-        measurement.close();
+        logger.report();
     }
 
-    private List<long[]> loadInputData( String dataFileName, String[] expectedHeader )
+    private void benchmarkQuery(
+            BaseQuery query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
+            throws FileNotFoundException
     {
-        List<long[]> inputData = new ArrayList<>();
-        if ( !dataFileName.equals( NO_INPUT ) )
+        // Load input data
+        InputDataLoader inputDataLoader = new InputDataLoader();
+        List<long[]> inputData = inputDataLoader.load( dataFileName, query.inputDataHeader() );
+        if ( inputData == null )
         {
-            InputStream in = getClass().getResourceAsStream( resourcePath + dataFileName );
-            BufferedReader reader = new BufferedReader( new InputStreamReader( in ) );
-            String[] line;
-
-            try ( CSVReader csvReader = new CSVReader( reader, csvSeparator ) )
-            {
-                String[] actualHeader = csvReader.readNext();
-                if ( !Arrays.equals( expectedHeader, actualHeader ) )
-                {
-                    throw new RuntimeException(
-                            String.format( "Input has wrong header. Expected header: %s, Actual header%s\n",
-                                    expectedHeader, actualHeader ) );
-                }
-
-                // Ready to read input
-                while ( (line = csvReader.readNext()) != null )
-                {
-                    long[] input = new long[line.length];
-                    for ( int i = 0; i < line.length; i++ )
-                    {
-                        input[i] = Long.parseLong( line[i] );
-                    }
-                    inputData.add( input );
-                }
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-                throw new RuntimeException( e.getCause() );
-            }
+            Measurement measurement = logger.startQuery( query.query() );
+            measurement.error( "Failed to load input data" );
         }
         else
         {
-            inputData.add( BaseQuery.NO_DATA );
+            // Start logging
+            Measurement measurement = logger.startQuery( query.query() );
+
+            // Run query
+            for ( long[] input : inputData )
+            {
+                query.runQuery( graphDb, measurement, input );
+            }
+            measurement.close();
         }
-        return inputData;
     }
 
     private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index,
             ShortcutIndexDescription desc )
     {
-        try ( Transaction tx = graphDb.beginTx() )
+        if ( desc.nodePropertyKey != null )
         {
-            Label firstLabel = DynamicLabel.label( desc.firstLabel );
-            Label secondLabel = DynamicLabel.label( desc.secondLabel );
+            populateShortcutIndex( graphDb, index, desc.firstLabel, desc.relationshipType, desc.direction,
+                    desc.secondLabel, desc.nodePropertyKey, false );
 
-            Iterator<Relationship> allRelationships =
-                    GlobalGraphOperations.at( graphDb ).getAllRelationships().iterator();
-            int numberOfInsert = 0;
-            int numberOfRelationships = 0;
-            while ( allRelationships.hasNext() )
-            {
-                Relationship rel = allRelationships.next();
-                numberOfRelationships++;
-                if ( rel.getType().name().equals( desc.relationshipType ) )
-                {
-                    Node first;
-                    Node second;
-                    if ( desc.direction == Direction.OUTGOING )
-                    {
-                        first = rel.getStartNode();
-                        second = rel.getEndNode();
-                    }
-                    else
-                    {
-                        first = rel.getEndNode();
-                        second = rel.getStartNode();
-                    }
-                    if ( first.hasLabel( firstLabel ) && second.hasLabel( secondLabel ) )
-                    {
-                        numberOfInsert++;
-                        long prop = desc.relationshipPropertyKey != null ?
-                                    (long) rel.getProperty( desc.relationshipPropertyKey ) :
-                                    (long) second.getProperty( desc.nodePropertyKey );
-                        index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
-                    }
-                }
-                if ( numberOfRelationships % 10000 == 0 )
-                {
-                    System.out.printf( "# relationships: %d, # inserts: %d\n", numberOfRelationships, numberOfInsert );
-                }
-            }
-            tx.success();
+        }
+        else
+        {
+            populateShortcutIndex( graphDb, index, desc.firstLabel, desc.relationshipType, desc.direction,
+                    desc.secondLabel, desc.relationshipPropertyKey, true );
         }
     }
 
@@ -352,20 +304,5 @@ public class BenchmarkMain
             System.out.println( node.getProperty( propKey ) );
         }
         System.out.println();
-    }
-
-    private static void registerShutdownHook( final GraphDatabaseService graphDb )
-    {
-        // Registers a shutdown hook for the Neo4j instance so that it
-        // shuts down nicely when the VM exits (even if you "Ctrl-C" the
-        // running application).
-        Runtime.getRuntime().addShutdownHook( new Thread()
-        {
-            @Override
-            public void run()
-            {
-                graphDb.shutdown();
-            }
-        } );
     }
 }

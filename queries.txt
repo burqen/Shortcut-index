@@ -15,35 +15,35 @@ Potentially bad at
 
 // PART ONE. Simple, illustrate one use case with one hop.
 
-QUERY 1 - SCAN
+// QUERY 1 - SCAN
 // All comments written by all persons
 MATCH (p:Person) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)
 RETURN id(p), id(r), id(c), c.creationDate
 
-QUERY 2 - SEEK
+// QUERY 2 - SEEK
 // All comments written by person
 MATCH (p:Person {id:{1}}) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)
 RETURN id(p), id(r), id(c), c.creationDate
 
-QUERY 3 - ORDER BY
+// QUERY 3 - ORDER BY
 // Most recently liked post by person
 MATCH (p:Person {id:{1}} -[r:LIKES]-> (o:Post)
 RETURN id(p), id(r), id(o), r.creationDate
 ORDER BY r.creationDate DESC
 
-QUERY 4 - EXACT MATCH
+// QUERY 4 - EXACT MATCH
 // Number of students studying at university 2010
 MATCH (u:University {id:{1}} <-[r:STUDY_AT]- (p:Person)
 WHERE r.classYear = 2010
 RETURN id(u), count(p), r.classYear
 
-QUERY 5 - RANGE prop <
+// QUERY 5 - RANGE prop <
 // Employees since before 2010
 MATCH (c:Company {id:{1}}) <-[r:WORKS_AT]- (p:Person)
 WHERE r.workFrom < 2010
 RETURN id(c), id(p), r.workYear
 
-QUERY 6 - RANGE <= prop <
+// QUERY 6 - RANGE <= prop <
 // Posts posted to a forum in a time interval
 MATCH (f:Forum {id:{1}}) -[r:CONTAINER_OF]-> (p:Post)
 WHERE {2} <= p.creationDate < {3}

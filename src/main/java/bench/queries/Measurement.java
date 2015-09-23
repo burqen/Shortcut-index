@@ -10,4 +10,5 @@ public interface Measurement
     boolean isClosed();
     String query();
     void report( PrintStream out );
+    void error( String s );
 }
