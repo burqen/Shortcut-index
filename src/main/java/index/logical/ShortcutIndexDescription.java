@@ -26,13 +26,13 @@ public class ShortcutIndexDescription
     {
         if ( relationshipPropertyKey == null ^ nodePropertyKey == null )
         {
-            this.firstLabel = firstLabel.toUpperCase();
-            this.secondLabel = secondLabel.toUpperCase();
-            this.relationshipType = relationshipType.toUpperCase();
+            this.firstLabel = firstLabel;
+            this.secondLabel = secondLabel;
+            this.relationshipType = relationshipType;
             this.direction = direction;
             this.relationshipPropertyKey =
-                    relationshipPropertyKey == null ? null : relationshipPropertyKey.toLowerCase();
-            this.nodePropertyKey = nodePropertyKey == null ? null : nodePropertyKey.toLowerCase();
+                    relationshipPropertyKey == null ? null : relationshipPropertyKey;
+            this.nodePropertyKey = nodePropertyKey == null ? null : nodePropertyKey;
         }
         else
         {
@@ -64,12 +64,12 @@ public class ShortcutIndexDescription
             {
                 prefix = suffix = "";
             }
-            builder.append( prefix ).append( "[:" ).append( relationshipType );
+            builder.append( prefix ).append( "-[:" ).append( relationshipType );
             if ( relationshipPropertyKey != null )
             {
                 appendProperty( builder, relationshipPropertyKey );
             }
-            builder.append( "]" ).append( suffix ).append( "(:" ).append( secondLabel );
+            builder.append( "]-" ).append( suffix ).append( "(:" ).append( secondLabel );
             if ( nodePropertyKey != null )
             {
                 appendProperty( builder, nodePropertyKey );
@@ -82,7 +82,7 @@ public class ShortcutIndexDescription
 
     private void appendProperty( StringBuilder builder, String propertyKey )
     {
-        builder.append( "{" ).append( propertyKey ).append( ":}" );
+        builder.append( "{" ).append( propertyKey ).append( "}" );
     }
 
     @Override

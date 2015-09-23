@@ -1,6 +1,6 @@
 package bench;
 
-import bench.queries.Measurement;
+import bench.queries.framework.Measurement;
 import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;
@@ -31,20 +31,12 @@ public class BenchLogger
             String query = queryToMeasure;
             Histogram timeHistogram = new Histogram( TimeUnit.MILLISECONDS.convert( 10, TimeUnit.MINUTES ), 5 );
             Histogram rowHistogram = new Histogram( 5 );
-            long rows;
 
             @Override
-            public void countSuccess( long elapsedTime )
+            public void queryFinished( long elapsedTime, long rowCount )
             {
                 timeHistogram.recordValue( elapsedTime );
-                rowHistogram.recordValue( rows );
-                rows = 0;
-            }
-
-            @Override
-            public void row()
-            {
-                rows++;
+                rowHistogram.recordValue( rowCount );
             }
 
             @Override

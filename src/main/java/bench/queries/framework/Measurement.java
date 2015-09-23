@@ -1,11 +1,10 @@
-package bench.queries;
+package bench.queries.framework;
 
 import java.io.PrintStream;
 
 public interface Measurement
 {
-    void countSuccess( long elapsedTime );
-    void row();
+    void queryFinished( long elapsedTime, long rowCount );
     void close();
     boolean isClosed();
     String query();

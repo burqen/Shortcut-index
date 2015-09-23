@@ -1,15 +1,18 @@
 package bench.util;
 
-import bench.queries.Query2;
-import bench.queries.framework.BaseQuery;
+import bench.queries.impl.Query2Kernel;
+import bench.queries.impl.Query4Kernel;
+import bench.queries.framework.Query;
+import bench.queries.impl.Query5Kernel;
+import bench.queries.impl.Query6Kernel;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -22,23 +25,77 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 public class InputDataGenerator
 {
 
     public void run( String[] argv ) throws IOException
     {
+        if ( argv.length == 0 )
+        {
+            System.out.println( "Expected input of combination of query2, query4, query5, query6" );
+            System.exit( 1 );
+        }
+
         String dbName = Config.LDBC_SF001;
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( Config.GRAPH_DB_FOLDER, dbName );
 
-        // Query 2
-        // Person
-        BaseQuery query = new Query2();
+        for ( String arg : argv )
+        {
+            switch ( arg )
+            {
+            case "query2":
+                generateInputForQuery( graphDb, new Query2Kernel() );
+                break;
+            case "query4":
+                generateInputForQuery( graphDb, new Query4Kernel() );
+                break;
+            case "query5":
+                generateInputForQuery( graphDb, new Query5Kernel() );
+                break;
+            case "query6":
+                generateInputForQuery( graphDb, new Query6Kernel() );
+                break;
+            default:
+                System.out.println( "Unexpected input. Only accept query2, query4, query5, query6" );
+            }
 
-        PrintWriter out = new PrintWriter( openOutputStream( Config.QUERY2_PARAMETERS ) );
+        }
 
+    }
+
+    private void generateInputForQuery( GraphDatabaseService graphDb, Query query ) throws IOException
+    {
+        System.out.println( "Create input data for query with input header "
+                            + Arrays.toString( query.inputDataHeader() ) );
+        System.out.print( "Open file " + query.inputFile() + "... " );
+        PrintWriter out = new PrintWriter( openOutputStream( query.inputFile() ) );
+        System.out.print( "ok\n");
+        System.out.print( "Generate random ids... " );
+        List<Long> personIds = generateRandomIdsForLabel( graphDb, query.inputDataHeader()[0] );
+        System.out.print( "ok\n" );
+
+        char separator = InputDataLoader.csvSeparator;
+
+        // HEADER
+        String[] header = query.inputDataHeader();
+        printHeader( out, header, separator );
+
+        // ... and shuffle the order and write to file...
+        // CONTENT
+        Collections.shuffle( personIds );
+        System.out.print( "Writing to file..." );
+        personIds.forEach( out::println );
+        System.out.print( "ok\n" );
+
+        out.close();
+        System.out.println( "SUCCESS" );
+    }
+
+    private List<Long> generateRandomIdsForLabel( GraphDatabaseService graphDb, String label )
+    {
+        // Count the number of nodes with label Person...
         int numberOfPersons = 0;
         try ( Transaction tx = graphDb.beginTx() )
         {
@@ -46,12 +103,12 @@ public class InputDataGenerator
                     .resolveDependency( ThreadToStatementContextBridge.class )
                     .get().readOperations();
 
-            int personLabelId = operations.labelGetForName( "Person" );
-            PrimitiveLongIterator nodesWithLabelPerson = operations.nodesGetForLabel( personLabelId );
+            int labelId = operations.labelGetForName( label );
+            PrimitiveLongIterator nodesWithLabel = operations.nodesGetForLabel( labelId );
 
-            while ( nodesWithLabelPerson.hasNext() )
+            while ( nodesWithLabel.hasNext() )
             {
-                nodesWithLabelPerson.next();
+                nodesWithLabel.next();
                 numberOfPersons++;
             }
 
@@ -60,57 +117,48 @@ public class InputDataGenerator
 
         int desired = Config.MAX_NUMBER_OF_QUERY_REPETITIONS;
         Random rng = new Random();
-        Set<Integer> personsToAdd = new TreeSet<>();
+        Set<Integer> nodesToAddFromOrderedListOfNodes = new TreeSet<>();
 
-        while ( personsToAdd.size() < desired )
+        // ... to randomly generate what persons to pick out of an ordered list ...
+        while ( nodesToAddFromOrderedListOfNodes.size() < desired )
         {
-            personsToAdd.add( rng.nextInt( numberOfPersons ) );
+            nodesToAddFromOrderedListOfNodes.add( rng.nextInt( numberOfPersons ) );
         }
 
-        List<Long> personIds = new ArrayList<>();
+        // ... then walk through that ordered list which turns out to be an iterator, and pick out the
+        // persons decided upon...
+        List<Long> nodeIds = new ArrayList<>();
         try ( Transaction tx = graphDb.beginTx() )
         {
             ReadOperations operations = ((GraphDatabaseAPI) graphDb).getDependencyResolver()
                     .resolveDependency( ThreadToStatementContextBridge.class )
                     .get().readOperations();
 
-            int personLabelId = operations.labelGetForName( "Person" );
-            PrimitiveLongIterator nodesWithLabelPerson = operations.nodesGetForLabel( personLabelId );
+            int labelId = operations.labelGetForName( label );
+            PrimitiveLongIterator nodesWithLabel = operations.nodesGetForLabel( labelId );
 
             int count = 0;
-            Iterator<Integer> personsToAddIt = personsToAdd.iterator();
-            int nextToAdd = personsToAddIt.next();
-            while ( nodesWithLabelPerson.hasNext() )
+            Iterator<Integer> nodesToAddIt = nodesToAddFromOrderedListOfNodes.iterator();
+            int nextToAdd = nodesToAddIt.next();
+            while ( nodesWithLabel.hasNext() )
             {
-                long nextId = nodesWithLabelPerson.next();
+                long nextId = nodesWithLabel.next();
                 if ( count == nextToAdd )
                 {
-                    personIds.add( nextId );
-                    if ( !personsToAddIt.hasNext() )
+                    nodeIds.add( nextId );
+                    if ( !nodesToAddIt.hasNext() )
                     {
                         break;
                     }
-                    nextToAdd = personsToAddIt.next();
+                    nextToAdd = nodesToAddIt.next();
                 }
                 count++;
             }
 
             tx.success();
         }
-
-
-
-        char separator = InputDataLoader.csvSeparator;
-
-        // HEADER
-        String[] header = query.inputDataHeader();
-        printHeader( out, header, separator );
-
-        // CONTENT
-        Collections.shuffle( personIds );
-        personIds.forEach( out::println );
-
-        out.close();
+        // ... and lastly think about if this is the easiest way to do this. Probably not.
+        return nodeIds;
     }
 
     private void printHeader( PrintWriter out, String[] header, char separator )
@@ -128,7 +176,7 @@ public class InputDataGenerator
             throws IOException
     {
         File file;
-        FileOutputStream out = null;
+        FileOutputStream out;
 
         file = new File( filePath );
 

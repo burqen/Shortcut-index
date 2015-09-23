@@ -1,7 +1,10 @@
 package bench.queries.framework;
 
-import bench.queries.Measurement;
-import index.logical.ShortcutIndexProvider;
+import index.logical.TKey;
+import index.logical.TResult;
+import index.logical.TValue;
+
+import java.util.List;
 
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
@@ -9,22 +12,18 @@ import org.neo4j.kernel.api.exceptions.PropertyNotFoundException;
 import org.neo4j.kernel.impl.api.RelationshipDataExtractor;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 
-public abstract class QueryWithPropertyOnNode extends BaseQuery
+public abstract class QueryKernelWithPropertyOnRelationship extends QueryKernel
 {
-    public QueryWithPropertyOnNode()
+    public QueryKernelWithPropertyOnRelationship()
     {
         super();
     }
 
-    public QueryWithPropertyOnNode( ShortcutIndexProvider indexes )
-    {
-        super( indexes );
-    }
-
     @Override
     protected void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
-            long startPoint, int relType, int secondLabel, int propKey )
+            long startPoint, int relType, int secondLabel, int propKey, List<TResult> resultList )
     {
+
         try
         {
             RelationshipIterator relationships = operations.nodeGetRelationships( startPoint, direction(), relType );
@@ -34,23 +33,26 @@ public abstract class QueryWithPropertyOnNode extends BaseQuery
             {
                 long relationship = relationships.next();
 
+                long prop = ((Number) operations.relationshipGetProperty( relationship, propKey ).value() ).longValue();
+
+                if ( filterOnRelationshipProperty( prop ) )
+                {
+                    continue;
+                }
+
                 operations.relationshipVisit( relationship, extractor );
 
-                // Other node should now be a comment written by person
+
+                // Other node should now be a have second label and have a relationship of relType to startPoint
                 long otherNode = startPoint == extractor.startNode() ? extractor.endNode() : extractor.startNode();
                 if ( operations.nodeHasLabel( otherNode, secondLabel ) )
                 {
-                    long prop = (long)operations.nodeGetProperty( otherNode, propKey ).value();
-
-                    if ( filterOnNodeProperty( prop ) )
-                    {
-                        continue;
-                    }
-
-                    if ( validateRow( startPoint, otherNode, relationship, prop ) )
+                    TResult result = new TResult(
+                            new TKey( startPoint, prop ), new TValue( relationship, otherNode ) );
+                    if ( !filterResultRow( result ) )
                     {
                         // Valid result. Report
-                        measurement.row();
+                        resultList.add( result );
                     }
                 }
             }
@@ -65,5 +67,6 @@ public abstract class QueryWithPropertyOnNode extends BaseQuery
         }
     }
 
-    protected abstract boolean filterOnNodeProperty( long prop );
+    protected abstract boolean filterOnRelationshipProperty( long prop );
 }
+

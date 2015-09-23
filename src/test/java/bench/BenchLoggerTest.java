@@ -1,7 +1,5 @@
 package bench;
 
-import bench.queries.Measurement;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -34,7 +32,7 @@ public class BenchLoggerTest
 //        logger.startQuery( "" );
 //        Measurement measurement = logger.measurement();
 //        assertEquals( "Expected to not have any successes.", 0, measurement.getSuccesses() );
-//        measurement.countSuccess();
+//        measurement.queryFinished();
 //        assertEquals( "Expected to have one (1) success.", 1, measurement.getSuccesses() );
 //        logger.finishQuery();
 //    }

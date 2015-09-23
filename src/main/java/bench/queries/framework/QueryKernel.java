@@ -1,7 +1,9 @@
 package bench.queries.framework;
 
-import bench.queries.Measurement;
-import index.logical.ShortcutIndexProvider;
+import index.logical.TResult;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -9,24 +11,13 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.api.ReadOperations;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
 import org.neo4j.kernel.api.index.IndexDescriptor;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 
-public abstract class BaseQuery
+public abstract class QueryKernel extends Query
 {
-    protected final ShortcutIndexProvider indexes;
-
-    public BaseQuery()
-    {
-        indexes = null;
-    }
-
-    public BaseQuery( ShortcutIndexProvider indexes )
-    {
-        this.indexes = indexes;
-    }
-
     protected abstract String firstLabel();
 
     protected abstract String secondLabel();
@@ -37,23 +28,18 @@ public abstract class BaseQuery
 
     protected abstract String propKey();
 
-    public abstract String[] inputDataHeader();
-
-    public abstract String query();
-
     protected abstract PrimitiveLongIterator startingPoints(
-            ReadOperations operations, long[] inputData, int firstLabel );
+            ReadOperations operations, long[] inputData, int firstLabel ) throws EntityNotFoundException;
 
-    protected abstract boolean validateRow( long startPoint, long otherNode, long relationship, long prop );
+    protected abstract boolean filterResultRow( TResult resultRow );
 
     protected abstract void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
             long startPoint,
             int relType, int secondLabel,
-            int propKey );
+            int propKey, List<TResult> resultList );
 
-    protected abstract void doRunQueryWithIndex(
-            ReadOperations operations, Measurement measurement, long[] inputData );
 
+    @Override
     public void runQuery( GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
     {
         try ( Transaction tx = graphDb.beginTx() )
@@ -63,15 +49,12 @@ public abstract class BaseQuery
                     .get().readOperations();
 
             long start = System.currentTimeMillis();
-            if ( indexes == null )
-            {
-                doRunQueryWithoutIndex( readOperations, measurement, inputData );
-            }
-            else
-            {
-                doRunQueryWithIndex( readOperations, measurement, inputData );
-            }
-            measurement.countSuccess( System.currentTimeMillis() - start );
+            List<TResult> resultList;
+            resultList = doRunQuery( readOperations, measurement, inputData );
+
+            measurement.queryFinished( System.currentTimeMillis() - start, resultList.size() );
+
+            reportResult( resultList );
 
             tx.success();
         }
@@ -81,25 +64,36 @@ public abstract class BaseQuery
         }
     }
 
-    protected void doRunQueryWithoutIndex(
-            ReadOperations operations, Measurement measurement, long[] inputData )
+    protected List<TResult> doRunQuery(
+            ReadOperations operations, Measurement measurement, long[] inputData ) throws EntityNotFoundException
     {
         int firstLabel = operations.labelGetForName( firstLabel() );
         int relType = operations.relationshipTypeGetForName( relType() );
         int secondLabel = operations.labelGetForName( secondLabel() );
         int propKey = operations.propertyKeyGetForName( propKey() );
 
-        PrimitiveLongIterator startingPoints = startingPoints( operations, inputData, firstLabel );
+        List<TResult> resultList = new ArrayList<>();
 
-        long prop;
+        PrimitiveLongIterator startingPoints = startingPoints( operations, inputData, firstLabel );
 
         while ( startingPoints.hasNext() )
         {
             long startPoint = startingPoints.next();
 
-            expandFromStart( operations, measurement, inputData, startPoint, relType, secondLabel, propKey );
+            expandFromStart( operations, measurement, inputData, startPoint, relType, secondLabel, propKey,
+                    resultList );
         }
+
+        massageRawResult( resultList );
+        return resultList;
     }
+
+    protected void reportResult( List<TResult> resultList )
+    {
+        // Do nothing here as default
+    }
+
+    protected abstract void massageRawResult( List<TResult> resultList );
 
     protected PrimitiveLongIterator getNodeFromIndexLookup( ReadOperations operations,
                                                           int labelId, int propertyId, Object value )
@@ -108,5 +102,4 @@ public abstract class BaseQuery
         return operations.nodesGetFromIndexLookup( new IndexDescriptor( labelId, propertyId ), value );
     }
 
-    public abstract String inputFile();
 }

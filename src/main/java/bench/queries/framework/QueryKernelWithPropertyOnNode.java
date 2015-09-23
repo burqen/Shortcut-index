@@ -1,8 +1,10 @@
 package bench.queries.framework;
 
-import bench.queries.Measurement;
-import bench.queries.framework.BaseQuery;
-import index.logical.ShortcutIndexProvider;
+import index.logical.TKey;
+import index.logical.TResult;
+import index.logical.TValue;
+
+import java.util.List;
 
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
@@ -10,23 +12,17 @@ import org.neo4j.kernel.api.exceptions.PropertyNotFoundException;
 import org.neo4j.kernel.impl.api.RelationshipDataExtractor;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 
-public abstract class QueryWithPropertyOnRelationship extends BaseQuery
+public abstract class QueryKernelWithPropertyOnNode extends QueryKernel
 {
-    public QueryWithPropertyOnRelationship()
+    public QueryKernelWithPropertyOnNode()
     {
         super();
     }
 
-    public QueryWithPropertyOnRelationship( ShortcutIndexProvider indexes )
-    {
-        super( indexes );
-    }
-
     @Override
     protected void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
-            long startPoint, int relType, int secondLabel, int propKey )
+            long startPoint, int relType, int secondLabel, int propKey, List<TResult> resultList )
     {
-
         try
         {
             RelationshipIterator relationships = operations.nodeGetRelationships( startPoint, direction(), relType );
@@ -36,24 +32,25 @@ public abstract class QueryWithPropertyOnRelationship extends BaseQuery
             {
                 long relationship = relationships.next();
 
-                long prop = (long) operations.relationshipGetProperty( relationship, propKey ).value();
-
-                if ( filterOnRelationshipProperty( prop ) )
-                {
-                    continue;
-                }
-
                 operations.relationshipVisit( relationship, extractor );
-
 
                 // Other node should now be a comment written by person
                 long otherNode = startPoint == extractor.startNode() ? extractor.endNode() : extractor.startNode();
                 if ( operations.nodeHasLabel( otherNode, secondLabel ) )
                 {
-                    if ( validateRow( startPoint, otherNode, relationship, prop ) )
+                    long prop = ((Number) operations.nodeGetProperty( otherNode, propKey ).value()).longValue();
+
+                    if ( filterOnNodeProperty( prop ) )
+                    {
+                        continue;
+                    }
+
+                    TResult result = new TResult(
+                            new TKey( startPoint, prop ), new TValue( relationship, otherNode ) );
+                    if ( !filterResultRow( result ) )
                     {
                         // Valid result. Report
-                        measurement.row();
+                        resultList.add( result );
                     }
                 }
             }
@@ -68,6 +65,5 @@ public abstract class QueryWithPropertyOnRelationship extends BaseQuery
         }
     }
 
-    protected abstract boolean filterOnRelationshipProperty( long prop );
+    protected abstract boolean filterOnNodeProperty( long prop );
 }
-

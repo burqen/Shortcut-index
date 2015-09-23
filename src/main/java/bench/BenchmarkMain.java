@@ -1,9 +1,17 @@
 package bench;
 
-import bench.queries.Measurement;
-import bench.queries.Query1;
-import bench.queries.Query2;
-import bench.queries.framework.BaseQuery;
+import bench.queries.framework.Measurement;
+import bench.queries.impl.Query1Kernel;
+import bench.queries.impl.Query1Shortcut;
+import bench.queries.impl.Query2Kernel;
+import bench.queries.impl.Query2Shortcut;
+import bench.queries.impl.Query3Kernel;
+import bench.queries.impl.Query3Shortcut;
+import bench.queries.impl.Query4Kernel;
+import bench.queries.impl.Query4Shortcut;
+import bench.queries.framework.Query;
+import bench.queries.impl.Query5Kernel;
+import bench.queries.impl.Query5Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
@@ -84,58 +92,65 @@ public class BenchmarkMain
     private void benchRun( GraphDatabaseService graphDb ) throws FileNotFoundException
     {
         int order = 64;
-        ShortcutIndexDescription description = Query1.indexDescription;
-        ShortcutIndexService index = new ShortcutIndexService( order, description );
+        ShortcutIndexProvider indexes = new ShortcutIndexProvider();
 
+        // Index for query 1 and 2
+        ShortcutIndexDescription description = Query1Shortcut.indexDescription;
+        ShortcutIndexService index = new ShortcutIndexService( order, description );
         populateShortcutIndex( graphDb, index,
                 "Person", "COMMENT_HAS_CREATOR", Direction.INCOMING, "Comment", "creationDate", false );
-
-        ShortcutIndexProvider indexes = new ShortcutIndexProvider();
         indexes.put( index );
 
-        initiateLuceneIndex( graphDb, "Person", "firstName" );
+        // Index for query 3
+        description = Query3Shortcut.indexDescription;
+        index = new ShortcutIndexService( order, description );
+        populateShortcutIndex( graphDb, index, description );
+        indexes.put( index );
+
+        // Index for query 4
+        description = Query4Shortcut.indexDescription;
+        index = new ShortcutIndexService( order, description );
+        populateShortcutIndex( graphDb, index, description );
+        indexes.put( index );
+
+        Query[] kernelQueries = new Query[]{
+                new Query1Kernel(),
+                new Query2Kernel(),
+                new Query3Kernel(),
+                new Query4Kernel(),
+                new Query5Kernel(),
+        };
+
+        Query[] shortcutQueries = new Query[]{
+                new Query1Shortcut( indexes ),
+                new Query2Shortcut( indexes ),
+                new Query3Shortcut( indexes ),
+                new Query4Shortcut( indexes ),
+                new Query5Shortcut( indexes ),
+        };
 
         // Logger
         BenchLogger logger = new BenchLogger( System.out, " -~~- KERNEL -~~-" );
 
         // --- WITH KERNEL ---
-        runKernelQueries( graphDb, logger );
+        for ( Query query : kernelQueries )
+        {
+            benchmarkQuery( query, logger, graphDb, query.inputFile() );
+            logger.report();
+        }
 
         logger = new BenchLogger( System.out, "-~~- SHORTCUT -~~-" );
 
         // --- WITH SHORTCUT ---
-        runShortcutQueries( graphDb, logger, indexes );
-    }
-
-    private void runKernelQueries( GraphDatabaseService graphDb, BenchLogger logger ) throws FileNotFoundException
-    {
-        // *** QUERY 1 ***
-        BaseQuery query1 = new Query1();
-        benchmarkQuery( query1, logger, graphDb, query1.inputFile() );
-
-        // *** QUERY 2 ***
-        BaseQuery query2 = new Query2();
-        benchmarkQuery( query2, logger, graphDb, query2.inputFile() );
-
-        logger.report();
-    }
-
-    private void runShortcutQueries( GraphDatabaseService graphDb, BenchLogger logger, ShortcutIndexProvider indexes )
-            throws FileNotFoundException
-    {
-        // *** QUERY 1 ***
-        BaseQuery query1 = new Query1( indexes );
-        benchmarkQuery( query1, logger, graphDb, query1.inputFile() );
-
-        // *** QUERY 2 ***
-        BaseQuery query2 = new Query2( indexes );
-        benchmarkQuery( query2, logger, graphDb, query2.inputFile() );
-
-        logger.report();
+        for ( Query query : shortcutQueries )
+        {
+            benchmarkQuery( query, logger, graphDb, query.inputFile() );
+            logger.report();
+        }
     }
 
     private void benchmarkQuery(
-            BaseQuery query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
+            Query query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
             throws FileNotFoundException
     {
         // Load input data
@@ -143,13 +158,13 @@ public class BenchmarkMain
         List<long[]> inputData = inputDataLoader.load( dataFileName, query.inputDataHeader() );
         if ( inputData == null )
         {
-            Measurement measurement = logger.startQuery( query.query() );
+            Measurement measurement = logger.startQuery( query.cypher() );
             measurement.error( "Failed to load input data" );
         }
         else
         {
             // Start logging
-            Measurement measurement = logger.startQuery( query.query() );
+            Measurement measurement = logger.startQuery( query.cypher() );
 
             // Run query
             for ( long[] input : inputData )
@@ -179,6 +194,7 @@ public class BenchmarkMain
     private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index, String firstLabelName,
             String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
     {
+        System.out.println( "INDEX PATTERN: " + index.getDescription() );
         try ( Transaction tx = graphDb.beginTx() )
         {
             Label firstLabel = DynamicLabel.label( firstLabelName );
@@ -209,12 +225,12 @@ public class BenchmarkMain
                     if ( first.hasLabel( firstLabel ) && second.hasLabel( secondLabel ) )
                     {
                         numberOfInsert++;
-                        long prop = propOnRel ? (long) rel.getProperty( propName ) :
-                                          (long) second.getProperty( propName );
+                        long prop = propOnRel ? ((Number) rel.getProperty( propName )).longValue() :
+                                    ((Number) second.getProperty( propName ) ).longValue();
                         index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
                     }
                 }
-                if ( numberOfRelationships % 10000 == 0 )
+                if ( numberOfRelationships % 100000 == 0 )
                 {
                     System.out.printf( "# relationships: %d, # inserts: %d\n", numberOfRelationships, numberOfInsert );
                 }
