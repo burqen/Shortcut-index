@@ -93,7 +93,10 @@ public abstract class QueryKernel extends Query
         // Do nothing here as default
     }
 
-    protected abstract void massageRawResult( List<TResult> resultList );
+    protected void massageRawResult( List<TResult> resultList )
+    {
+        // Do nothing here as default
+    }
 
     protected PrimitiveLongIterator getNodeFromIndexLookup( ReadOperations operations,
                                                           int labelId, int propertyId, Object value )

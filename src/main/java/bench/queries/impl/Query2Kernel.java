@@ -95,12 +95,6 @@ public class Query2Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    protected void massageRawResult( List<TResult> resultList )
-    {
-        // Nothing to be done here
-    }
-
-    @Override
     public String inputFile()
     {
         return Config.QUERY2_PARAMETERS;

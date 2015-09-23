@@ -5,7 +5,8 @@ import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query6Description;
 import index.logical.TResult;
 
-import java.util.List;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -14,41 +15,52 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public class Query6Kernel extends QueryKernelWithPropertyOnNode
 {
-    // TODO: IMPLEMENT THIS CLASS
+    private long lowerBoundary;
+    private long upperBoundary;
+
+    public Query6Kernel()
+    {
+        Calendar cal = new GregorianCalendar();
+        cal.set( 2011, Calendar.JANUARY, 1 );
+        lowerBoundary = cal.getTimeInMillis();
+        cal.set( 2012, Calendar.JANUARY, 1 );
+        upperBoundary = cal.getTimeInMillis();
+    }
+
     @Override
     protected boolean filterOnNodeProperty( long prop )
     {
-        return false;
+        return lowerBoundary <= prop && prop < upperBoundary;
     }
 
     @Override
     protected String firstLabel()
     {
-        return null;
+        return "Forum";
     }
 
     @Override
     protected String secondLabel()
     {
-        return null;
+        return "Post";
     }
 
     @Override
     protected String relType()
     {
-        return null;
+        return "CONTAINER_OF";
     }
 
     @Override
     protected Direction direction()
     {
-        return null;
+        return Direction.INCOMING;
     }
 
     @Override
     protected String propKey()
     {
-        return null;
+        return "creationDate";
     }
 
     @Override
@@ -62,12 +74,6 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     protected boolean filterResultRow( TResult resultRow )
     {
         return false;
-    }
-
-    @Override
-    protected void massageRawResult( List<TResult> resultList )
-    {
-
     }
 
     @Override

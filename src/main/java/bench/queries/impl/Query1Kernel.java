@@ -68,12 +68,6 @@ public class Query1Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    protected void massageRawResult( List<TResult> resultList )
-    {
-        // Nothing to be done here
-    }
-
-    @Override
     public QueryDescription queryDescription()
     {
         return Query1Description.instance;

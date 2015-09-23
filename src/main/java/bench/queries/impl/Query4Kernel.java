@@ -74,12 +74,6 @@ public class Query4Kernel extends QueryKernelWithPropertyOnRelationship
     }
 
     @Override
-    protected void massageRawResult( List<TResult> resultList )
-    {
-
-    }
-
-    @Override
     public QueryDescription queryDescription()
     {
         return Query4Description.instance;
