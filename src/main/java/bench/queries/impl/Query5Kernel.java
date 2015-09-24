@@ -3,11 +3,8 @@ package bench.queries.impl;
 import bench.queries.framework.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
 import bench.queries.impl.description.Query5Description;
-import bench.util.Config;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.logical.TResult;
-
-import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -19,7 +16,7 @@ public class Query5Kernel extends QueryKernelWithPropertyOnRelationship
     @Override
     protected boolean filterOnRelationshipProperty( long prop )
     {
-        return prop < 2010l;
+        return prop >= 2010l;
     }
 
     @Override

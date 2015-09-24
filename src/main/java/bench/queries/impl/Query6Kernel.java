@@ -3,6 +3,7 @@ package bench.queries.impl;
 import bench.queries.framework.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query6Description;
+import bench.util.SingleEntryPrimitiveLongIterator;
 import index.logical.TResult;
 
 import java.util.Calendar;
@@ -30,7 +31,7 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     @Override
     protected boolean filterOnNodeProperty( long prop )
     {
-        return lowerBoundary <= prop && prop < upperBoundary;
+        return prop < lowerBoundary || upperBoundary <= prop;
     }
 
     @Override
@@ -54,7 +55,7 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     @Override
     protected Direction direction()
     {
-        return Direction.INCOMING;
+        return Direction.OUTGOING;
     }
 
     @Override
@@ -67,7 +68,16 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     protected PrimitiveLongIterator startingPoints( ReadOperations operations, long[] inputData, int firstLabel )
             throws EntityNotFoundException
     {
-        return null;
+        if ( operations.nodeHasLabel( inputData[0], firstLabel ) )
+        {
+            return new SingleEntryPrimitiveLongIterator( inputData[0] );
+        }
+        else
+        {
+            throw new IllegalArgumentException(
+                    "Node[" + inputData[0] + "] did not have label " + firstLabel() + " as expected. " +
+                    "Use correct input file." );
+        }
     }
 
     @Override

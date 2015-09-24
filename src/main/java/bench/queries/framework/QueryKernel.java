@@ -41,6 +41,7 @@ public abstract class QueryKernel extends Query
 
     @Override
     public void runQuery( GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
+            throws EntityNotFoundException
     {
         try ( Transaction tx = graphDb.beginTx() )
         {
@@ -57,10 +58,6 @@ public abstract class QueryKernel extends Query
             reportResult( resultList );
 
             tx.success();
-        }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
         }
     }
 

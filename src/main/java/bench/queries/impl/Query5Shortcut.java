@@ -6,6 +6,7 @@ import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query5Description;
 import bench.util.Config;
 import index.logical.ExactMatchSeeker;
+import index.logical.RangeSeeker;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
@@ -22,8 +23,8 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public class Query5Shortcut extends QueryShortcut
 {
-    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "University", "Person",
-            "STUDY_AT", Direction.INCOMING, "classYear", null );
+    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "Company", "Person",
+            "WORKS_AT", Direction.INCOMING, "workFrom", null );
 
     public Query5Shortcut( ShortcutIndexProvider indexes )
     {
@@ -49,7 +50,7 @@ public class Query5Shortcut extends QueryShortcut
 
             ShortcutIndexService index = indexes.get( indexDescription );
 
-            index.seek( new ExactMatchSeeker( new TKey( start, 2010l ) ), indexSeekResult ); // TODO
+            index.seek( new RangeSeeker( start, null, 2010l ), indexSeekResult );
 
             Iterator<TResult> resultIterator = indexSeekResult.iterator();
             while ( resultIterator.hasNext() )

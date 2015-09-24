@@ -1,6 +1,7 @@
 package bench.queries.framework;
 
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public abstract class Query
 {
@@ -21,6 +22,7 @@ public abstract class Query
 
     public abstract QueryDescription queryDescription();
 
-    public abstract void runQuery( GraphDatabaseService graphDb, Measurement measurement, long[] inputData );
+    public abstract void runQuery( GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
+            throws EntityNotFoundException;
 
 }

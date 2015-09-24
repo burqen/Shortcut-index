@@ -12,9 +12,12 @@ import bench.queries.impl.Query4Shortcut;
 import bench.queries.framework.Query;
 import bench.queries.impl.Query5Kernel;
 import bench.queries.impl.Query5Shortcut;
+import bench.queries.impl.Query6Kernel;
+import bench.queries.impl.Query6Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
+import com.sun.xml.internal.bind.v2.runtime.output.SAXOutput;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
@@ -38,6 +41,8 @@ import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
+import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.api.index.IndexDescriptor;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import static bench.util.Config.GRAPH_DB_FOLDER;
@@ -46,12 +51,12 @@ public class BenchmarkMain
 {
     private String dbName;
 
-    public static void main( String[] argv ) throws FileNotFoundException
+    public static void main( String[] argv ) throws FileNotFoundException, EntityNotFoundException
     {
         new BenchmarkMain().run( argv );
     }
 
-    private void run( String[] argv ) throws FileNotFoundException
+    private void run( String[] argv ) throws FileNotFoundException, EntityNotFoundException
     {
         dbName = Config.LDBC_SF001;
 
@@ -89,29 +94,19 @@ public class BenchmarkMain
         }
     }
 
-    private void benchRun( GraphDatabaseService graphDb ) throws FileNotFoundException
+    private void benchRun( GraphDatabaseService graphDb ) throws FileNotFoundException, EntityNotFoundException
     {
         int order = 64;
         ShortcutIndexProvider indexes = new ShortcutIndexProvider();
 
         // Index for query 1 and 2
-        ShortcutIndexDescription description = Query1Shortcut.indexDescription;
-        ShortcutIndexService index = new ShortcutIndexService( order, description );
-        populateShortcutIndex( graphDb, index,
-                "Person", "COMMENT_HAS_CREATOR", Direction.INCOMING, "Comment", "creationDate", false );
-        indexes.put( index );
+        addIndexForQuery( Query1Shortcut.indexDescription, graphDb, order, indexes );
+        addIndexForQuery( Query3Shortcut.indexDescription, graphDb, order, indexes );
+        addIndexForQuery( Query4Shortcut.indexDescription, graphDb, order, indexes );
+        addIndexForQuery( Query5Shortcut.indexDescription, graphDb, order, indexes );
+        addIndexForQuery( Query6Shortcut.indexDescription, graphDb, order, indexes );
 
-        // Index for query 3
-        description = Query3Shortcut.indexDescription;
-        index = new ShortcutIndexService( order, description );
-        populateShortcutIndex( graphDb, index, description );
-        indexes.put( index );
 
-        // Index for query 4
-        description = Query4Shortcut.indexDescription;
-        index = new ShortcutIndexService( order, description );
-        populateShortcutIndex( graphDb, index, description );
-        indexes.put( index );
 
         Query[] kernelQueries = new Query[]{
                 new Query1Kernel(),
@@ -119,6 +114,7 @@ public class BenchmarkMain
                 new Query3Kernel(),
                 new Query4Kernel(),
                 new Query5Kernel(),
+                new Query6Kernel(),
         };
 
         Query[] shortcutQueries = new Query[]{
@@ -127,6 +123,7 @@ public class BenchmarkMain
                 new Query3Shortcut( indexes ),
                 new Query4Shortcut( indexes ),
                 new Query5Shortcut( indexes ),
+                new Query6Shortcut( indexes ),
         };
 
         // Logger
@@ -149,9 +146,17 @@ public class BenchmarkMain
         }
     }
 
+    private void addIndexForQuery( ShortcutIndexDescription description, GraphDatabaseService graphDb, int order,
+            ShortcutIndexProvider indexes )
+    {
+        ShortcutIndexService index = new ShortcutIndexService( order, description );
+        populateShortcutIndex( graphDb, index, description );
+        indexes.put( index );
+    }
+
     private void benchmarkQuery(
             Query query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
-            throws FileNotFoundException
+            throws FileNotFoundException, EntityNotFoundException
     {
         // Load input data
         InputDataLoader inputDataLoader = new InputDataLoader();
@@ -191,10 +196,14 @@ public class BenchmarkMain
         }
     }
 
+
+    // TODO: Fix this to populate all indexes at once
     private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index, String firstLabelName,
             String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
     {
         System.out.println( "INDEX PATTERN: " + index.getDescription() );
+        System.out.print( "Building... " );
+        int numberOfInsert = 0;
         try ( Transaction tx = graphDb.beginTx() )
         {
             Label firstLabel = DynamicLabel.label( firstLabelName );
@@ -202,12 +211,9 @@ public class BenchmarkMain
 
             Iterator<Relationship> allRelationships =
                     GlobalGraphOperations.at( graphDb ).getAllRelationships().iterator();
-            int numberOfInsert = 0;
-            int numberOfRelationships = 0;
             while ( allRelationships.hasNext() )
             {
                 Relationship rel = allRelationships.next();
-                numberOfRelationships++;
                 if ( rel.getType().name().equals( relTypeName ) )
                 {
                     Node first;
@@ -230,13 +236,10 @@ public class BenchmarkMain
                         index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
                     }
                 }
-                if ( numberOfRelationships % 100000 == 0 )
-                {
-                    System.out.printf( "# relationships: %d, # inserts: %d\n", numberOfRelationships, numberOfInsert );
-                }
             }
             tx.success();
         }
+        System.out.printf( "OK [index size %d]\n", numberOfInsert );
     }
 
     private void initiateLuceneIndex( GraphDatabaseService graphDb, String label, String prop )
