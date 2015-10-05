@@ -1,16 +1,13 @@
 package bench.queries.impl;
 
-import bench.queries.framework.Measurement;
-import bench.queries.framework.QueryDescription;
+import bench.Measurement;
+import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query5Description;
-import bench.util.Config;
-import index.logical.ExactMatchSeeker;
 import index.logical.RangeSeeker;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
-import index.logical.TKey;
 import index.logical.TResult;
 
 import java.util.ArrayList;

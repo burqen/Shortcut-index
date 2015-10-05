@@ -1,4 +1,4 @@
-package bench.queries.framework;
+package bench.queries;
 
 public abstract class QueryDescription
 {

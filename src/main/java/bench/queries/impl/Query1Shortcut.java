@@ -1,7 +1,7 @@
 package bench.queries.impl;
 
-import bench.queries.framework.Measurement;
-import bench.queries.framework.QueryDescription;
+import bench.Measurement;
+import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query1Description;
 import index.logical.BTScanner;

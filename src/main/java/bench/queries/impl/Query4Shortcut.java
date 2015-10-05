@@ -1,10 +1,9 @@
 package bench.queries.impl;
 
-import bench.queries.framework.Measurement;
-import bench.queries.framework.QueryDescription;
+import bench.Measurement;
+import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query4Description;
-import bench.util.Config;
 import index.logical.ExactMatchSeeker;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;

@@ -1,6 +1,6 @@
 package bench.queries.impl;
 
-import bench.queries.framework.QueryDescription;
+import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
 import bench.queries.impl.description.Query5Description;
 import bench.util.SingleEntryPrimitiveLongIterator;

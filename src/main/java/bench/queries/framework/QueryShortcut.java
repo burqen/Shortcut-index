@@ -1,5 +1,8 @@
 package bench.queries.framework;
 
+import bench.QueryType;
+import bench.Measurement;
+import bench.queries.Query;
 import index.logical.ShortcutIndexProvider;
 import index.logical.TResult;
 
@@ -29,10 +32,10 @@ public abstract class QueryShortcut extends Query
                     .resolveDependency( ThreadToStatementContextBridge.class )
                     .get().readOperations();
 
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             List<TResult> resultList = doRunQuery( readOperations, measurement, inputData );
 
-            measurement.queryFinished( System.currentTimeMillis() - start, resultList.size() );
+            measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
 
             reportResult( resultList );
 
@@ -53,4 +56,10 @@ public abstract class QueryShortcut extends Query
             ReadOperations operations, Measurement measurement, long[] inputData );
 
     protected abstract boolean filterResultRow( TResult resultRow );
+
+    @Override
+    public QueryType type()
+    {
+        return QueryType.SHORTCUT;
+    }
 }

@@ -38,7 +38,8 @@ public class InputDataLoader
                 }
 
                 // Ready to read input
-                while ( (line = csvReader.readNext()) != null )
+                int count = 0;
+                while ( (line = csvReader.readNext()) != null && count++ < Config.NUMBER_OF_QUERY_REPETITIONS )
                 {
                     long[] input = new long[line.length];
                     for ( int i = 0; i < line.length; i++ )

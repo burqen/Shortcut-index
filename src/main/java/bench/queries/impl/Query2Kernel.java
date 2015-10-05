@@ -1,13 +1,11 @@
 package bench.queries.impl;
 
-import bench.queries.framework.QueryDescription;
+import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query2Description;
 import bench.util.Config;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.logical.TResult;
-
-import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;

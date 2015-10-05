@@ -1,5 +1,8 @@
 package bench.util;
 
+import bench.LogStrategy;
+import bench.QueryType;
+import bench.Measurement;
 import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;
@@ -7,24 +10,50 @@ import java.io.PrintStream;
 public class LogCompleteHistogram implements LogStrategy
 {
     @Override
-    public void query( PrintStream out, String query )
+    public void header( PrintStream out )
     {
-        out.print( query + "\n" );
+        // No header
     }
 
     @Override
-    public void result( PrintStream out, Histogram timeHistogram, Histogram rowHistogram )
+    public void reportRow( PrintStream out, ResultRow resultRow )
     {
-        out.print( histogramString( timeHistogram, "Run Time (ms)" ) );
+        out.print( resultRow.query().cypher() );
         out.print( "\n" );
-        out.print( histogramString( rowHistogram, "Result Rows" ) );
-        out.print( "\n" );
+
+        reportType( out, resultRow.measurement( QueryType.KERNEL ), "Kernel" );
+        reportType( out, resultRow.measurement( QueryType.SHORTCUT ), "Shortcut" );
+    }
+
+    private void reportType( PrintStream out, Measurement measurement, String typeName )
+    {
+        if ( measurement != null )
+        {
+            if ( !measurement.error() )
+            {
+                Histogram kernelTime = measurement.timeHistogram();
+                out.print( histogramString( kernelTime, typeName + " Run Time (µs)" ) );
+                out.print( "\n" );
+
+                Histogram kernelCount = measurement.rowHistogram();
+                out.print( histogramString( kernelCount, typeName + " Result Rows" ) );
+                out.print( "\n" );
+            }
+            else
+            {
+                out.print( typeName + " ERROR: " + measurement.errorMessage() );
+            }
+        }
+        else
+        {
+            out.print( "Measurement is missing for " + typeName );
+        }
     }
 
     @Override
-    public void error( PrintStream out, String errorMessage )
+    public void footer( PrintStream out )
     {
-        out.print( String.format( "ERROR: %s\n", errorMessage ) );
+        // No footer
     }
 
     private static String histogramString( Histogram histogram, String name )

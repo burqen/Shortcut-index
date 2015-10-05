@@ -1,6 +1,6 @@
 package bench.queries.impl.description;
 
-import bench.queries.framework.QueryDescription;
+import bench.queries.QueryDescription;
 import bench.util.Config;
 
 public class Query1Description extends QueryDescription

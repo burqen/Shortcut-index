@@ -1,5 +1,8 @@
 package bench.queries.framework;
 
+import bench.QueryType;
+import bench.Measurement;
+import bench.queries.Query;
 import index.logical.TResult;
 
 import java.util.ArrayList;
@@ -49,11 +52,11 @@ public abstract class QueryKernel extends Query
                     .resolveDependency( ThreadToStatementContextBridge.class )
                     .get().readOperations();
 
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             List<TResult> resultList;
             resultList = doRunQuery( readOperations, measurement, inputData );
 
-            measurement.queryFinished( System.currentTimeMillis() - start, resultList.size() );
+            measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
 
             reportResult( resultList );
 
@@ -102,4 +105,9 @@ public abstract class QueryKernel extends Query
         return operations.nodesGetFromIndexLookup( new IndexDescriptor( labelId, propertyId ), value );
     }
 
+    @Override
+    public QueryType type()
+    {
+        return QueryType.KERNEL;
+    }
 }

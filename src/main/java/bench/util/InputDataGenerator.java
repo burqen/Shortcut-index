@@ -2,7 +2,7 @@ package bench.util;
 
 import bench.queries.impl.Query2Kernel;
 import bench.queries.impl.Query4Kernel;
-import bench.queries.framework.Query;
+import bench.queries.Query;
 import bench.queries.impl.Query5Kernel;
 import bench.queries.impl.Query6Kernel;
 
@@ -119,10 +119,22 @@ public class InputDataGenerator
         Random rng = new Random();
         Set<Integer> nodesToAddFromOrderedListOfNodes = new TreeSet<>();
 
-        // ... to randomly generate what persons to pick out of an ordered list ...
-        while ( nodesToAddFromOrderedListOfNodes.size() < desired )
+        // ... to see if there are enough ...
+        if ( numberOfPersons <= desired )
         {
-            nodesToAddFromOrderedListOfNodes.add( rng.nextInt( numberOfPersons ) );
+            // ... if not just pick all of them ...
+            for ( int i = 0; i < numberOfPersons; i++ )
+            {
+                nodesToAddFromOrderedListOfNodes.add( i );
+            }
+        }
+        else
+        {
+            // ... or if so, randomly generate what persons to pick out of an ordered list ...
+            while ( nodesToAddFromOrderedListOfNodes.size() < desired )
+            {
+                nodesToAddFromOrderedListOfNodes.add( rng.nextInt( numberOfPersons ) );
+            }
         }
 
         // ... then walk through that ordered list which turns out to be an iterator, and pick out the

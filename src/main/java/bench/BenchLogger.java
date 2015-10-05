@@ -1,38 +1,31 @@
 package bench;
 
-import bench.queries.framework.Measurement;
-import bench.queries.framework.QueryDescription;
-import bench.util.LogStrategy;
+import bench.queries.QueryDescription;
+import bench.util.ResultRow;
 import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public class BenchLogger
 {
-    private Queue<Measurement> measurementsToReport;
+    private SortedMap<String, ResultRow> resultsToReport;
     private final PrintStream out;
-    private String logHeader;
-    private boolean hasWrittenHeader;
 
-    public BenchLogger( PrintStream out, String logHeader ) {
+    public BenchLogger( PrintStream out ) {
         this.out = out;
-        this.logHeader = logHeader;
-        measurementsToReport = new LinkedList<>();
+        resultsToReport = new TreeMap<>();
     }
 
     public Measurement startQuery( QueryDescription queryDescription, QueryType queryType )
     {
         Measurement measurement = new Measurement()
         {
-            boolean closed;
             boolean error;
             String errorMessage;
-            QueryType type = queryType;
-            QueryDescription query = queryDescription;
-            Histogram timeHistogram = new Histogram( TimeUnit.MILLISECONDS.convert( 10, TimeUnit.MINUTES ), 5 );
+            Histogram timeHistogram = new Histogram( TimeUnit.MICROSECONDS.convert( 1, TimeUnit.MINUTES ), 5 );
             Histogram rowHistogram = new Histogram( 5 );
 
             @Override
@@ -43,67 +36,54 @@ public class BenchLogger
             }
 
             @Override
-            public void close()
-            {
-                closed = true;
-            }
-
-            @Override
-            public boolean isClosed()
-            {
-                return closed;
-            }
-
-            @Override
-            public String query()
-            {
-                return query.cypher();
-            }
-
-            @Override
-            public void report( PrintStream out, LogStrategy logStrategy )
-            {
-                logStrategy.query( out, query );
-                if ( !error )
-                {
-                    logStrategy.result( out, timeHistogram, rowHistogram );
-                }
-                else
-                {
-                    logStrategy.error( out, errorMessage );
-                }
-            }
-
-            @Override
             public void error( String s )
             {
-                close();
                 error = true;
                 errorMessage = s;
             }
+
+            @Override
+            public boolean error()
+            {
+                return error;
+            }
+
+            @Override
+            public String errorMessage()
+            {
+                return errorMessage;
+            }
+
+            @Override
+            public Histogram timeHistogram()
+            {
+                return timeHistogram;
+            }
+
+            @Override
+            public Histogram rowHistogram()
+            {
+                return rowHistogram;
+            }
         };
-        measurementsToReport.add( measurement );
+        ResultRow resultRow = resultsToReport.get( queryDescription.queryName() );
+        if ( resultRow == null )
+        {
+            resultRow = new ResultRow( queryDescription );
+            resultsToReport.put( queryDescription.queryName(), resultRow );
+        }
+        resultRow.addMeasurement( measurement, queryType );
         return measurement;
     }
 
-    public boolean report( LogStrategy logStrategy )
+    public void report( LogStrategy logStrategy )
     {
-        while ( !measurementsToReport.isEmpty() && measurementsToReport.peek().isClosed() )
+        logStrategy.header( out );
+        for ( ResultRow resultRow : resultsToReport.values() )
         {
-            if ( !hasWrittenHeader )
-            {
-                out.print( logHeader );
-                out.print( "\n" );
-                hasWrittenHeader = true;
-            }
-            Measurement measurement = measurementsToReport.poll();
-            measurement.report( out, logStrategy );
+            logStrategy.reportRow( out, resultRow );
         }
-        return measurementsToReport.isEmpty();
+        logStrategy.footer( out );
     }
 
-    public enum QueryType
-    {
-        KERNEL, SHORTCUT
-    }
 }

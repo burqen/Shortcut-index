@@ -1,5 +1,6 @@
 package bench.queries.framework;
 
+import bench.Measurement;
 import index.logical.TKey;
 import index.logical.TResult;
 import index.logical.TValue;
@@ -55,7 +56,7 @@ public abstract class QueryKernelWithPropertyOnNode extends QueryKernel
                 }
             }
         }
-        catch(EntityNotFoundException e)
+        catch( EntityNotFoundException e )
         {
             e.printStackTrace();
         }

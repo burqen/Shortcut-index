@@ -1,6 +1,5 @@
 package bench;
 
-import bench.queries.framework.Measurement;
 import bench.queries.impl.Query1Kernel;
 import bench.queries.impl.Query1Shortcut;
 import bench.queries.impl.Query2Kernel;
@@ -9,7 +8,7 @@ import bench.queries.impl.Query3Kernel;
 import bench.queries.impl.Query3Shortcut;
 import bench.queries.impl.Query4Kernel;
 import bench.queries.impl.Query4Shortcut;
-import bench.queries.framework.Query;
+import bench.queries.Query;
 import bench.queries.impl.Query5Kernel;
 import bench.queries.impl.Query5Shortcut;
 import bench.queries.impl.Query6Kernel;
@@ -17,8 +16,7 @@ import bench.queries.impl.Query6Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
-import bench.util.LogCompleteHistogram;
-import com.sun.xml.internal.bind.v2.runtime.output.SAXOutput;
+import bench.util.LogLatexTable;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
@@ -26,7 +24,6 @@ import index.logical.TKey;
 import index.logical.TValue;
 
 import java.io.FileNotFoundException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -43,14 +40,12 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.index.IndexDescriptor;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import static bench.util.Config.GRAPH_DB_FOLDER;
 
 public class BenchmarkMain
 {
-    private String dbName;
 
     public static void main( String[] argv ) throws FileNotFoundException, EntityNotFoundException
     {
@@ -59,7 +54,7 @@ public class BenchmarkMain
 
     private void run( String[] argv ) throws FileNotFoundException, EntityNotFoundException
     {
-        dbName = Config.LDBC_SF001;
+        String dbName = Config.LDBC_SF001;
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( GRAPH_DB_FOLDER, dbName );
 
@@ -128,23 +123,21 @@ public class BenchmarkMain
         };
 
         // Logger
-        BenchLogger logger = new BenchLogger( System.out, " -~~- KERNEL -~~-" );
+        BenchLogger logger = new BenchLogger( System.out );
 
         // --- WITH KERNEL ---
         for ( Query query : kernelQueries )
         {
             benchmarkQuery( query, logger, graphDb, query.inputFile() );
-            logger.report( new LogCompleteHistogram() );
         }
-
-        logger = new BenchLogger( System.out, "-~~- SHORTCUT -~~-" );
 
         // --- WITH SHORTCUT ---
         for ( Query query : shortcutQueries )
         {
             benchmarkQuery( query, logger, graphDb, query.inputFile() );
-            logger.report( new LogCompleteHistogram() );
         }
+
+        logger.report( new LogLatexTable() );
     }
 
     private void addIndexForQuery( ShortcutIndexDescription description, GraphDatabaseService graphDb, int order,
@@ -164,20 +157,19 @@ public class BenchmarkMain
         List<long[]> inputData = inputDataLoader.load( dataFileName, query.inputDataHeader() );
         if ( inputData == null )
         {
-            Measurement measurement = logger.startQuery( query.cypher() );
+            Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
             measurement.error( "Failed to load input data" );
         }
         else
         {
             // Start logging
-            Measurement measurement = logger.startQuery( query.cypher() );
+            Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
 
             // Run query
             for ( long[] input : inputData )
             {
                 query.runQuery( graphDb, measurement, input );
             }
-            measurement.close();
         }
     }
 
@@ -210,11 +202,8 @@ public class BenchmarkMain
             Label firstLabel = DynamicLabel.label( firstLabelName );
             Label secondLabel = DynamicLabel.label( secondLabelName );
 
-            Iterator<Relationship> allRelationships =
-                    GlobalGraphOperations.at( graphDb ).getAllRelationships().iterator();
-            while ( allRelationships.hasNext() )
+            for ( Relationship rel : GlobalGraphOperations.at( graphDb ).getAllRelationships() )
             {
-                Relationship rel = allRelationships.next();
                 if ( rel.getType().name().equals( relTypeName ) )
                 {
                     Node first;
@@ -233,7 +222,7 @@ public class BenchmarkMain
                     {
                         numberOfInsert++;
                         long prop = propOnRel ? ((Number) rel.getProperty( propName )).longValue() :
-                                    ((Number) second.getProperty( propName ) ).longValue();
+                                    ((Number) second.getProperty( propName )).longValue();
                         index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
                     }
                 }

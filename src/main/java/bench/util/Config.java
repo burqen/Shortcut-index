@@ -26,5 +26,7 @@ public class Config
 
     public static final long[] NO_DATA = new long[0];
 
-    public static final int MAX_NUMBER_OF_QUERY_REPETITIONS = 1000;
+    public static final int MAX_NUMBER_OF_QUERY_REPETITIONS = 10000;
+
+    public static final int NUMBER_OF_QUERY_REPETITIONS = 10;
 }
