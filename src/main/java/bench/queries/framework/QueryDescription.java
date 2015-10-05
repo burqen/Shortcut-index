@@ -1,10 +1,28 @@
 package bench.queries.framework;
 
-public interface QueryDescription
+public abstract class QueryDescription
 {
-    String cypher();
+    public abstract String queryName();
 
-    String[] inputDataHeader();
+    public abstract String cypher();
 
-    String inputFile();
+    public abstract String[] inputDataHeader();
+
+    public abstract String inputFile();
+
+    @Override
+    public int hashCode() {
+        return queryName().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if ( !( obj instanceof QueryDescription ) )
+            return false;
+        if ( obj == this )
+            return true;
+
+        QueryDescription rhs = (QueryDescription) obj;
+        return queryName().equals( rhs.queryName() );
+    }
 }

@@ -1,5 +1,6 @@
 package bench;
 
+import bench.util.LogCompleteHistogram;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,7 +41,7 @@ public class BenchLoggerTest
     @Test( expected = IllegalStateException.class )
     public void reportOnNotStartedLogger()
     {
-        logger.report();
+        logger.report( new LogCompleteHistogram());
     }
 
     @Parameterized.Parameters

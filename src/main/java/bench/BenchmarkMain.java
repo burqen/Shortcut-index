@@ -17,6 +17,7 @@ import bench.queries.impl.Query6Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
+import bench.util.LogCompleteHistogram;
 import com.sun.xml.internal.bind.v2.runtime.output.SAXOutput;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
@@ -133,7 +134,7 @@ public class BenchmarkMain
         for ( Query query : kernelQueries )
         {
             benchmarkQuery( query, logger, graphDb, query.inputFile() );
-            logger.report();
+            logger.report( new LogCompleteHistogram() );
         }
 
         logger = new BenchLogger( System.out, "-~~- SHORTCUT -~~-" );
@@ -142,7 +143,7 @@ public class BenchmarkMain
         for ( Query query : shortcutQueries )
         {
             benchmarkQuery( query, logger, graphDb, query.inputFile() );
-            logger.report();
+            logger.report( new LogCompleteHistogram() );
         }
     }
 

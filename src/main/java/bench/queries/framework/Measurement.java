@@ -1,5 +1,7 @@
 package bench.queries.framework;
 
+import bench.util.LogStrategy;
+
 import java.io.PrintStream;
 
 public interface Measurement
@@ -8,6 +10,6 @@ public interface Measurement
     void close();
     boolean isClosed();
     String query();
-    void report( PrintStream out );
+    void report( PrintStream out, LogStrategy logStrategy );
     void error( String s );
 }

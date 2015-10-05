@@ -3,8 +3,14 @@ package bench.queries.impl.description;
 import bench.queries.framework.QueryDescription;
 import bench.util.Config;
 
-public class Query1Description implements QueryDescription
+public class Query1Description extends QueryDescription
 {
+    @Override
+    public String queryName()
+    {
+        return "Query1";
+    }
+
     @Override
     public String cypher()
     {
