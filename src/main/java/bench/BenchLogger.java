@@ -23,10 +23,12 @@ public class BenchLogger
     {
         Measurement measurement = new Measurement()
         {
-            boolean error;
-            String errorMessage;
-            Histogram timeHistogram = new Histogram( TimeUnit.MICROSECONDS.convert( 1, TimeUnit.MINUTES ), 5 );
-            Histogram rowHistogram = new Histogram( 5 );
+            private boolean error;
+            private long firstQueryFinished;
+            private long lastQueryFinished;
+            private String errorMessage;
+            private Histogram timeHistogram = new Histogram( TimeUnit.MICROSECONDS.convert( 1, TimeUnit.MINUTES ), 5 );
+            private Histogram rowHistogram = new Histogram( 5 );
 
             @Override
             public void queryFinished( long elapsedTime, long rowCount )
@@ -64,6 +66,30 @@ public class BenchLogger
             public Histogram rowHistogram()
             {
                 return rowHistogram;
+            }
+
+            @Override
+            public void firstQueryFinished( long elapsedTime )
+            {
+                firstQueryFinished = elapsedTime;
+            }
+
+            @Override
+            public void lastQueryFinished( long elapsedTime )
+            {
+                lastQueryFinished = elapsedTime;
+            }
+
+            @Override
+            public long timeForFirstQuery()
+            {
+                return firstQueryFinished;
+            }
+
+            @Override
+            public long timeForLastQuery()
+            {
+                return lastQueryFinished;
             }
         };
         ResultRow resultRow = resultsToReport.get( queryDescription.queryName() );

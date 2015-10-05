@@ -40,54 +40,86 @@ public class LogLatexTable implements LogStrategy
         Measurement shortcut = resultRow.measurement( SHORTCUT );
 
         String queryName = resultRow.query().queryName();
+        long kernelFirst;
+        long kernelLast;
         double kernelAvg;
+        long shortcutFirst;
+        long shortcutLast;
         double shortcutAvg;
-        long kernelPercentile;
-        long shortcutPercentile;
-        int speedup;
+        double avgSpeedup;
+        double firstSpeedup;
+        double lastSpeedup;
 
         if ( kernel != null && !kernel.error() )
         {
             Histogram kernelTime = kernel.timeHistogram();
+            kernelFirst = kernel.timeForFirstQuery();
+            kernelLast = kernel.timeForLastQuery();
             kernelAvg = kernelTime.getMean();
-            kernelPercentile = kernelTime.getValueAtPercentile( 95 );
         }
         else
         {
+            kernelFirst = -1;
+            kernelLast = -1;
             kernelAvg = -1;
-            kernelPercentile = -1;
         }
 
         if ( shortcut != null && !shortcut.error() )
         {
             Histogram shortcutTime = shortcut.timeHistogram();
+            shortcutFirst = shortcut.timeForFirstQuery();
+            shortcutLast = shortcut.timeForLastQuery();
             shortcutAvg = shortcutTime.getMean();
-            shortcutPercentile = shortcutTime.getValueAtPercentile( 95 );
         }
         else
         {
+            shortcutFirst = -1;
+            shortcutLast = -1;
             shortcutAvg = -1;
-            shortcutPercentile = -1;
+        }
+
+        if ( kernelFirst != -1 && shortcutFirst != -1 )
+        {
+            firstSpeedup = (double) kernelFirst / shortcutFirst;
+        }
+        else
+        {
+            firstSpeedup = 0;
+        }
+
+        if ( kernelLast != -1 && shortcutLast != -1 )
+        {
+            lastSpeedup = (double) kernelLast / shortcutLast;
+        }
+        else
+        {
+            lastSpeedup = 0;
         }
 
         if ( kernelAvg != -1 && shortcutAvg != -1 )
         {
-            speedup = (int) (kernelAvg / shortcutAvg);
+            avgSpeedup = kernelAvg / shortcutAvg;
         }
         else
         {
-            speedup = 0;
+            avgSpeedup = 0;
         }
 
-        String format = String.format( "\\multirow{2}{*}{%s} & avg & %f & %f & \\multirow{2}{*}{%dx} \\\\ \\cline{2-4}\n" +
-                                       "        & 95th & %d & %d & \\\\ \n" +
+        String format = String.format( "\\multirow{3}{*}{%s}\n" +
+                                       "        & first & %,d & %,d & %,.2fx \\\\ \\cline{2-4}\n" +
+                                       "        & last & %,d & %,d & %,.2fx \\\\ \\cline{2-4}\n" +
+                                       "        & avg & %,.0f & %,.0f & %,.2fx \\\\ \\cline{2-4}\n" +
                                        "        \\hline\n",
                 queryName,
+                kernelFirst,
+                shortcutFirst,
+                firstSpeedup,
+                kernelLast,
+                shortcutLast,
+                lastSpeedup,
                 kernelAvg,
                 shortcutAvg,
-                speedup,
-                kernelPercentile,
-                shortcutPercentile
+                avgSpeedup
         );
         out.print( format );
     }

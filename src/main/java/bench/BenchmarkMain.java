@@ -165,11 +165,19 @@ public class BenchmarkMain
             // Start logging
             Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
 
+            long start = System.nanoTime();
+            boolean first = true;
             // Run query
             for ( long[] input : inputData )
             {
                 query.runQuery( graphDb, measurement, input );
+                if ( first )
+                {
+                    measurement.firstQueryFinished( (System.nanoTime() - start) / 1000 );
+                    first = false;
+                }
             }
+            measurement.lastQueryFinished( ( System.nanoTime() - start ) / 1000 );
         }
     }
 
