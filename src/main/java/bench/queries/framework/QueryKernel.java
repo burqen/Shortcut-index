@@ -43,25 +43,23 @@ public abstract class QueryKernel extends Query
 
 
     @Override
-    public void runQuery( GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
+    public void runQuery( ThreadToStatementContextBridge threadToStatementContextBridge, GraphDatabaseService graphDb,
+            Measurement measurement, long[] inputData )
             throws EntityNotFoundException
     {
+        long start = System.nanoTime();
+        List<TResult> resultList;
         try ( Transaction tx = graphDb.beginTx() )
         {
-            ReadOperations readOperations = ((GraphDatabaseAPI) graphDb).getDependencyResolver()
-                    .resolveDependency( ThreadToStatementContextBridge.class )
-                    .get().readOperations();
+            ReadOperations readOperations = threadToStatementContextBridge.get().readOperations();
 
-            long start = System.nanoTime();
-            List<TResult> resultList;
             resultList = doRunQuery( readOperations, measurement, inputData );
-
-            measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
-
-            reportResult( resultList );
 
             tx.success();
         }
+        measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
+
+        reportResult( resultList );
     }
 
     protected List<TResult> doRunQuery(

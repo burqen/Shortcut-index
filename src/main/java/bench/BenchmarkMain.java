@@ -39,7 +39,10 @@ import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
+import org.neo4j.kernel.GraphDatabaseAPI;
+import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
+import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import static bench.util.Config.GRAPH_DB_FOLDER;
@@ -162,22 +165,30 @@ public class BenchmarkMain
         }
         else
         {
+
+            // Get context bridge
+            ThreadToStatementContextBridge threadToStatementContextBridge =
+                    ((GraphDatabaseAPI) graphDb).getDependencyResolver()
+                            .resolveDependency( ThreadToStatementContextBridge.class );
+
             // Start logging
             Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
 
+            // Start clock
             long start = System.nanoTime();
             boolean first = true;
             // Run query
             for ( long[] input : inputData )
             {
-                query.runQuery( graphDb, measurement, input );
+                query.runQuery( threadToStatementContextBridge, graphDb, measurement, input );
                 if ( first )
                 {
                     measurement.firstQueryFinished( (System.nanoTime() - start) / 1000 );
                     first = false;
                 }
             }
-            measurement.lastQueryFinished( ( System.nanoTime() - start ) / 1000 );
+            measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
+
         }
     }
 

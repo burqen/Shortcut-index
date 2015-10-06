@@ -24,27 +24,22 @@ public abstract class QueryShortcut extends Query
     }
 
     @Override
-    public void runQuery( GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
+    public void runQuery( ThreadToStatementContextBridge threadToStatementContextBridge, GraphDatabaseService graphDb,
+            Measurement measurement, long[] inputData )
     {
+        long start = System.nanoTime();
+        List<TResult> resultList;
         try ( Transaction tx = graphDb.beginTx() )
         {
-            ReadOperations readOperations = ((GraphDatabaseAPI) graphDb).getDependencyResolver()
-                    .resolveDependency( ThreadToStatementContextBridge.class )
-                    .get().readOperations();
+            ReadOperations readOperations = threadToStatementContextBridge.get().readOperations();
 
-            long start = System.nanoTime();
-            List<TResult> resultList = doRunQuery( readOperations, measurement, inputData );
-
-            measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
-
-            reportResult( resultList );
+            resultList = doRunQuery( readOperations, measurement, inputData );
 
             tx.success();
         }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-        }
+        measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
+
+        reportResult( resultList );
     }
 
     protected void reportResult( List<TResult> resultList )
