@@ -28,7 +28,7 @@ public class RangeSeekerTest
     // Utility
     private void addEntryToLeaf( LeafBTreeNode leaf, long id, long prop )
     {
-        leaf.insert( new TKey( id, prop ), new TValue( prop, prop ) );
+        leaf.insert( id, prop, new TValue( prop, prop ) );
     }
 
     // DEFINED WHOLE RANGE
@@ -106,7 +106,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey( 1,2 ) );
+        root.setKey( 0, 1, 2 );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 
@@ -205,7 +205,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey( 1, 2 ) );
+        root.setKey( 0, 1, 2 );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 
@@ -307,7 +307,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey( 1,2 ) );
+        root.setKey( 0, 1, 2 );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 
@@ -410,7 +410,7 @@ public class RangeSeekerTest
     {
         InternalBTreeNode root = new InternalBTreeNode( 2 );
 
-        root.setKey( 0, new TKey( 1,2 ) );
+        root.setKey( 0, 1, 2 );
         LeafBTreeNode left = new LeafBTreeNode( 2 );
         LeafBTreeNode right = new LeafBTreeNode( 2 );
 

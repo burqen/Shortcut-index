@@ -56,7 +56,7 @@ public class LogCompleteHistogram implements LogStrategy
         // No footer
     }
 
-    private static String histogramString( Histogram histogram, String name )
+    protected String histogramString( Histogram histogram, String name )
     {
         StringBuilder sb = new StringBuilder();
         sb.append( String.format( "\t\t%15s\n", name ) )

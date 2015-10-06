@@ -20,7 +20,7 @@ public abstract class BTreeNode
 
     public abstract BTreeNodeType getNodeType();
 
-    public abstract void insert( TKey key, TValue value );
+    public abstract void insert( long firstId, long propValue, TValue value );
 
     public abstract int height();
 
@@ -47,14 +47,16 @@ public abstract class BTreeNode
 
     /**
      * Search for the first position where the key on that position is greater than or equal to provided key.
-     * @param key   Provided key
+     *
+     * @param firstId
+     * @param propValue
      * @return the lowest i for which getKey( i ).compareTo( key ) >= 0 or position just outside of array range if key
      * is greater than every key.
      */
-    public int searchFirstGreaterThanOrEqualTo( TKey key )
+    public int searchFirstGreaterThanOrEqualTo( long firstId, long propValue )
     {
         int i = 0;
-        while ( i < getKeyCount() && getKey( i ).compareTo( key ) < 0 )
+        while ( i < getKeyCount() && getKey( i ).compareTo( new TKey( firstId, propValue ) ) < 0 )
         {
             i++;
         }
@@ -75,11 +77,11 @@ public abstract class BTreeNode
         return replaced;
     }
 
-    public static TKey replaceKey( int pos, TKey key, long[] keys )
+    public static TKey replaceKey( int pos, long[] keys, long firstId, long propValue )
     {
         TKey replaced = new TKey( keys[pos*KEY_SIZE], keys[pos*KEY_SIZE+1] );
-        keys[pos*KEY_SIZE] = key.getId();
-        keys[pos*KEY_SIZE+1] = key.getProp();
+        keys[pos*KEY_SIZE] = firstId;
+        keys[pos*KEY_SIZE+1] = propValue;
         return replaced;
     }
 
@@ -207,10 +209,10 @@ public abstract class BTreeNode
         this.keyCount = keyCount;
     }
 
-    public void setKey( int i, TKey key )
+    public void setKey( int i, long firstId, long propValue )
     {
-        keys[i* KEY_SIZE] = key.getId();
-        keys[i* KEY_SIZE +1] = key.getProp();
+        keys[i* KEY_SIZE] = firstId;
+        keys[i* KEY_SIZE +1] = propValue;
     }
 
     public TKey getKey( int i )
