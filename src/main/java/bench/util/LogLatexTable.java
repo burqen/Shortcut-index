@@ -24,9 +24,9 @@ public class LogLatexTable implements LogStrategy
                             "\\caption{%s}\n" +
                             "\\label{%s}\n" +
                             "\\begin{tabular}{ | c | c | c | c | c | }\n" +
-                            "\\hline\n" +
+                            "\\thickhline\n" +
                             "\\multicolumn{2}{|c|}{ Query } & Neo4j (µs) & Shortcut (µs)& Speedup  \\\\ \n" +
-                            "\\hline" , "Result table", "tbl:result" );
+                            "\\thickhline" , "Result table", "tbl:result" );
             out.print( header );
             out.print( "\n" );
             hasWrittenHeader = true;
@@ -106,10 +106,10 @@ public class LogLatexTable implements LogStrategy
         }
 
         String format = String.format( "\\multirow{3}{*}{%s}\n" +
-                                       "        & first & %,d & %,d & %,.2fx \\\\ \\cline{2-4}\n" +
-                                       "        & last & %,d & %,d & %,.2fx \\\\ \\cline{2-4}\n" +
-                                       "        & avg & %,.0f & %,.0f & %,.2fx \\\\ \\cline{2-4}\n" +
-                                       "        \\hline\n",
+                                       "        & first & %,d & %,d & %,.2fx \\\\ \\cline{2-5}\n" +
+                                       "        & last & %,d & %,d & %,.2fx \\\\ \\cline{2-5}\n" +
+                                       "        & avg & %,.0f & %,.0f & %,.2fx \\\\ \\cline{2-5}\n" +
+                                       "        \\thickhline\n",
                 queryName,
                 kernelFirst,
                 shortcutFirst,
