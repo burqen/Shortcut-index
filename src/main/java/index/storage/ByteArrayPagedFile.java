@@ -1,5 +1,7 @@
 package index.storage;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,24 +32,24 @@ public class ByteArrayPagedFile implements PagedFile
     @Override
     public int pageSize()
     {
-        return 0;
+        return PAGE_SIZE;
     }
 
     @Override
     public void flushAndForce() throws IOException
     {
-
+        throw new NotImplementedException();
     }
 
     @Override
     public long getLastPageId() throws IOException
     {
-        return 0;
+        return pages.size();
     }
 
     @Override
     public void close() throws IOException
     {
-
+        throw new NotImplementedException();
     }
 }
