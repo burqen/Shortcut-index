@@ -25,8 +25,6 @@ public class ShortcutIndexDescriptionTest
         ShortcutIndexDescription[] shouldBeEqual = new ShortcutIndexDescription[]
                 {
                         new ShortcutIndexDescription( firstLabel, secondLabel, relType, dir, prop, null ),
-                        new ShortcutIndexDescription( firstLabel.toUpperCase(), secondLabel.toUpperCase(),
-                                relType.toUpperCase(), dir, prop.toUpperCase(), null ),
                 };
 
         ShortcutIndexDescription[] shouldNotBeEqual = new ShortcutIndexDescription[]
