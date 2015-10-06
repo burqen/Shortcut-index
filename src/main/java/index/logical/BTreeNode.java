@@ -166,23 +166,23 @@ public abstract class BTreeNode
                     "When splitting array left and right array need to have equal length." );
         }
 
-        int size = left.length;
+        int size = left.length / KEY_SIZE;
 
 
         // + KEY_SIZE if odd + 0 if even
-        int firstToMove = size/2 + (size & 1)*KEY_SIZE;
+        int firstToMove = size/2 + (size & 1);
 
         int i = 0;
         while ( i + firstToMove < size )
         {
-            right[i*KEY_SIZE] = left[i + firstToMove];
-            right[i*KEY_SIZE + 1] = left[i + firstToMove + 1];
+            right[i*KEY_SIZE] = left[(i + firstToMove)*KEY_SIZE];
+            right[i*KEY_SIZE + 1] = left[(i + firstToMove)*KEY_SIZE + 1];
             //left[i + firstToMove] = null; // TODO: Should we set to 0?
-            i += KEY_SIZE;
+            i++;
         }
 
-        right[i] = overflow.getId();
-        right[i + 1] = overflow.getProp();
+        right[i*KEY_SIZE] = overflow.getId();
+        right[i*KEY_SIZE + 1] = overflow.getProp();
     }
 
     // GETTERS and SETTERS
