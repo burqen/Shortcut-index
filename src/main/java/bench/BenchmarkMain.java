@@ -16,7 +16,9 @@ import bench.queries.impl.Query6Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
+import bench.util.LogCompleteHistogram;
 import bench.util.LogLatexTable;
+import bench.util.LogSimple;
 import index.logical.ShortcutIndexDescription;
 import index.logical.ShortcutIndexProvider;
 import index.logical.ShortcutIndexService;
@@ -140,7 +142,7 @@ public class BenchmarkMain
             benchmarkQuery( query, logger, graphDb, query.inputFile() );
         }
 
-        logger.report( new LogLatexTable() );
+        logger.report( new LogSimple() );
     }
 
     private void addIndexForQuery( ShortcutIndexDescription description, GraphDatabaseService graphDb, int order,

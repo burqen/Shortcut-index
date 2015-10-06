@@ -29,10 +29,11 @@ public class LeafBTreeNode extends BTreeNode
     }
 
     @Override
-    public void insert( TKey key, TValue value )
+    public void insert( long firstId, long propValue, TValue value )
     {
         int keyCount = getKeyCount();
-        int pos = searchFirstGreaterThanOrEqualTo( key );
+        int pos = searchFirstGreaterThanOrEqualTo( firstId, propValue );
+        TKey key = new TKey( firstId, propValue );
         if ( keyCount < order*2 )
         {
             // No overflow, insert key and value and move other keys and value accordingly.
@@ -41,7 +42,7 @@ public class LeafBTreeNode extends BTreeNode
             int keyPos = pos;
             while ( keyPos <= keyCount )
             {
-                key = replace( keyPos, key, keys );
+                key = replaceKey( keyPos, keys, key.getId(), key.getProp() );
                 keyPos++;
             }
 
@@ -109,13 +110,13 @@ public class LeafBTreeNode extends BTreeNode
         // Insert key and value in order and keep the last key and value.
         while ( pos < getKeyCount() )
         {
-            key = replace( pos, key, keys );
+            key = replaceKey( pos, keys, key.getId(), key.getProp() );
             value = replace( pos, value, values );
             pos++;
         }
 
         // Split
-        split( keys, rightLeaf.keys, key );
+        splitKeys( keys, rightLeaf.keys, key );
         split( values, rightLeaf.values, value );
 
         // Update key count

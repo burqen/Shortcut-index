@@ -39,14 +39,16 @@ public class ShortcutIndexDescriptionTest
 
         for ( ShortcutIndexDescription same : shouldBeEqual )
         {
-            assertTrue( original.equals( same ) );
-            assertTrue( original.hashCode() == same.hashCode() );
+            assertTrue( "Expected " + same + " to be equal to " + original, original.equals( same ) );
+            assertTrue( "Expected same hashCode from " + same + " and " + original,
+                    original.hashCode() == same.hashCode() );
         }
 
         for ( ShortcutIndexDescription other : shouldNotBeEqual )
         {
-            assertFalse( original.equals( other ) );
-            assertFalse( original.hashCode() == other.hashCode() );
+            assertFalse( "Expected " + other + " to be not equal to " + original, original.equals( other ) );
+            assertFalse( "Expected different hashCodes from " + other + " and " + original,
+                    original.hashCode() == other.hashCode() );
         }
     }
 }

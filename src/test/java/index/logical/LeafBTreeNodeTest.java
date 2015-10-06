@@ -53,11 +53,11 @@ public class LeafBTreeNodeTest
         // Fill leaf up
         for ( int i = 0; i < order*2; i++ )
         {
-            leaf.insert( new TKey( i, i ), new TValue( i, i ) );
+            leaf.insert( i, i, new TValue( i, i ) );
             assertEquals( i + 1, leaf.getKeyCount() );
         }
 
-        leaf.insert( new TKey( order*2, order*2 ), new TValue( order*2, order*2 ) );
+        leaf.insert( order*2, order*2, new TValue( order*2, order*2 ) );
         assertEquals( order, leaf.getKeyCount() );
         assertNotNull( "Expected to have a right sibling after split", leaf.getRightSibling() );
     }

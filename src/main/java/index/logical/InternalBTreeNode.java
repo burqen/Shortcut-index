@@ -29,9 +29,9 @@ public class InternalBTreeNode extends BTreeNode
     }
 
     @Override
-    public void insert( TKey key, TValue value )
+    public void insert( long firstId, long propValue, TValue value )
     {
-        children[searchFirstGreaterThanOrEqualTo( key )].insert( key, value );
+        children[searchFirstGreaterThanOrEqualTo( firstId, propValue )].insert( firstId, propValue, value );
     }
 
     @Override
@@ -62,14 +62,14 @@ public class InternalBTreeNode extends BTreeNode
      */
     public void splitInChild( BTreeNode rightChild, TKey key )
     {
-        int pos = searchFirstGreaterThanOrEqualTo( key );
+        int pos = searchFirstGreaterThanOrEqualTo( key.getId(), key.getProp() );
         int keyCount = getKeyCount();
         if ( keyCount < order*2 )
         {
             // No overflow
             while ( pos <= keyCount )
             {
-                key = replace( pos, key, keys );
+                key = replaceKey( pos, keys, key.getId(), key.getProp() );
                 rightChild = replace( pos+1, rightChild, children );
                 pos++;
             }
@@ -99,7 +99,7 @@ public class InternalBTreeNode extends BTreeNode
         {
             for ( int i = pos; i < order; i++ )
             {
-                newKey = replace( i, newKey, keys );
+                newKey = replaceKey( i, keys, newKey.getId(), newKey.getProp() );
 
             }
             middleKey = newKey;
@@ -108,7 +108,7 @@ public class InternalBTreeNode extends BTreeNode
         {
             for ( int i = pos-1; i >= order; i-- )
             {
-                newKey = replace( i, newKey, keys );
+                newKey = replaceKey( i, keys, newKey.getId(), newKey.getProp() );
             }
 
             // middle is at pos [order + 1]
@@ -119,7 +119,7 @@ public class InternalBTreeNode extends BTreeNode
         for ( int i = order; i < order*2; i++ )
         {
             rightInternalNode.keys[i - order] = this.keys[i];
-            this.keys[i] = null;
+            // this.keys[i] = null; // TODO: SHOULD WE SET TO 0?
         }
 
         // Insert new child in correct order
