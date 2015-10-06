@@ -4,16 +4,18 @@ import java.io.PrintStream;
 
 public abstract class BTreeNode
 {
+    public static int KEY_SIZE = 2;
+
     protected final int order;
     private BTreeNode rightSibling;
     private InternalBTreeNode parent;
-    protected TKey[] keys;
+    protected long[] keys;
     private int keyCount;
 
     public BTreeNode( int order )
     {
         this.order = order;
-        this.keys = new TKey[order*2];
+        this.keys = new long[order*2*KEY_SIZE];
     }
 
     public abstract BTreeNodeType getNodeType();
@@ -60,41 +62,6 @@ public abstract class BTreeNode
     }
 
     /**
-     * Search for the first position where the key on that position is greater than key.
-     * @param key   Provided key
-     * @return the lowest i for which getKey( i ).compareTo( key ) > 0 or position just outside of array range if key
-     * is greater than or equal to every key.
-     */
-    public int searchFirstGreaterThan( TKey key )
-    {
-        int i = 0;
-        while ( i < getKeyCount() && getKey( i ).compareTo( key ) <= 0 )
-        {
-            i++;
-        }
-        return i;
-    }
-
-    /**
-     * Search for the first position where key is equal to the current key on that position.
-     * @param key   Provided key
-     * @return i for which getKey( i ).compareTo( key ) == 0 or -1 if no such match is found.
-     */
-    public int searchExactMatch( TKey key )
-    {
-        int i = 0;
-        while ( i < getKeyCount() && getKey( i ).compareTo( key ) < 0 )
-        {
-            i++;
-        }
-        if ( i == getKeyCount() )
-        {
-            return -1;
-        }
-        return getKey( i ).compareTo( key ) == 0 ? i : -1;
-    }
-
-    /**
      *
      * @param pos       Position of element to be replaced
      * @param object    Element to insert on position, pos
@@ -105,6 +72,14 @@ public abstract class BTreeNode
     {
         T replaced = array[pos];
         array[pos] = object;
+        return replaced;
+    }
+
+    public static TKey replaceKey( int pos, TKey key, long[] keys )
+    {
+        TKey replaced = new TKey( keys[pos*KEY_SIZE], keys[pos*KEY_SIZE+1] );
+        keys[pos*KEY_SIZE] = key.getId();
+        keys[pos*KEY_SIZE+1] = key.getProp();
         return replaced;
     }
 
@@ -174,6 +149,42 @@ public abstract class BTreeNode
         right[i] = overflow;
     }
 
+    /**
+     * Assumes left is full and sorted. Right is empty.
+     * Overflow comes last in sorting order compared to values in left.
+     * This should be used when splitting leaves of children arrays in internal nodes.
+     * @param left      Contains the left most elements after split
+     * @param right     Contains the right most elements after split
+     * @param overflow  Overflowing element is right most element
+     */
+    public static void splitKeys( long[] left, long[] right, TKey overflow )
+    {
+
+        if ( left.length != right.length )
+        {
+            throw new IllegalArgumentException(
+                    "When splitting array left and right array need to have equal length." );
+        }
+
+        int size = left.length;
+
+
+        // + KEY_SIZE if odd + 0 if even
+        int firstToMove = size/2 + (size & 1)*KEY_SIZE;
+
+        int i = 0;
+        while ( i + firstToMove < size )
+        {
+            right[i*KEY_SIZE] = left[i + firstToMove];
+            right[i*KEY_SIZE + 1] = left[i + firstToMove + 1];
+            //left[i + firstToMove] = null; // TODO: Should we set to 0?
+            i += KEY_SIZE;
+        }
+
+        right[i] = overflow.getId();
+        right[i + 1] = overflow.getProp();
+    }
+
     // GETTERS and SETTERS
 
     public int getOrder()
@@ -198,12 +209,13 @@ public abstract class BTreeNode
 
     public void setKey( int i, TKey key )
     {
-        keys[i] = key;
+        keys[i* KEY_SIZE] = key.getId();
+        keys[i* KEY_SIZE +1] = key.getProp();
     }
 
     public TKey getKey( int i )
     {
-        return keys[i];
+        return new TKey( keys[i* KEY_SIZE], keys[i* KEY_SIZE +1]);
     }
 
     public int getKeyCount()

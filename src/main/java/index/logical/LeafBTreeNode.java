@@ -41,7 +41,7 @@ public class LeafBTreeNode extends BTreeNode
             int keyPos = pos;
             while ( keyPos <= keyCount )
             {
-                key = replace( keyPos, key, keys );
+                key = replaceKey( keyPos, key, keys );
                 keyPos++;
             }
 
@@ -109,13 +109,13 @@ public class LeafBTreeNode extends BTreeNode
         // Insert key and value in order and keep the last key and value.
         while ( pos < getKeyCount() )
         {
-            key = replace( pos, key, keys );
+            key = replaceKey( pos, key, keys );
             value = replace( pos, value, values );
             pos++;
         }
 
         // Split
-        split( keys, rightLeaf.keys, key );
+        splitKeys( keys, rightLeaf.keys, key );
         split( values, rightLeaf.values, value );
 
         // Update key count

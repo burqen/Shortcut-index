@@ -35,7 +35,7 @@ public class InternalBTreeNodeTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void setKeyOutsideOfRange()
     {
-        node.setKey( order * 2, null );
+        node.setKey( order * 2, Mockito.mock( TKey.class ) );
     }
 
     @Test
