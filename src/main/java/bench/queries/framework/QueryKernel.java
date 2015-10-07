@@ -100,7 +100,7 @@ public abstract class QueryKernel extends Query
                                                           int labelId, int propertyId, Object value )
             throws IndexNotFoundKernelException
     {
-        return operations.nodesGetFromIndexLookup( new IndexDescriptor( labelId, propertyId ), value );
+        return operations.nodesGetFromIndexSeek( new IndexDescriptor( labelId, propertyId ), value );
     }
 
     @Override

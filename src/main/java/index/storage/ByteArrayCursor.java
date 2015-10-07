@@ -1,10 +1,11 @@
 package index.storage;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import java.io.File;
 import java.io.IOException;
 
 import org.neo4j.io.pagecache.PageCursor;
-import org.neo4j.unsafe.impl.internal.dragons.UnsafeUtil;
 
 /**
  * This cursor should behave like a PageCursor with the exception that it does not point at an offset in a file.
@@ -12,21 +13,23 @@ import org.neo4j.unsafe.impl.internal.dragons.UnsafeUtil;
  */
 public abstract class ByteArrayCursor implements PageCursor
 {
-    private ByteArrayPagedFile pagedFile;
-    private long pageId;
-    private byte[] page;
+    protected ByteArrayPagedFile pagedFile;
+    protected long pageId;
+    protected byte[] page;
 
-    private long nextPageId;
-    private long currentPageId;
-    private long lastPageId;
+    protected long nextPageId;
+    protected long currentPageId;
+    protected long lastPageId;
 
     // Offset into page
-    private int offset;
+    protected int offset;
+    protected int pf_flags;
 
-    public final void initialize( ByteArrayPagedFile pagedFile, long pageId )
+    public final void initialise( ByteArrayPagedFile pagedFile, long pageId, int pf_flags )
     {
         this.pagedFile = pagedFile;
         this.pageId = pageId;
+        this.pf_flags = pf_flags;
     }
 
     /**
@@ -223,8 +226,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public long getUnsignedInt()
     {
-        // TODO: CONTINUE HERE!
-        return 0l;
+        return getInt() & 0xFFFFFFFFL;
     }
 
     /**
@@ -237,7 +239,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public long getUnsignedInt( int offset )
     {
-        return 0l;
+        return getInt( offset ) & 0xFFFFFFFFL;
     }
 
     /**
@@ -250,7 +252,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void getBytes( byte[] data )
     {
-
+        getBytes( data, 0, data.length );
     }
 
     /**
@@ -263,7 +265,8 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void getBytes( byte[] data, int arrayOffset, int length )
     {
-
+        System.arraycopy( page, offset, data, arrayOffset, length );
+        offset += length;
     }
 
     /**
@@ -276,7 +279,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void putBytes( byte[] data )
     {
-
+        putBytes( data, 0, data.length );
     }
 
     /**
@@ -289,7 +292,8 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void putBytes( byte[] data, int arrayOffset, int length )
     {
-
+        System.arraycopy( data, arrayOffset, page, offset, length );
+        offset += length;
     }
 
     /**
@@ -301,7 +305,9 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public short getShort()
     {
-        return 0;
+        short s = getShort( offset );
+        offset += 2;
+        return s;
     }
 
     /**
@@ -314,7 +320,9 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public short getShort( int offset )
     {
-        return 0;
+        short a = (short) (page[ offset     ] & 0xFF);
+        short b = (short) (page[ offset + 1 ] & 0xFF);
+        return (short) ((a << 8) | b);
     }
 
     /**
@@ -326,7 +334,8 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void putShort( short value )
     {
-
+        putShort( offset, value );
+        offset += 2;
     }
 
     /**
@@ -339,7 +348,8 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void putShort( int offset, short value )
     {
-
+        page[ offset    ] = (byte)( value >> 8 );
+        page[ offset + 1] = (byte)( value   );
     }
 
     /**
@@ -375,7 +385,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public long getCurrentPageId()
     {
-        return 0l;
+        return currentPageId;
     }
 
     /**
@@ -386,7 +396,8 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public int getCurrentPageSize()
     {
-        return 0;
+        return currentPageId == UNBOUND_PAGE_ID?
+               UNBOUND_PAGE_SIZE : pagedFile.pageSize();
     }
 
     /**
@@ -397,7 +408,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public File getCurrentFile()
     {
-        return null;
+        throw new NotImplementedException();
     }
 
     /**
@@ -433,7 +444,20 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public boolean next( long pageId ) throws IOException
     {
-        return false;
+        nextPageId = pageId;
+        return next();
+    }
+
+    protected void pin( long nextPageId )
+    {
+        byte[] page = pagedFile.getPage( nextPageId );
+        reset( page );
+    }
+
+    public final void reset( byte[] page )
+    {
+        this.page = page;
+        this.offset = 0;
     }
 
     /**
@@ -444,7 +468,7 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public void close()
     {
-
+        throw new NotImplementedException();
     }
 
     /**
@@ -460,6 +484,6 @@ public abstract class ByteArrayCursor implements PageCursor
     @Override
     public boolean shouldRetry() throws IOException
     {
-        return false;
+        throw new NotImplementedException();
     }
 }

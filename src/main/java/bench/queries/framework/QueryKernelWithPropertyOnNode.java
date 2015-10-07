@@ -39,7 +39,7 @@ public abstract class QueryKernelWithPropertyOnNode extends QueryKernel
                 long otherNode = startPoint == extractor.startNode() ? extractor.endNode() : extractor.startNode();
                 if ( operations.nodeHasLabel( otherNode, secondLabel ) )
                 {
-                    long prop = ((Number) operations.nodeGetProperty( otherNode, propKey ).value()).longValue();
+                    long prop = ((Number) operations.nodeGetProperty( otherNode, propKey ) ).longValue();
 
                     if ( filterOnNodeProperty( prop ) )
                     {
@@ -57,10 +57,6 @@ public abstract class QueryKernelWithPropertyOnNode extends QueryKernel
             }
         }
         catch( EntityNotFoundException e )
-        {
-            e.printStackTrace();
-        }
-        catch ( PropertyNotFoundException e )
         {
             e.printStackTrace();
         }

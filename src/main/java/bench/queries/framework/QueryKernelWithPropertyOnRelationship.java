@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.PropertyNotFoundException;
 import org.neo4j.kernel.impl.api.RelationshipDataExtractor;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 
@@ -34,7 +33,7 @@ public abstract class QueryKernelWithPropertyOnRelationship extends QueryKernel
             {
                 long relationship = relationships.next();
 
-                long prop = ((Number) operations.relationshipGetProperty( relationship, propKey ).value() ).longValue();
+                long prop = ((Number) operations.relationshipGetProperty( relationship, propKey ) ).longValue();
 
                 if ( filterOnRelationshipProperty( prop ) )
                 {
@@ -59,10 +58,6 @@ public abstract class QueryKernelWithPropertyOnRelationship extends QueryKernel
             }
         }
         catch(EntityNotFoundException e)
-        {
-            e.printStackTrace();
-        }
-        catch ( PropertyNotFoundException e )
         {
             e.printStackTrace();
         }
