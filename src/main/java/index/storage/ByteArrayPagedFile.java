@@ -25,7 +25,7 @@ public class ByteArrayPagedFile implements PagedFile
     }
 
     @Override
-    public ByteArrayCursor io( long pageId, int pf_flags ) throws IOException
+    public ByteArrayPageCursor io( long pageId, int pf_flags ) throws IOException
     {
         int lockMask = PF_EXCLUSIVE_LOCK | PF_SHARED_LOCK;
         if ( (pf_flags & lockMask) == 0 )
@@ -38,14 +38,14 @@ public class ByteArrayPagedFile implements PagedFile
             throw new IllegalArgumentException(
                     "Cannot specify both PF_EXCLUSIVE_LOCK and PF_SHARED_LOCK" );
         }
-        ByteArrayCursor cursor;
+        ByteArrayPageCursor cursor;
         if ( (pf_flags & PF_SHARED_LOCK) == 0 )
         {
-            cursor = new ByteArrayWriteCursor();
+            cursor = new ByteArrayWritePageCursor();
         }
         else
         {
-            cursor = new ByteArrayReadCursor();
+            cursor = new ByteArrayReadPageCursor();
         }
 
         cursor.initialise( this, pageId, pf_flags );

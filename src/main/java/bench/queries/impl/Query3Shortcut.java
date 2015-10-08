@@ -4,11 +4,11 @@ import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query3Description;
-import index.logical.RangeSeeker;
-import index.logical.ShortcutIndexDescription;
-import index.logical.ShortcutIndexProvider;
-import index.logical.ShortcutIndexService;
-import index.logical.TResult;
+import index.SCIndexDescription;
+import index.legacy.LegacySCIndex;
+import index.legacy.RangeSeeker;
+import index.ShortcutIndexProvider;
+import index.legacy.TResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +21,7 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public class Query3Shortcut extends QueryShortcut
 {
-    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "Person", "Post",
+    public static SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Post",
             "LIKES_POST", Direction.OUTGOING, "creationDate", null );
 
     public Query3Shortcut( ShortcutIndexProvider indexes )
@@ -46,7 +46,7 @@ public class Query3Shortcut extends QueryShortcut
                         "Use correct input file." );
             }
 
-            ShortcutIndexService index = indexes.get( indexDescription );
+            LegacySCIndex index = indexes.get( indexDescription );
 
             index.seek( new RangeSeeker( start, null, null ), indexSeekResult );
 

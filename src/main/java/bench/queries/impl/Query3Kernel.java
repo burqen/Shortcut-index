@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
 import bench.queries.impl.description.Query3Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.logical.TResult;
+import index.legacy.TResult;
 
 import java.util.Collections;
 import java.util.List;

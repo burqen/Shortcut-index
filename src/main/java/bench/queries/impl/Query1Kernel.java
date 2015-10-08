@@ -3,7 +3,7 @@ package bench.queries.impl;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query1Description;
-import index.logical.TResult;
+import index.legacy.TResult;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;

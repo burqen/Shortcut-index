@@ -5,10 +5,7 @@ import org.junit.Test;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Random;
 
-import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
 
 import static org.junit.Assert.assertEquals;
@@ -66,14 +63,14 @@ public class ByteArrayPagedFileTest
     @Test
     public void ioWithExclusiveLock() throws IOException
     {
-        ByteArrayCursor cursor = pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
-        assertTrue( "Expected a write cursor", cursor instanceof ByteArrayWriteCursor );
+        ByteArrayPageCursor cursor = pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
+        assertTrue( "Expected a write cursor", cursor instanceof ByteArrayWritePageCursor );
     }
 
     @Test
     public void ioWithSharedLock() throws IOException
     {
-        ByteArrayCursor cursor = pagedFile.io( 0, PagedFile.PF_SHARED_LOCK );
-        assertTrue( "Expected a write cursor", cursor instanceof ByteArrayReadCursor );
+        ByteArrayPageCursor cursor = pagedFile.io( 0, PagedFile.PF_SHARED_LOCK );
+        assertTrue( "Expected a write cursor", cursor instanceof ByteArrayReadPageCursor );
     }
 }

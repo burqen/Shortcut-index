@@ -3,14 +3,13 @@ package bench.queries.framework;
 import bench.QueryType;
 import bench.Measurement;
 import bench.queries.Query;
-import index.logical.ShortcutIndexProvider;
-import index.logical.TResult;
+import index.ShortcutIndexProvider;
+import index.legacy.TResult;
 
 import java.util.List;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 

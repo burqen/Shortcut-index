@@ -16,16 +16,16 @@ import bench.queries.impl.Query6Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
-import bench.util.LogCompleteHistogram;
-import bench.util.LogLatexTable;
 import bench.util.LogSimple;
-import index.logical.ShortcutIndexDescription;
-import index.logical.ShortcutIndexProvider;
-import index.logical.ShortcutIndexService;
-import index.logical.TKey;
-import index.logical.TValue;
+import index.SCIndexDescription;
+import index.ShortcutIndexProvider;
+import index.legacy.LegacySCIndex;
+import index.SCIndex;
+import index.legacy.TKey;
+import index.legacy.TValue;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +42,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.tooling.GlobalGraphOperations;
@@ -52,12 +51,12 @@ import static bench.util.Config.GRAPH_DB_FOLDER;
 public class BenchmarkMain
 {
 
-    public static void main( String[] argv ) throws FileNotFoundException, EntityNotFoundException
+    public static void main( String[] argv ) throws IOException, EntityNotFoundException
     {
         new BenchmarkMain().run( argv );
     }
 
-    private void run( String[] argv ) throws FileNotFoundException, EntityNotFoundException
+    private void run( String[] argv ) throws IOException, EntityNotFoundException
     {
         String dbName = Config.LDBC_SF001;
 
@@ -95,7 +94,7 @@ public class BenchmarkMain
         }
     }
 
-    private void benchRun( GraphDatabaseService graphDb ) throws FileNotFoundException, EntityNotFoundException
+    private void benchRun( GraphDatabaseService graphDb ) throws IOException, EntityNotFoundException
     {
         int order = 64;
         ShortcutIndexProvider indexes = new ShortcutIndexProvider();
@@ -145,10 +144,10 @@ public class BenchmarkMain
         logger.report( new LogSimple() );
     }
 
-    private void addIndexForQuery( ShortcutIndexDescription description, GraphDatabaseService graphDb, int order,
-            ShortcutIndexProvider indexes )
+    private void addIndexForQuery( SCIndexDescription description, GraphDatabaseService graphDb, int order,
+            ShortcutIndexProvider indexes ) throws IOException
     {
-        ShortcutIndexService index = new ShortcutIndexService( order, description );
+        LegacySCIndex index = new LegacySCIndex( order, description );
         populateShortcutIndex( graphDb, index, description );
         indexes.put( index );
     }
@@ -194,8 +193,8 @@ public class BenchmarkMain
         }
     }
 
-    private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index,
-            ShortcutIndexDescription desc )
+    private void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
+            SCIndexDescription desc ) throws IOException
     {
         if ( desc.nodePropertyKey != null )
         {
@@ -212,8 +211,9 @@ public class BenchmarkMain
 
 
     // TODO: Fix this to populate all indexes at once
-    private void populateShortcutIndex( GraphDatabaseService graphDb, ShortcutIndexService index, String firstLabelName,
+    private void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
             String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
+            throws IOException
     {
         System.out.println( "INDEX PATTERN: " + index.getDescription() );
         System.out.print( "Building... " );
@@ -244,7 +244,7 @@ public class BenchmarkMain
                         numberOfInsert++;
                         long prop = propOnRel ? ((Number) rel.getProperty( propName )).longValue() :
                                     ((Number) second.getProperty( propName )).longValue();
-                        index.insert( new TKey( first.getId(), prop ), new TValue( rel.getId(), second.getId() ) );
+                        index.insert( new long[]{first.getId(), prop }, new long[]{ rel.getId(), second.getId() } );
                     }
                 }
             }

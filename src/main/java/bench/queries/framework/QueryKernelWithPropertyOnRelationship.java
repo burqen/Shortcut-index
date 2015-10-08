@@ -1,9 +1,9 @@
 package bench.queries.framework;
 
 import bench.Measurement;
-import index.logical.TKey;
-import index.logical.TResult;
-import index.logical.TValue;
+import index.legacy.TKey;
+import index.legacy.TResult;
+import index.legacy.TValue;
 
 import java.util.List;
 

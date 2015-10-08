@@ -4,12 +4,12 @@ import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query4Description;
-import index.logical.ExactMatchSeeker;
-import index.logical.ShortcutIndexDescription;
-import index.logical.ShortcutIndexProvider;
-import index.logical.ShortcutIndexService;
-import index.logical.TKey;
-import index.logical.TResult;
+import index.SCIndexDescription;
+import index.legacy.ExactMatchSeeker;
+import index.ShortcutIndexProvider;
+import index.legacy.LegacySCIndex;
+import index.legacy.TKey;
+import index.legacy.TResult;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,7 +21,7 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public class Query4Shortcut extends QueryShortcut
 {
-    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "University", "Person",
+    public static SCIndexDescription indexDescription = new SCIndexDescription( "University", "Person",
             "STUDY_AT", Direction.INCOMING, "classYear", null );
 
     public Query4Shortcut( ShortcutIndexProvider indexes )
@@ -46,7 +46,7 @@ public class Query4Shortcut extends QueryShortcut
                         "Use correct input file." );
             }
 
-            ShortcutIndexService index = indexes.get( indexDescription );
+            LegacySCIndex index = indexes.get( indexDescription );
 
             index.seek( new ExactMatchSeeker( new TKey( start, 2010l ) ), indexSeekResult );
 

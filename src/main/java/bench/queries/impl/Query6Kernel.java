@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query6Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.logical.TResult;
+import index.legacy.TResult;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;

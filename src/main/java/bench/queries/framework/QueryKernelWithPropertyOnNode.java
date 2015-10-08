@@ -1,15 +1,14 @@
 package bench.queries.framework;
 
 import bench.Measurement;
-import index.logical.TKey;
-import index.logical.TResult;
-import index.logical.TValue;
+import index.legacy.TKey;
+import index.legacy.TResult;
+import index.legacy.TValue;
 
 import java.util.List;
 
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
-import org.neo4j.kernel.api.exceptions.PropertyNotFoundException;
 import org.neo4j.kernel.impl.api.RelationshipDataExtractor;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 

@@ -4,11 +4,11 @@ import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query6Description;
-import index.logical.RangeSeeker;
-import index.logical.ShortcutIndexDescription;
-import index.logical.ShortcutIndexProvider;
-import index.logical.ShortcutIndexService;
-import index.logical.TResult;
+import index.SCIndexDescription;
+import index.legacy.LegacySCIndex;
+import index.legacy.RangeSeeker;
+import index.ShortcutIndexProvider;
+import index.legacy.TResult;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -22,7 +22,7 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public class Query6Shortcut extends QueryShortcut
 {
-    public static ShortcutIndexDescription indexDescription = new ShortcutIndexDescription( "Forum", "Post",
+    public static SCIndexDescription indexDescription = new SCIndexDescription( "Forum", "Post",
             "CONTAINER_OF", Direction.OUTGOING, null, "creationDate" );
 
     private long lowerBoundary;
@@ -55,7 +55,7 @@ public class Query6Shortcut extends QueryShortcut
                         "Use correct input file." );
             }
 
-            ShortcutIndexService index = indexes.get( indexDescription );
+            LegacySCIndex index = indexes.get( indexDescription );
 
             index.seek( new RangeSeeker( start, lowerBoundary, upperBoundary ), indexSeekResult );
 
