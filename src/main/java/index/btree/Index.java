@@ -13,6 +13,8 @@ public class Index implements SCIndex
     private PagedFile pagedFile;
     private SCIndexDescription description;
     private long rootId;
+    private IndexInsert inserter;
+    private IdPool idPool;
 
     public Index( PagedFile pagedFile, SCIndexDescription description )
     {
@@ -24,6 +26,7 @@ public class Index implements SCIndex
         this.pagedFile = pagedFile;
         this.description = description;
         this.rootId = rootId;
+        this.inserter = new IndexInsert( this );
     }
 
     @Override
@@ -37,12 +40,17 @@ public class Index implements SCIndex
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
 
-        SplitResult split = IndexInsert.insert( cursor, key, value );
+        SplitResult split = inserter.insert( cursor, key, value );
 
         if ( split != null )
         {
             // New root
 
         }
+    }
+
+    public long acquireNewNode()
+    {
+        return idPool.getId();
     }
 }

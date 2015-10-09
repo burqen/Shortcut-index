@@ -35,6 +35,4 @@ public class IndexSearch
         }
         return pos == keyCount ? NO_POS : pos;
     }
-
-
 }

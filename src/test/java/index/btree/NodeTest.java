@@ -20,7 +20,6 @@ public class NodeTest
     long x = 0xABCFACCC;
     long y = 0xFCDCDFFF;
     private int keyCount = 120;
-    private long parentId = 3076029;
     private long rightSiblingId = 456092;
 
     @Before
@@ -55,14 +54,6 @@ public class NodeTest
     }
 
     @Test
-    public void setAndGetParent()
-    {
-        Node.setParent( cursor, parentId );
-        long id = Node.parent( cursor );
-        assertEquals( "Expected parent to be " + parentId + " but was " + id, parentId, id );
-    }
-
-    @Test
     public void setAndGetRightSibling()
     {
         Node.setRightSibling( cursor, rightSiblingId );
@@ -77,7 +68,6 @@ public class NodeTest
         Node.initializeLeaf( cursor );
         assertTrue( "Expected node to be leaf", Node.isLeaf( cursor ) );
         assertEquals( "Expected node to have no keys", 0, Node.keyCount( cursor ) );
-        assertEquals( "Expected node to have no parent", Node.NO_NODE_FLAG, Node.parent( cursor ) );
         assertEquals( "Expected node to have no rightSibling", Node.NO_NODE_FLAG,
                 Node.rightSibling( cursor ) );
     }
@@ -88,11 +78,9 @@ public class NodeTest
         Node.initializeInternal( cursor );
         assertTrue( "Expected node to be leaf", Node.isInternal( cursor ) );
         assertEquals( "Expected node to have no keys", 0, Node.keyCount( cursor ) );
-        assertEquals( "Expected node to have no parent", Node.NO_NODE_FLAG, Node.parent( cursor ) );
         assertEquals( "Expected node to have no rightSibling", Node.NO_NODE_FLAG,
                 Node.rightSibling( cursor ) );
     }
-
 
     @Test
     public void keyComparator()
@@ -133,4 +121,56 @@ public class NodeTest
                     ", foundKey = " + Arrays.toString( foundKey1 ),
                 Node.KEY_COMPARATOR.compare( key2, foundKey2 ) == 0 );
     }
+
+    @Test
+    public void setAndGetValue()
+    {
+        long[] overWrittenValue = new long[]{ 666, 666 };
+        long[] value2 = new long[]{ 1, 1 };
+        long[] value1 = new long[]{ x, y };
+        Node.setKeyAt( cursor, overWrittenValue, 1 );
+        Node.setKeyAt( cursor, value1, 0 );
+        Node.setKeyAt( cursor, value2, 1 );
+
+        long[] foundValue1 = Node.valueAt( cursor, 0 );
+        long[] foundValue2 = Node.valueAt( cursor, 1 );
+
+        assertTrue( "Expected values to be equal but value = " + Arrays.toString( value1 ) +
+                    ", foundValue = " + Arrays.toString( foundValue1 ),
+                Arrays.equals( value1, foundValue1 ) );
+        assertTrue( "Expected values to be equal but value = " + Arrays.toString( value2 ) +
+                    ", foundValue = " + Arrays.toString( foundValue1 ),
+                Arrays.equals( value2, foundValue2 ) );
+    }
+
+    @Test
+    public void setAndGetKeys()
+    {
+        for ( long i = 0; i < 5; i++ )
+        {
+            Node.setKeyAt( cursor, new long[]{ i, i }, (int)i );
+            assertKey( new long[]{ i, i }, Node.keyAt( cursor, (int)i ) );
+        }
+        byte[] oldKeys = Node.keysFromTo( cursor, 0, 5 );
+        // Overwrite keys
+        for ( int i = 0; i < 5; i++ )
+        {
+            Node.setKeyAt( cursor, new long[]{ 0, 0 }, i );
+            assertKey( new long[]{ 0,0 }, Node.keyAt( cursor, i ) );
+        }
+
+        Node.setKeysAt( cursor, oldKeys, 0 );
+
+        for ( long i = 0; i < 5; i++ )
+        {
+            assertKey( new long[]{ i, i }, Node.keyAt( cursor, (int) i ) );
+        }
+    }
+
+    private void assertKey( long[] expected, long[] actual )
+    {
+        assertTrue( "Expected keys to be equal", Arrays.equals( expected, actual ));
+    }
+
+    // TODO: Lots to do here. Many new methods added.
 }
