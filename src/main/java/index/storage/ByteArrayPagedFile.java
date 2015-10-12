@@ -13,11 +13,6 @@ public class ByteArrayPagedFile implements PagedFile
     private final int pageSize;
     private List<byte[]> pages;
 
-    public ByteArrayPagedFile()
-    {
-        this( 1024 );
-    }
-
     public ByteArrayPagedFile( int pageSize )
     {
         this.pageSize = pageSize;

@@ -46,38 +46,45 @@ public class Node
     public static final int BYTE_POS_RIGHTSIBLING = 5;
     public static final int HEADER_LENGTH = 13;
 
-    public static final int SIZE_CHILD  = 8;
-    public static final int SIZE_KEY    = 2 * 8;
-    public static final int SIZE_VALUE  = 2 * 8;
+    public static final int SIZE_CHILD = 8;
+    public static final int SIZE_KEY = 2 * 8;
+    public static final int SIZE_VALUE = 2 * 8;
 
     public static final byte LEAF_FLAG = 1;
     public static final byte INTERNAL_FLAG = 0;
     public static final long NO_NODE_FLAG = -1l;
 
-    public static final Comparator<long[]> KEY_COMPARATOR = new Comparator<long[]>()
-    {
-        @Override
-        public int compare( long[] left, long[] right )
+    private final int internalMaxKeyCount;
+    private final int leafMaxKeyCount;
+
+
+    public static final Comparator<long[]> KEY_COMPARATOR = ( left, right ) -> {
+        if ( left.length != 2 || right.length != 2 )
         {
-            if ( left.length != 2 || right.length != 2 )
-            {
-                throw new IllegalArgumentException( "Keys must have length 2 to be compared" );
-            }
-            int compareId = Long.compare( left[0], right[0] );
-            return compareId != 0 ? compareId : Long.compare( left[1], right[1] );
+            throw new IllegalArgumentException( "Keys must have length 2 to be compared" );
         }
+        int compareId = Long.compare( left[0], right[0] );
+        return compareId != 0 ? compareId : Long.compare( left[1], right[1] );
     };
+
+    public Node( int pageSize )
+    {
+        internalMaxKeyCount = Math.floorDiv( pageSize - (HEADER_LENGTH + SIZE_CHILD),
+                SIZE_KEY + SIZE_CHILD);
+        leafMaxKeyCount = Math.floorDiv( pageSize - HEADER_LENGTH,
+                SIZE_KEY + SIZE_VALUE );
+    }
 
     // ROUTINES
 
-    public static void initializeLeaf( PageCursor cursor )
+    public void initializeLeaf( PageCursor cursor )
     {
         setTypeLeaf( cursor );
         setKeyCount( cursor, 0 );
         setRightSibling( cursor, NO_NODE_FLAG );
     }
 
-    public static void initializeInternal( PageCursor cursor )
+    public void initializeInternal( PageCursor cursor )
     {
         setTypeInternal( cursor );
         setKeyCount( cursor, 0 );
@@ -87,42 +94,42 @@ public class Node
 
     // HEADER METHODS
 
-    public static boolean isLeaf( PageCursor cursor )
+    public boolean isLeaf( PageCursor cursor )
     {
         return cursor.getByte( BYTE_POS_TYPE ) == LEAF_FLAG;
     }
 
-    public static boolean isInternal( PageCursor cursor )
+    public boolean isInternal( PageCursor cursor )
     {
         return cursor.getByte( BYTE_POS_TYPE ) == INTERNAL_FLAG;
     }
 
-    public static int keyCount( PageCursor cursor )
+    public int keyCount( PageCursor cursor )
     {
         return cursor.getInt( BYTE_POS_KEYCOUNT );
     }
 
-    public static long rightSibling( PageCursor cursor )
+    public long rightSibling( PageCursor cursor )
     {
         return cursor.getLong( BYTE_POS_RIGHTSIBLING );
     }
 
-    public static void setTypeLeaf( PageCursor cursor )
+    public void setTypeLeaf( PageCursor cursor )
     {
         cursor.putByte( BYTE_POS_TYPE, LEAF_FLAG );
     }
 
-    public static void setTypeInternal( PageCursor cursor )
+    public void setTypeInternal( PageCursor cursor )
     {
         cursor.putByte( BYTE_POS_TYPE, INTERNAL_FLAG );
     }
 
-    public static void setKeyCount( PageCursor cursor, int count )
+    public void setKeyCount( PageCursor cursor, int count )
     {
         cursor.putInt( BYTE_POS_KEYCOUNT, count );
     }
 
-    public static void setRightSibling( PageCursor cursor, long rightSiblingId)
+    public void setRightSibling( PageCursor cursor, long rightSiblingId )
     {
         cursor.putLong( BYTE_POS_RIGHTSIBLING, rightSiblingId );
     }
@@ -130,7 +137,7 @@ public class Node
 
     // BODY METHODS
 
-    public static long[] keyAt( PageCursor cursor, int pos )
+    public long[] keyAt( PageCursor cursor, int pos )
     {
         long[] key = new long[2];
         cursor.setOffset( keyOffset( pos ) );
@@ -139,28 +146,28 @@ public class Node
         return key;
     }
 
-    public static void setKeyAt( PageCursor cursor, long[] key, int pos )
+    public void setKeyAt( PageCursor cursor, long[] key, int pos )
     {
         cursor.setOffset( keyOffset( pos ) );
         cursor.putLong( key[0] );
         cursor.putLong( key[1] );
     }
 
-    public static byte[] keysFromTo( PageCursor cursor, int fromIncluding, int toExcluding )
+    public byte[] keysFromTo( PageCursor cursor, int fromIncluding, int toExcluding )
     {
-        byte[] data = new byte[ (toExcluding - fromIncluding) * SIZE_KEY ];
+        byte[] data = new byte[(toExcluding - fromIncluding) * SIZE_KEY];
         cursor.setOffset( keyOffset( fromIncluding ) );
         cursor.getBytes( data );
         return data;
     }
 
-    public static void setKeysAt( PageCursor cursor, byte[] keys, int pos )
+    public void setKeysAt( PageCursor cursor, byte[] keys, int pos )
     {
         cursor.setOffset( keyOffset( pos ) );
         cursor.putBytes( keys );
     }
 
-    public static long[] valueAt( PageCursor cursor, int pos )
+    public long[] valueAt( PageCursor cursor, int pos )
     {
         long[] value = new long[2];
         cursor.setOffset( valueOffset( pos ) );
@@ -169,50 +176,75 @@ public class Node
         return value;
     }
 
-    public static void setValueAt( PageCursor cursor, long[] value, int pos )
+    public void setValueAt( PageCursor cursor, long[] value, int pos )
     {
         cursor.setOffset( valueOffset( pos ) );
         cursor.putLong( value[0] );
         cursor.putLong( value[1] );
     }
 
-    public static byte[] valuesFromTo( PageCursor cursor, int fromIncluding, int toExcluding )
+    public byte[] valuesFromTo( PageCursor cursor, int fromIncluding, int toExcluding )
     {
-        byte[] data = new byte[ (toExcluding - fromIncluding) * SIZE_VALUE ];
+        byte[] data = new byte[(toExcluding - fromIncluding) * SIZE_VALUE];
         cursor.setOffset( valueOffset( fromIncluding ) );
         cursor.getBytes( data );
         return data;
     }
 
-    public static byte[] lastValues( PageCursor cursor, int fromPosInclusive, int keyCount )
-    {
-        byte[] data = new byte[ (keyCount - fromPosInclusive) * SIZE_VALUE ];
-        cursor.setOffset( valueOffset( fromPosInclusive ) );
-        cursor.getBytes( data );
-        return data;
-    }
-
-    public static void setValuesAt( PageCursor cursor, byte[] values, int pos )
+    public void setValuesAt( PageCursor cursor, byte[] values, int pos )
     {
         cursor.setOffset( valueOffset( pos ) );
         cursor.putBytes( values );
     }
 
+    public long childAt( PageCursor cursor, int pos )
+    {
+        return cursor.getLong( childOffset( pos ) );
+    }
+
+    public void setChildAt( PageCursor cursor, long child, int pos )
+    {
+        cursor.putLong( childOffset( pos ), child );
+    }
+
+    public byte[] childrenFromTo( PageCursor cursor, int fromIncluding, int toExcluding )
+    {
+        byte[] data = new byte[(toExcluding - fromIncluding) * SIZE_CHILD];
+        cursor.setOffset( childOffset( fromIncluding ) );
+        cursor.getBytes( data );
+        return data;
+    }
+
+    public void setChildrenAt( PageCursor cursor, byte[] children, int pos )
+    {
+        cursor.setOffset( childOffset( pos ) );
+        cursor.putBytes( children );
+    }
+
+    public int internalMaxKeyCount()
+    {
+        return internalMaxKeyCount;
+    }
+
+    public int leafMaxKeyCount()
+    {
+        return leafMaxKeyCount;
+    }
 
     // HELPERS
 
-    public static int keyOffset( int pos )
+    public int keyOffset( int pos )
     {
         return HEADER_LENGTH + pos * SIZE_KEY;
     }
 
-    public static int valueOffset( int pos )
+    public int valueOffset( int pos )
     {
-        return HEADER_LENGTH + IndexGlobal.MAX_KEY_COUNT_LEAF * SIZE_KEY + pos * SIZE_VALUE;
+        return HEADER_LENGTH + leafMaxKeyCount * SIZE_KEY + pos * SIZE_VALUE;
     }
 
-    public static int childOffset( int pos )
+    public int childOffset( int pos )
     {
-        return HEADER_LENGTH + IndexGlobal.MAX_KEY_COUNT_INTERNAL * SIZE_KEY + pos + SIZE_CHILD;
+        return HEADER_LENGTH + internalMaxKeyCount * SIZE_KEY + pos * SIZE_CHILD;
     }
 }

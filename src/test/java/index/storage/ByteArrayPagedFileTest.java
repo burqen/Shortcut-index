@@ -18,7 +18,8 @@ public class ByteArrayPagedFileTest
     @Before
     public void setup()
     {
-        pagedFile = new ByteArrayPagedFile();
+        int pageSize = 512;
+        pagedFile = new ByteArrayPagedFile( pageSize );
     }
 
     @Test(expected = NotImplementedException.class)

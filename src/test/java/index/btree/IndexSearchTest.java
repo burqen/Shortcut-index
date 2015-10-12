@@ -20,14 +20,14 @@ public class IndexSearchTest
     @Before
     public void reset()
     {
-        Node.setKeyCount( cursor, 0 );
+        node.setKeyCount( cursor, 0 );
     }
 
     @Test
     public void searchNoKeys()
     {
         long[] key = new long[]{ 1, 1 };
-        int pos = IndexSearch.search( cursor, key );
+        int pos = IndexSearch.search( cursor, node, key );
         assertPos( NO_POS, pos );
     }
 
@@ -35,10 +35,10 @@ public class IndexSearchTest
     public void searchEqualSingleKey()
     {
         long[] key = new long[]{ 1, 1 };
-        Node.setKeyAt( cursor, key, 0 );
-        Node.setKeyCount( cursor, 1 );
+        node.setKeyAt( cursor, key, 0 );
+        node.setKeyCount( cursor, 1 );
 
-        int pos = IndexSearch.search( cursor, key );
+        int pos = IndexSearch.search( cursor, node, key );
         assertPos( 0, pos );
     }
 
@@ -46,9 +46,9 @@ public class IndexSearchTest
     public void searchSingleKeyWithKeyCountZero()
     {
         long[] key = new long[]{ 1, 1 };
-        Node.setKeyAt( cursor, key, 0 );
-        Node.setKeyCount( cursor, 0 );
-        int pos = IndexSearch.search( cursor, key );
+        node.setKeyAt( cursor, key, 0 );
+        node.setKeyCount( cursor, 0 );
+        int pos = IndexSearch.search( cursor, node, key );
         assertPos( NO_POS, pos );
     }
 
@@ -57,11 +57,11 @@ public class IndexSearchTest
     {
         long[] key = new long[]{ 0, 0 };
         long[] key2 = new long[]{ 1, 1 };
-        Node.setKeyAt( cursor, key, 0 );
-        Node.setKeyAt( cursor, key2, 1 );
-        Node.setKeyAt( cursor, key2, 2 );
-        Node.setKeyCount( cursor, 3 );
-        int pos = IndexSearch.search( cursor, key2 );
+        node.setKeyAt( cursor, key, 0 );
+        node.setKeyAt( cursor, key2, 1 );
+        node.setKeyAt( cursor, key2, 2 );
+        node.setKeyCount( cursor, 3 );
+        int pos = IndexSearch.search( cursor, node, key2 );
         assertPos( 1, pos );
     }
 
@@ -71,10 +71,10 @@ public class IndexSearchTest
         long[] key1 = new long []{ 1, 1 };
         long[] key2 = new long []{ 2, 2 };
         long[] searchKey = new long[]{ 2,1 };
-        Node.setKeyAt( cursor, key1, 0 );
-        Node.setKeyAt( cursor, key2, 1 );
-        Node.setKeyCount( cursor, 2 );
-        int pos = IndexSearch.search( cursor, searchKey );
+        node.setKeyAt( cursor, key1, 0 );
+        node.setKeyAt( cursor, key2, 1 );
+        node.setKeyCount( cursor, 2 );
+        int pos = IndexSearch.search( cursor, node, searchKey );
         assertPos( 1, pos );
     }
 
@@ -84,10 +84,10 @@ public class IndexSearchTest
         long[] highest = new long []{ 5, 5 };
         long[] key1 = new long []{ 1, 1 };
         long[] key2 = new long []{ 2, 2 };
-        Node.setKeyAt( cursor, key1, 0 );
-        Node.setKeyAt( cursor, key2, 1 );
-        Node.setKeyCount( cursor, 2 );
-        int pos = IndexSearch.search( cursor, highest );
+        node.setKeyAt( cursor, key1, 0 );
+        node.setKeyAt( cursor, key2, 1 );
+        node.setKeyCount( cursor, 2 );
+        int pos = IndexSearch.search( cursor, node, highest );
         assertPos( NO_POS, pos );
     }
 
@@ -99,28 +99,32 @@ public class IndexSearchTest
     @Parameterized.Parameters
     public static Collection<Object[]> data()
     {
-        ByteBuffer buffer = ByteBuffer.allocate( 128 );
+        int pageSize = 512;
+        Node node = new Node( pageSize );
+        ByteBuffer buffer = ByteBuffer.allocate( pageSize );
         PageCursor leafCursor = new ByteBufferCursor( buffer );
-        Node.initializeLeaf( leafCursor );
+        node.initializeLeaf( leafCursor );
 
         buffer = ByteBuffer.allocate( 128 );
         PageCursor internalCursor = new ByteBufferCursor( buffer );
-        Node.initializeInternal( internalCursor );
+        node.initializeInternal( internalCursor );
         return Arrays.asList( new Object[][]
                 {
                         {
-                            leafCursor
+                            leafCursor, node
                         },
                         {
-                            internalCursor
+                            internalCursor, node
                         }
                 } );
     }
 
     private PageCursor cursor;
+    private Node node;
 
-    public IndexSearchTest( PageCursor cursor )
+    public IndexSearchTest( PageCursor cursor, Node node )
     {
         this.cursor = cursor;
+        this.node = node;
     }
 }

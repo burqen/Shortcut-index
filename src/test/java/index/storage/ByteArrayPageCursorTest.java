@@ -91,9 +91,24 @@ public class ByteArrayPageCursorTest
     {
         cursor = pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
         assertTrue( "Expected cursor to have next.", cursor.next() );
+        long currentPageId = cursor.getCurrentPageId();
+        assertEquals( "Expected current page id to be 0 but was " + currentPageId, 0, currentPageId );
+        assertTrue( "Expected cursor to have next.", cursor.next() );
+        currentPageId = cursor.getCurrentPageId();
+        assertEquals( "Expected current page id to be 1 but was " + currentPageId, 1, currentPageId );
+    }
+
+    @Test
+    public void nextPageInt() throws IOException
+    {
+        cursor = pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
+        int nextPage = 5;
         assertTrue( "Expected cursor to have next.", cursor.next() );
         long currentPageId = cursor.getCurrentPageId();
-        assertEquals( "Expected current page id to be 1 but was " + currentPageId, 1, currentPageId );
+        assertEquals( "Expected current page id to be 0 but was " + currentPageId, 0, currentPageId );
+        assertTrue( "Expected cursor to have next.", cursor.next( nextPage ) );
+        currentPageId = cursor.getCurrentPageId();
+        assertEquals( "Expected current page id to be 5 but was " + currentPageId, 5, currentPageId );
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

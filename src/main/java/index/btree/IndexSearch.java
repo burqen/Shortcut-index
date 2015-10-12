@@ -25,11 +25,11 @@ public class IndexSearch
      * @param key       long[] of length 2 where key[0] is id and key[1] is property value
      * @return          first position i for which Node.KEY_COMPARATOR.compare( key, Node.keyAt( i ) <= 0;
      */
-    public static int search( PageCursor cursor, long[] key )
+    public static int search( PageCursor cursor, Node node, long[] key )
     {
         int pos = 0;
-        int keyCount = Node.keyCount( cursor );
-        while ( pos < keyCount && Node.KEY_COMPARATOR.compare( key, Node.keyAt( cursor, pos ) ) > 0 )
+        int keyCount = node.keyCount( cursor );
+        while ( pos < keyCount && Node.KEY_COMPARATOR.compare( key, node.keyAt( cursor, pos ) ) > 0 )
         {
             pos++;
         }

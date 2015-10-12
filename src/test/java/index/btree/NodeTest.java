@@ -13,51 +13,55 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
-public class NodeTest
+public class NodeTest extends TestUtils
 {
     private PageCursor cursor;
+    private Node node;
 
     long x = 0xABCFACCC;
     long y = 0xFCDCDFFF;
-    private int keyCount = 120;
-    private long rightSiblingId = 456092;
 
     @Before
     public void setup()
     {
-        ByteBuffer buffer = ByteBuffer.allocate( 128 );
+        int pageSize = 512;
+        byte[] data = new byte[pageSize];
+        ByteBuffer buffer = ByteBuffer.wrap( data );
         cursor = new ByteBufferCursor( buffer );
+        node = new Node( pageSize );
     }
 
     @Test
     public void setAndGetTypeLeaf()
     {
-        Node.setTypeLeaf( cursor );
-        assertTrue( "Expected node to be leaf", Node.isLeaf( cursor ) );
-        assertFalse( "Expected node to not be internal", Node.isInternal( cursor ) );
+        node.setTypeLeaf( cursor );
+        assertTrue( "Expected node to be leaf", node.isLeaf( cursor ) );
+        assertFalse( "Expected node to not be internal", node.isInternal( cursor ) );
     }
 
     @Test
     public void setAndGetTypeInternal()
     {
-        Node.setTypeInternal( cursor );
-        assertTrue( "Expected node to be internal", Node.isInternal( cursor ) );
-        assertFalse( "Expected node to not be leaf", Node.isLeaf( cursor ) );
+        node.setTypeInternal( cursor );
+        assertTrue( "Expected node to be internal", node.isInternal( cursor ) );
+        assertFalse( "Expected node to not be leaf", node.isLeaf( cursor ) );
     }
 
     @Test
     public void setAndGetKeyCount()
     {
-        Node.setKeyCount( cursor, keyCount );
-        int count = Node.keyCount( cursor );
+        int keyCount = 120;
+        node.setKeyCount( cursor, keyCount );
+        int count = node.keyCount( cursor );
         assertEquals( "Expected key count to be " + keyCount + " but was " + count, keyCount, count );
     }
 
     @Test
     public void setAndGetRightSibling()
     {
-        Node.setRightSibling( cursor, rightSiblingId );
-        long sibling = Node.rightSibling( cursor );
+        long rightSiblingId = 456092;
+        node.setRightSibling( cursor, rightSiblingId );
+        long sibling = node.rightSibling( cursor );
         assertEquals( "Expected right sibling to be " + rightSiblingId + " but was " + sibling,
                 rightSiblingId, sibling );
     }
@@ -65,21 +69,21 @@ public class NodeTest
     @Test
     public void initializeLeaf()
     {
-        Node.initializeLeaf( cursor );
-        assertTrue( "Expected node to be leaf", Node.isLeaf( cursor ) );
-        assertEquals( "Expected node to have no keys", 0, Node.keyCount( cursor ) );
+        node.initializeLeaf( cursor );
+        assertTrue( "Expected node to be leaf", node.isLeaf( cursor ) );
+        assertEquals( "Expected node to have no keys", 0, node.keyCount( cursor ) );
         assertEquals( "Expected node to have no rightSibling", Node.NO_NODE_FLAG,
-                Node.rightSibling( cursor ) );
+                node.rightSibling( cursor ) );
     }
 
     @Test
     public void initializeInternal()
     {
-        Node.initializeInternal( cursor );
-        assertTrue( "Expected node to be leaf", Node.isInternal( cursor ) );
-        assertEquals( "Expected node to have no keys", 0, Node.keyCount( cursor ) );
+        node.initializeInternal( cursor );
+        assertTrue( "Expected node to be leaf", node.isInternal( cursor ) );
+        assertEquals( "Expected node to have no keys", 0, node.keyCount( cursor ) );
         assertEquals( "Expected node to have no rightSibling", Node.NO_NODE_FLAG,
-                Node.rightSibling( cursor ) );
+                node.rightSibling( cursor ) );
     }
 
     @Test
@@ -107,12 +111,12 @@ public class NodeTest
         long[] overWrittenKey = new long[]{ 666, 666 };
         long[] key2 = new long[]{ 1, 1 };
         long[] key1 = new long[]{ x, y };
-        Node.setKeyAt( cursor, overWrittenKey, 1 );
-        Node.setKeyAt( cursor, key1, 0 );
-        Node.setKeyAt( cursor, key2, 1 );
+        node.setKeyAt( cursor, overWrittenKey, 1 );
+        node.setKeyAt( cursor, key1, 0 );
+        node.setKeyAt( cursor, key2, 1 );
 
-        long[] foundKey1 = Node.keyAt( cursor, 0 );
-        long[] foundKey2 = Node.keyAt( cursor, 1 );
+        long[] foundKey1 = node.keyAt( cursor, 0 );
+        long[] foundKey2 = node.keyAt( cursor, 1 );
 
         assertTrue( "Expected keys to be equal but key = " + Arrays.toString( key1 ) +
                     ", foundKey = " + Arrays.toString( foundKey1 ),
@@ -128,49 +132,96 @@ public class NodeTest
         long[] overWrittenValue = new long[]{ 666, 666 };
         long[] value2 = new long[]{ 1, 1 };
         long[] value1 = new long[]{ x, y };
-        Node.setKeyAt( cursor, overWrittenValue, 1 );
-        Node.setKeyAt( cursor, value1, 0 );
-        Node.setKeyAt( cursor, value2, 1 );
+        node.setValueAt( cursor, overWrittenValue, 1 );
+        node.setValueAt( cursor, value1, 0 );
+        node.setValueAt( cursor, value2, 1 );
 
-        long[] foundValue1 = Node.valueAt( cursor, 0 );
-        long[] foundValue2 = Node.valueAt( cursor, 1 );
+        long[] foundValue1 = node.valueAt( cursor, 0 );
+        long[] foundValue2 = node.valueAt( cursor, 1 );
 
-        assertTrue( "Expected values to be equal but value = " + Arrays.toString( value1 ) +
-                    ", foundValue = " + Arrays.toString( foundValue1 ),
-                Arrays.equals( value1, foundValue1 ) );
-        assertTrue( "Expected values to be equal but value = " + Arrays.toString( value2 ) +
-                    ", foundValue = " + Arrays.toString( foundValue1 ),
-                Arrays.equals( value2, foundValue2 ) );
+        assertValue( value1, foundValue1 );
+        assertValue( value2, foundValue2);
     }
 
     @Test
-    public void setAndGetKeys()
+    public void setAndGetKeysAndValues()
     {
+        // Write keys and values
         for ( long i = 0; i < 5; i++ )
         {
-            Node.setKeyAt( cursor, new long[]{ i, i }, (int)i );
-            assertKey( new long[]{ i, i }, Node.keyAt( cursor, (int)i ) );
+            node.setKeyAt( cursor, new long[]{ i, i }, (int)i );
+            node.setValueAt( cursor, new long[]{ i, i }, (int)i );
+            assertKey( new long[]{i, i}, node.keyAt( cursor, (int) i ) );
+            assertValue( new long[]{ i, i }, node.valueAt( cursor, (int)i ) );
         }
-        byte[] oldKeys = Node.keysFromTo( cursor, 0, 5 );
-        // Overwrite keys
+        // Read keys
+        byte[] oldKeys = node.keysFromTo( cursor, 0, 5 );
+        byte[] oldValues = node.valuesFromTo( cursor, 0, 5 );
+
+        // Overwrite keys and values
         for ( int i = 0; i < 5; i++ )
         {
-            Node.setKeyAt( cursor, new long[]{ 0, 0 }, i );
-            assertKey( new long[]{ 0,0 }, Node.keyAt( cursor, i ) );
+            node.setKeyAt( cursor, new long[]{ 0, 0 }, i );
+            node.setValueAt( cursor, new long[]{ 0, 0}, i );
+            assertKey( new long[]{ 0,0 }, node.keyAt( cursor, i ) );
+            assertValue( new long[]{ 0,0 }, node.valueAt( cursor, i ) );
         }
 
-        Node.setKeysAt( cursor, oldKeys, 0 );
+        // Reset keys and values
+        node.setKeysAt( cursor, oldKeys, 0 );
+        node.setValuesAt( cursor, oldValues, 0 );
 
+        // Assert
         for ( long i = 0; i < 5; i++ )
         {
-            assertKey( new long[]{ i, i }, Node.keyAt( cursor, (int) i ) );
+            assertKey( new long[]{ i, i }, node.keyAt( cursor, (int) i ) );
+            assertValue( new long[]{i, i}, node.valueAt( cursor, (int) i ) );
         }
     }
 
-    private void assertKey( long[] expected, long[] actual )
+    @Test
+    public void setAndGetChild()
     {
-        assertTrue( "Expected keys to be equal", Arrays.equals( expected, actual ));
+        long overwrite = -1l;
+        long a = 0xDACDAC;
+        long b = 0xACDCADA;
+
+        node.setChildAt( cursor, overwrite, 0 );
+        node.setChildAt( cursor, b, 1 );
+        node.setChildAt( cursor, a, 0 );
+
+        assertChild( a, node.childAt( cursor, 0 ) );
+        assertChild( b, node.childAt( cursor, 1 ) );
     }
 
-    // TODO: Lots to do here. Many new methods added.
+    @Test
+    public void setAndGetChildren()
+    {
+        long childConst = 0xADCDAD;
+        // Write children
+        for ( int i = 0; i < 5; i++ )
+        {
+            long child = i*childConst;
+            node.setChildAt( cursor, child, i );
+            assertChild( child, node.childAt( cursor, i ) );
+        }
+
+        // Read children
+        byte[] data = node.childrenFromTo( cursor, 0, 5 );
+
+        // Overwrite
+        for ( int i = 0; i < 5; i++ )
+        {
+            node.setChildAt( cursor, 0l, i );
+        }
+
+        // Reset children
+        node.setChildrenAt( cursor, data, 0 );
+
+        // Assert
+        for( int i = 0; i < 5; i++ )
+        {
+            assertChild( i*childConst, node.childAt( cursor, i ) );
+        }
+    }
 }
