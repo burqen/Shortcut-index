@@ -129,7 +129,7 @@ public class IndexInsert
 
             throws IOException
     {
-        long newRight = idProvider.acquireNewNode();
+        long newRight = idProvider.acquireNewId();
 
         // First fullNode (left node). Then move on to right node.
 
@@ -290,7 +290,7 @@ public class IndexInsert
         //
 
         long left = cursor.getCurrentPageId();
-        long newRight = idProvider.acquireNewNode();
+        long newRight = idProvider.acquireNewId();
 
         long oldRight = node.rightSibling( cursor );
         node.setRightSibling( cursor, newRight );

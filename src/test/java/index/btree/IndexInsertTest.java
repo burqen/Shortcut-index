@@ -35,7 +35,7 @@ public class IndexInsertTest extends TestUtils
         ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
         node = new Node( pageSize );
         idProvider = new IdPool();
-        long rootId = idProvider.acquireNewNode();
+        long rootId = idProvider.acquireNewId();
         inserter = new IndexInsert( idProvider, node );
         cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
@@ -171,13 +171,6 @@ public class IndexInsertTest extends TestUtils
             assertKey( insertedKeys.get( i + keyCountLeft ), node.keyAt( cursor, i ) );
             assertValue( insertedValues.get( i + keyCountLeft ), node.valueAt( cursor, i ) );
         }
-//        System.out.println( "Key count after insert: " + (maxKeyCount + 1) );
-//        System.out.println( "keyCountLeft = " + keyCountLeft );
-//        System.out.println( "keyCountRight = " + keyCountRight );
-//        cursor.next( split.left );
-//        printKeys( cursor );
-//        cursor.next( split.right );
-//        printKeys( cursor );
     }
 
     @Test
@@ -193,7 +186,7 @@ public class IndexInsertTest extends TestUtils
             if ( split != null )
             {
                 // New root
-                rootId = idProvider.acquireNewNode();
+                rootId = idProvider.acquireNewId();
 
                 cursor.next( rootId );
 

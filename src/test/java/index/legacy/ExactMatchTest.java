@@ -24,7 +24,7 @@ public class ExactMatchTest
     public void setup()
     {
         index = new LegacySCIndex( order, desc );
-        list = new ArrayList();
+        list = new ArrayList<>();
     }
 
     // Utility

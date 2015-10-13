@@ -21,8 +21,6 @@ import index.SCIndexDescription;
 import index.ShortcutIndexProvider;
 import index.legacy.LegacySCIndex;
 import index.SCIndex;
-import index.legacy.TKey;
-import index.legacy.TValue;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -253,6 +251,7 @@ public class BenchmarkMain
         System.out.printf( "OK [index size %d]\n", numberOfInsert );
     }
 
+    @SuppressWarnings( "unused" )
     private void initiateLuceneIndex( GraphDatabaseService graphDb, String label, String prop )
     {
 

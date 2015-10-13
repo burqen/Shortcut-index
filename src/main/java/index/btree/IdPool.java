@@ -12,7 +12,14 @@ public class IdPool implements IdProvider
     {
         freedIds = new LinkedList<>();
     }
-    public long getId()
+
+    public void returnId( long id )
+    {
+        freedIds.offer( id );
+    }
+
+    @Override
+    public long acquireNewId()
     {
         if ( freedIds.isEmpty() )
         {
@@ -22,16 +29,5 @@ public class IdPool implements IdProvider
         {
             return freedIds.poll();
         }
-    }
-
-    public void returnId( long id )
-    {
-        freedIds.offer( id );
-    }
-
-    @Override
-    public long acquireNewNode()
-    {
-        return getId();
     }
 }

@@ -53,7 +53,7 @@ public class Index implements SCIndex, IdProvider
         if ( split != null )
         {
             // New root
-            rootId = idPool.acquireNewNode();
+            rootId = idPool.acquireNewId();
             cursor.next( rootId );
 
             node.initializeInternal( cursor );
@@ -64,8 +64,8 @@ public class Index implements SCIndex, IdProvider
         }
     }
 
-    public long acquireNewNode()
+    public long acquireNewId()
     {
-        return idPool.getId();
+        return idPool.acquireNewId();
     }
 }
