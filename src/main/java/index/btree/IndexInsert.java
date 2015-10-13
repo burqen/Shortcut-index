@@ -40,10 +40,6 @@ public class IndexInsert
             int keyCount = node.keyCount( cursor );
 
             int pos = IndexSearch.search( cursor, node, key );
-            if ( pos == IndexSearch.NO_POS )
-            {
-                pos = keyCount;
-            }
 
             long currentId = cursor.getCurrentPageId();
             cursor.next( node.childAt( cursor, pos ) );
@@ -82,10 +78,6 @@ public class IndexInsert
         {
             // No overflow
             int pos = IndexSearch.search( cursor, node, primKey );
-            if ( pos == IndexSearch.NO_POS )
-            {
-                pos = keyCount;
-            }
 
             // Insert and move keys
             byte[] tmp = node.keysFromTo( cursor, pos, keyCount );
@@ -141,10 +133,6 @@ public class IndexInsert
 
         // Find position to insert new key
         int pos = IndexSearch.search( cursor, node, primKey );
-        if ( pos == IndexSearch.NO_POS )
-        {
-            pos = keyCount;
-        }
 
         // Arrays to temporarily store keys and children in sorted order.
         byte[] allKeysIncludingNewPrimKey = readRecordsWithInsertRecordInPosition( cursor, primKey, pos, keyCount+1,
@@ -236,10 +224,6 @@ public class IndexInsert
         {
             // No overflow, insert key and value
             int pos = IndexSearch.search( cursor, node, key );
-            if ( pos == IndexSearch.NO_POS )
-            {
-                pos = keyCount;
-            }
 
             // Insert and move keys
             byte[] tmp = node.keysFromTo( cursor, pos, keyCount );
@@ -328,10 +312,6 @@ public class IndexInsert
 
         // Position where newKey / newValue is to be inserted
         int pos = IndexSearch.search( cursor, node, newKey );
-        if ( pos == IndexSearch.NO_POS )
-        {
-            pos = keyCount;
-        }
 
         // arrays to temporarily store all keys and values
         byte[] allKeysIncludingNewKey = readRecordsWithInsertRecordInPosition( cursor, newKey, pos,

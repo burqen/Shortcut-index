@@ -11,7 +11,6 @@ import java.util.Collection;
 
 import org.neo4j.io.pagecache.PageCursor;
 
-import static index.btree.IndexSearch.NO_POS;
 import static junit.framework.TestCase.assertEquals;
 
 @RunWith( Parameterized.class )
@@ -28,7 +27,7 @@ public class IndexSearchTest
     {
         long[] key = new long[]{ 1, 1 };
         int pos = IndexSearch.search( cursor, node, key );
-        assertPos( NO_POS, pos );
+        assertPos( 0, pos );
     }
 
     @Test
@@ -49,7 +48,7 @@ public class IndexSearchTest
         node.setKeyAt( cursor, key, 0 );
         node.setKeyCount( cursor, 0 );
         int pos = IndexSearch.search( cursor, node, key );
-        assertPos( NO_POS, pos );
+        assertPos( 0, pos );
     }
 
     @Test
@@ -88,7 +87,7 @@ public class IndexSearchTest
         node.setKeyAt( cursor, key2, 1 );
         node.setKeyCount( cursor, 2 );
         int pos = IndexSearch.search( cursor, node, highest );
-        assertPos( NO_POS, pos );
+        assertPos( 2, pos );
     }
 
     private void assertPos( int expected, int actual )

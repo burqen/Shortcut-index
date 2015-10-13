@@ -7,23 +7,22 @@ import org.neo4j.io.pagecache.PageCursor;
  */
 public class IndexSearch
 {
-    public static final int NO_POS = -1;
-
     /**
      * Leaves cursor on same page as when called. No guaranties on offset.
      *
      * Search for keyAtPos such that key <= keyAtPos. Return first position of keyAtPos (not offset),
-     * or NO_POS if no such key exist.
+     * or key count if no such key exist.
      *
      * On insert, key should be inserted at pos.
-     * On seek in internal, child at pos should be followed from internal node, or last child if pos is NO_POS.
+     * On seek in internal, child at pos should be followed from internal node.
      * On seek in leaf, value at pos is correct if keyAtPos is equal to key.
      *
      * Simple implementation, linear search.
      *
      * //TODO: Implement binary search
      *
-     * @param cursor    {@link PageCursor} attached to page with node (internal or leaf does not matter)
+     * @param cursor    {@link PageCursor} pinned to page with node (internal or leaf does not matter)
+     * @param node      {@link index.btree.Node} to use for node interpretation
      * @param key       long[] of length 2 where key[0] is id and key[1] is property value
      * @return          first position i for which Node.KEY_COMPARATOR.compare( key, Node.keyAt( i ) <= 0;
      */
@@ -35,6 +34,6 @@ public class IndexSearch
         {
             pos++;
         }
-        return pos == keyCount ? NO_POS : pos;
+        return pos;
     }
 }

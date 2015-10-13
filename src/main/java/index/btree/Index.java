@@ -2,8 +2,12 @@ package index.btree;
 
 import index.SCIndex;
 import index.SCIndexDescription;
+import index.legacy.BTSeeker;
+import index.legacy.TResult;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
@@ -43,6 +47,7 @@ public class Index implements SCIndex, IdProvider
         return description;
     }
 
+    @Override
     public void insert( long[] key, long[] value ) throws IOException
     {
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
@@ -62,6 +67,14 @@ public class Index implements SCIndex, IdProvider
             node.setChildAt( cursor, split.left, 0 );
             node.setChildAt( cursor, split.right, 1 );
         }
+    }
+
+    public void seek( Seeker seeker, List<TResult> resultList ) throws IOException
+    {
+        PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
+        cursor.next();
+
+        seeker.seek( cursor, resultList );
     }
 
     public long acquireNewId()
