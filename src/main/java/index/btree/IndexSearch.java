@@ -10,6 +10,8 @@ public class IndexSearch
     public static final int NO_POS = -1;
 
     /**
+     * Leaves cursor on same page as when called. No guaranties on offset.
+     *
      * Search for keyAtPos such that key <= keyAtPos. Return first position of keyAtPos (not offset),
      * or NO_POS if no such key exist.
      *

@@ -31,7 +31,7 @@ public class IndexInsertTest extends TestUtils
     @Before
     public void setup() throws IOException
     {
-        int pageSize = 512;
+        int pageSize = 256;
         ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
         node = new Node( pageSize );
         idProvider = new IdPool();
@@ -183,8 +183,8 @@ public class IndexInsertTest extends TestUtils
     @Test
     public void insertInOrderMultipleSplits() throws IOException
     {
-        long rootId = cursor.getCurrentPageId();
-        for ( int i = 0; i < node.leafMaxKeyCount() * 5; i++ )
+        long rootId;
+        for ( int i = 0; i < node.leafMaxKeyCount() * 10; i++ )
         {
             long[] key = new long[]{ i,i };
             long[] value = new long[]{ i,i };
@@ -192,10 +192,8 @@ public class IndexInsertTest extends TestUtils
 
             if ( split != null )
             {
-                System.out.print( "oldRoot: " + rootId );
                 // New root
                 rootId = idProvider.acquireNewNode();
-                System.out.print( " newRoot: " + rootId + "\n" );
 
                 cursor.next( rootId );
 
@@ -207,13 +205,25 @@ public class IndexInsertTest extends TestUtils
             }
         }
 
+        int level = 0;
+        long id;
         while ( node.isInternal( cursor ) )
         {
-            System.out.println( "At node " + cursor.getCurrentPageId() );
+            System.out.println( "Level " + level++ );
+            id = cursor.getCurrentPageId();
+            printKeysOfSiblings( cursor );
+            System.out.println();
+            cursor.next( id );
             cursor.next( node.childAt( cursor, 0 ) );
         }
 
-        // Cursor now points to first leaf
+        System.out.println( "Level " + level );
+        printKeysOfSiblings( cursor );
+        System.out.println();
+    }
+
+    private void printKeysOfSiblings( PageCursor cursor ) throws IOException
+    {
         while ( true )
         {
             printKeys( cursor );
@@ -229,11 +239,11 @@ public class IndexInsertTest extends TestUtils
     private void printKeys( PageCursor cursor )
     {
         int keyCount = node.keyCount( cursor );
-        System.out.println( "Page id: " + cursor.getCurrentPageId() );
+        System.out.print( "|" );
         for ( int i = 0; i < keyCount; i++ )
         {
-            System.out.println( Arrays.toString( node.keyAt( cursor, i ) ) );
+            System.out.print( Arrays.toString( node.keyAt( cursor, i ) ) + " " );
         }
-        System.out.println();
+        System.out.print( "|" );
     }
 }

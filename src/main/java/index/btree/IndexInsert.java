@@ -1,7 +1,5 @@
 package index.btree;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -23,10 +21,16 @@ public class IndexInsert
         this.node = node;
     }
 
+    /**
+     * Leaves cursor at same page as when called. No guaranties on offset.
+     * @param cursor        {@link org.neo4j.io.pagecache.PageCursor} pinned to page where insertion is to be done.
+     * @param key           key to be inserted
+     * @param value         value to be associated with key
+     * @return              {@link index.btree.SplitResult} from insert to be used caller.
+     * @throws IOException  on cursor failure
+     */
     public SplitResult insert( PageCursor cursor, long[] key, long[] value ) throws IOException
     {
-        // CONTINUE HERE AND SOLVE CURSOR NOT POINTING TO WHAT IS IS SUPPOSED TO POINT AT!!
-        long thisId = cursor.getCurrentPageId();
         if ( node.isLeaf( cursor ) )
         {
             return insertInLeaf( cursor, key, value );
@@ -34,7 +38,6 @@ public class IndexInsert
         else
         {
             int keyCount = node.keyCount( cursor );
-            thisId = cursor.getCurrentPageId();
 
             int pos = IndexSearch.search( cursor, node, key );
             if ( pos == IndexSearch.NO_POS )
@@ -42,23 +45,39 @@ public class IndexInsert
                 pos = keyCount;
             }
 
+            long currentId = cursor.getCurrentPageId();
             cursor.next( node.childAt( cursor, pos ) );
 
             SplitResult split = insert( cursor, key, value );
 
+            cursor.next( currentId );
+
             if ( split != null )
             {
-                return insertInInternal( cursor, thisId, keyCount, split.primKey, split.right );
+                return insertInInternal( cursor, currentId, keyCount, split.primKey, split.right );
             }
         }
         return null;
     }
 
+    /**
+     * Leaves cursor at same page as when called. No guaranties on offset.
+     *
+     * Insertion in internal is always triggered by a split in child.
+     * The result of a split is a primary key that is sent upwards in the b+tree and the newly created right child.
+     *
+     * @param cursor        {@link org.neo4j.io.pagecache.PageCursor} pinned to page containing internal node,
+     *                      current node
+     * @param nodeId        id of current node
+     * @param keyCount      the key count of current node
+     * @param primKey       the primary key to be inserted
+     * @param rightChild    the right child of primKey
+     * @return              {@link index.btree.SplitResult} from insert to be used caller.
+     * @throws IOException  on cursor failure
+     */
     private SplitResult insertInInternal( PageCursor cursor, long nodeId, int keyCount, long[] primKey, long rightChild )
             throws IOException
     {
-        cursor.next( nodeId );
-
         if ( keyCount < node.internalMaxKeyCount() )
         {
             // No overflow
@@ -91,13 +110,28 @@ public class IndexInsert
         }
     }
 
-    private SplitResult splitInternal( PageCursor cursor, long splittingNodeId, long[] primKey, long newRightChild, int keyCount )
+    /**
+     *
+     * Leaves cursor at same page as when called. No guaranties on offset.
+     *
+     * Split in internal node caused by an insertion of primKey and newRightChild
+     *
+     * @param cursor        {@link org.neo4j.io.pagecache.PageCursor} pinned to page containing internal node, fullNode.
+     * @param fullNode      id of node to be split.
+     * @param primKey       primary key to be inserted, causing the split
+     * @param newRightChild right child of primKey
+     * @param keyCount      key count for fullNode
+     * @return              {@link index.btree.SplitResult} from insert to be used caller.
+     * @throws IOException  on cursor failure
+     */
+    private SplitResult splitInternal( PageCursor cursor, long fullNode, long[] primKey, long newRightChild,
+            int keyCount )
 
             throws IOException
     {
         long newRight = idProvider.acquireNewNode();
 
-        // First splitting (left) node. Then move on to right node
+        // First fullNode (left node). Then move on to right node.
 
         // Need old right sibling to set for new right sibling later
         long oldRight = node.rightSibling( cursor );
@@ -115,8 +149,8 @@ public class IndexInsert
         // Arrays to temporarily store keys and children in sorted order.
         byte[] allKeysIncludingNewPrimKey = readRecordsWithInsertRecordInPosition( cursor, primKey, pos, keyCount+1,
                 Node.SIZE_KEY, node.keyOffset( 0 ) );
-        byte[] allChildrenIncludingNewRightChild = readRecordsWithInsertRecordInPosition( cursor, primKey, pos+1,
-                keyCount+2, Node.SIZE_CHILD, node.childOffset( pos+1 ) );
+        byte[] allChildrenIncludingNewRightChild = readRecordsWithInsertRecordInPosition( cursor,
+                new long[]{newRightChild}, pos+1, keyCount+2, Node.SIZE_CHILD, node.childOffset( 0 ) );
 
 
         int keyCountAfterInsert = keyCount + 1;
@@ -154,8 +188,8 @@ public class IndexInsert
         cursor.putBytes( allKeysIncludingNewPrimKey, arrayOffset, allKeysIncludingNewPrimKey.length - arrayOffset );
 
         // Children
-        arrayOffset = (middle + 1) * Node.SIZE_VALUE;
-        cursor.setOffset( node.valueOffset( 0 ) );
+        arrayOffset = (middle + 1) * Node.SIZE_CHILD;
+        cursor.setOffset( node.childOffset( 0 ) );
         cursor.putBytes( allChildrenIncludingNewRightChild, arrayOffset,
                 allChildrenIncludingNewRightChild.length - arrayOffset );
 
@@ -173,12 +207,27 @@ public class IndexInsert
         // Populate split result
         SplitResult split = new SplitResult();
         split.primKey = newPrimKey;
-        split.left = splittingNodeId;
+        split.left = fullNode;
         split.right = newRight;
+
+        // Move cursor back to left
+        cursor.next( fullNode );
 
         return split;
     }
 
+    /**
+     * Leaves cursor at same page as when called. No guaranties on offset.
+     *
+     * Split in leaf node caused by an insertion of key and value
+     *
+     * @param cursor        {@link org.neo4j.io.pagecache.PageCursor} pinned to page containing leaf node targeted for
+     *                      insertion.
+     * @param key           key to be inserted
+     * @param value         value to be associated with key
+     * @return              {@link index.btree.SplitResult} from insert to be used caller.
+     * @throws IOException  on cursor failure
+     */
     private SplitResult insertInLeaf( PageCursor cursor, long[] key, long[] value ) throws IOException
     {
         int keyCount = node.keyCount( cursor );
@@ -215,6 +264,7 @@ public class IndexInsert
     }
 
     /**
+     * Leaves cursor at same page as when called. No guaranties on offset.
      * Cursor is expected to be pointing to full leaf.
      * @param cursor        cursor pointing into full (left) leaf that should be split in two.
      * @param newKey        key to be inserted
@@ -345,28 +395,48 @@ public class IndexInsert
         return split;
     }
 
-    private byte[] readRecordsWithInsertRecordInPosition( PageCursor cursor, long[] newRecord, int pos,
+    /**
+     * Leaves cursor on same page as when called. No guaranties on offset.
+     *
+     * Create a byte[] with totalNumberOfRecords of recordSize from cursor reading from baseRecordOffset
+     * with newRecord inserted in insertPosition, with the following records shifted to the right.
+     *
+     * Simply: Records of size recordSize that can be read from offset baseRecordOffset in page pinned by cursor has
+     * some ordering. This ordering is preserved with new record inserted in insertPosition in the returned byte[],
+     * NOT in the page.
+     *
+     * @param cursor                {@link org.neo4j.io.pagecache.PageCursor} pinned to page to read records from
+     * @param newRecord             new record to be inserted in insertPosition in returned byte[]
+     * @param insertPosition        position of newRecord. 0 being before all other records,
+     *                              (totalNumberOfRecords - 1) being after all other records
+     * @param totalNumberOfRecords  the total number of records to be contained in returned byte[], including newRecord
+     * @param recordSize            the size in number of bytes of one record
+     * @param baseRecordOffset      the offset from where cursor should start read records
+     * @return                      a byte[] with records in same order as read by cursor with newRecord in position
+     *                              insertPosition, that is data[ insertPosition * recordSize ]
+     */
+    private byte[] readRecordsWithInsertRecordInPosition( PageCursor cursor, long[] newRecord, int insertPosition,
             int totalNumberOfRecords, int recordSize, int baseRecordOffset )
     {
         byte[] allRecordsIncludingNewRecord = new byte[(totalNumberOfRecords) * recordSize];
 
         // First read all records
 
-        // Read all records on previous to pos
+        // Read all records on previous to insertPosition
         cursor.setOffset( baseRecordOffset );
-        cursor.getBytes( allRecordsIncludingNewRecord, 0, pos * recordSize );
+        cursor.getBytes( allRecordsIncludingNewRecord, 0, insertPosition * recordSize );
 
         // Read newRecord
-        ByteBuffer buffer = ByteBuffer.wrap( allRecordsIncludingNewRecord, pos * recordSize, recordSize );
+        ByteBuffer buffer = ByteBuffer.wrap( allRecordsIncludingNewRecord, insertPosition * recordSize, recordSize );
         for ( int i = 0; i < newRecord.length; i++ )
         {
             buffer.putLong( newRecord[i] );
         }
 
-        // Read all records following pos
-        cursor.setOffset( baseRecordOffset + pos * recordSize );
-        cursor.getBytes( allRecordsIncludingNewRecord, (pos + 1) * recordSize,
-                ((totalNumberOfRecords - 1) - pos) * recordSize );
+        // Read all records following insertPosition
+        cursor.setOffset( baseRecordOffset + insertPosition * recordSize );
+        cursor.getBytes( allRecordsIncludingNewRecord, (insertPosition + 1) * recordSize,
+                ((totalNumberOfRecords - 1) - insertPosition) * recordSize );
         return allRecordsIncludingNewRecord;
     }
 }
