@@ -1,5 +1,6 @@
 package index.legacy;
 
+import index.SCKey;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -7,15 +8,15 @@ import org.mockito.Mockito;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class InternalBTreeNodeTest
+public class LegacyInternalBTreeNodeTest
 {
     int order = 2;
-    InternalBTreeNode node;
+    LegacyInternalBTreeNode node;
 
     @Before
     public void setUpNode()
     {
-        node = new InternalBTreeNode( order );
+        node = new LegacyInternalBTreeNode( order );
     }
 
     @Test
@@ -23,7 +24,7 @@ public class InternalBTreeNodeTest
     {
         node.setKey( 0, 1, 2 );
 
-        assertTrue( node.getKey( 0 ).equals( new TKey( 1, 2 ) ) );
+        assertTrue( node.getKey( 0 ).equals( new SCKey( 1, 2 ) ) );
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -41,13 +42,13 @@ public class InternalBTreeNodeTest
     @Test
     public void nodeType()
     {
-        assertTrue( node.getNodeType() == BTreeNode.BTreeNodeType.InternalNode );
+        assertTrue( node.getNodeType() == LegacyBTreeNode.BTreeNodeType.InternalNode );
     }
 
     @Test
     public void setAndGetChildrenInsideRange()
     {
-        BTreeNode child = Mockito.mock( BTreeNode.class );
+        LegacyBTreeNode child = Mockito.mock( LegacyBTreeNode.class );
         node.setChild( 0, child );
         assertEquals( child, node.getChild( 0 ) );
     }
@@ -55,7 +56,7 @@ public class InternalBTreeNodeTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void setChildrenOutsideRange()
     {
-        BTreeNode child = Mockito.mock( BTreeNode.class );
+        LegacyBTreeNode child = Mockito.mock( LegacyBTreeNode.class );
         node.setChild( order*2 + 1, child );
     }
 

@@ -1,4 +1,4 @@
-package index.btree;
+package index;
 
 public interface IdProvider
 {

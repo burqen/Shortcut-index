@@ -1,18 +1,21 @@
 package index.legacy;
 
+import index.SCKey;
+import index.SCValue;
+
 import java.io.PrintStream;
 
-public abstract class BTreeNode
+public abstract class LegacyBTreeNode
 {
     public static int KEY_SIZE = 2;
 
     protected final int order;
-    private BTreeNode rightSibling;
-    private InternalBTreeNode parent;
+    private LegacyBTreeNode rightSibling;
+    private LegacyInternalBTreeNode parent;
     protected long[] keys;
     private int keyCount;
 
-    public BTreeNode( int order )
+    public LegacyBTreeNode( int order )
     {
         this.order = order;
         this.keys = new long[order*2*KEY_SIZE];
@@ -20,7 +23,7 @@ public abstract class BTreeNode
 
     public abstract BTreeNodeType getNodeType();
 
-    public abstract void insert( long firstId, long propValue, TValue value );
+    public abstract void insert( long firstId, long propValue, SCValue value );
 
     public abstract int height();
 
@@ -31,13 +34,13 @@ public abstract class BTreeNode
      * It makes sure if a split occurs in root a new root will be created.
      * @return The parent after split
      */
-    protected InternalBTreeNode getParentInMiddleOfSplit()
+    protected LegacyInternalBTreeNode getParentInMiddleOfSplit()
     {
-        InternalBTreeNode parent = getParent();
+        LegacyInternalBTreeNode parent = getParent();
         if ( parent == null )
         {
             // This node is missing parent, this is natural if node is currently root
-            parent = new InternalBTreeNode( order );
+            parent = new LegacyInternalBTreeNode( order );
             parent.setChild( 0, this );
             setParent( parent );
         }
@@ -56,7 +59,7 @@ public abstract class BTreeNode
     public int searchFirstGreaterThanOrEqualTo( long firstId, long propValue )
     {
         int i = 0;
-        while ( i < getKeyCount() && getKey( i ).compareTo( new TKey( firstId, propValue ) ) < 0 )
+        while ( i < getKeyCount() && getKey( i ).compareTo( new SCKey( firstId, propValue ) ) < 0 )
         {
             i++;
         }
@@ -77,9 +80,9 @@ public abstract class BTreeNode
         return replaced;
     }
 
-    public static TKey replaceKey( int pos, long[] keys, long firstId, long propValue )
+    public static SCKey replaceKey( int pos, long[] keys, long firstId, long propValue )
     {
-        TKey replaced = new TKey( keys[pos*KEY_SIZE], keys[pos*KEY_SIZE+1] );
+        SCKey replaced = new SCKey( keys[pos*KEY_SIZE], keys[pos*KEY_SIZE+1] );
         keys[pos*KEY_SIZE] = firstId;
         keys[pos*KEY_SIZE+1] = propValue;
         return replaced;
@@ -159,7 +162,7 @@ public abstract class BTreeNode
      * @param right     Contains the right most elements after split
      * @param overflow  Overflowing element is right most element
      */
-    public static void splitKeys( long[] left, long[] right, TKey overflow )
+    public static void splitKeys( long[] left, long[] right, SCKey overflow )
     {
 
         if ( left.length != right.length )
@@ -215,9 +218,9 @@ public abstract class BTreeNode
         keys[i* KEY_SIZE +1] = propValue;
     }
 
-    public TKey getKey( int i )
+    public SCKey getKey( int i )
     {
-        return new TKey( keys[i* KEY_SIZE], keys[i* KEY_SIZE +1]);
+        return new SCKey( keys[i* KEY_SIZE], keys[i* KEY_SIZE +1]);
     }
 
     public int getKeyCount()
@@ -225,22 +228,22 @@ public abstract class BTreeNode
         return keyCount;
     }
 
-    public InternalBTreeNode getParent()
+    public LegacyInternalBTreeNode getParent()
     {
         return parent;
     }
 
-    public void setParent( InternalBTreeNode parent )
+    public void setParent( LegacyInternalBTreeNode parent )
     {
         this.parent = parent;
     }
 
-    public void setRightSibling( BTreeNode rightSibling )
+    public void setRightSibling( LegacyBTreeNode rightSibling )
     {
         this.rightSibling = rightSibling;
     }
 
-    public BTreeNode getRightSibling()
+    public LegacyBTreeNode getRightSibling()
     {
         return rightSibling;
     }
@@ -255,7 +258,7 @@ public abstract class BTreeNode
 
         out.print( "| " );
 
-        BTreeNode sibling = getRightSibling();
+        LegacyBTreeNode sibling = getRightSibling();
         if ( sibling != null )
         {
             sibling.printKeys( out );

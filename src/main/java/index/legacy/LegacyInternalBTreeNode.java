@@ -1,23 +1,26 @@
 package index.legacy;
 
+import index.SCKey;
+import index.SCValue;
+
 import java.io.PrintStream;
 
-public class InternalBTreeNode extends BTreeNode
+public class LegacyInternalBTreeNode extends LegacyBTreeNode
 {
-    private BTreeNode[] children;
+    private LegacyBTreeNode[] children;
 
-    public InternalBTreeNode( int order )
+    public LegacyInternalBTreeNode( int order )
     {
         super( order );
-        children = new BTreeNode[order*2 + 1];
+        children = new LegacyBTreeNode[order*2 + 1];
     }
 
-    public void setChild( int i, BTreeNode child )
+    public void setChild( int i, LegacyBTreeNode child )
     {
         children[i] = child;
     }
 
-    public BTreeNode getChild( int i )
+    public LegacyBTreeNode getChild( int i )
     {
         return children[i];
     }
@@ -29,7 +32,7 @@ public class InternalBTreeNode extends BTreeNode
     }
 
     @Override
-    public void insert( long firstId, long propValue, TValue value )
+    public void insert( long firstId, long propValue, SCValue value )
     {
         children[searchFirstGreaterThanOrEqualTo( firstId, propValue )].insert( firstId, propValue, value );
     }
@@ -60,7 +63,7 @@ public class InternalBTreeNode extends BTreeNode
      * @param rightChild    Right child after split in child, to be added as child in this internal node.
      * @param key           Key sent from child after split.
      */
-    public void splitInChild( BTreeNode rightChild, TKey key )
+    public void splitInChild( LegacyBTreeNode rightChild, SCKey key )
     {
         int pos = searchFirstGreaterThanOrEqualTo( key.getId(), key.getProp() );
         int keyCount = getKeyCount();
@@ -83,13 +86,13 @@ public class InternalBTreeNode extends BTreeNode
         }
     }
 
-    private void splitInternalNode( TKey newKey, BTreeNode newChild, int pos )
+    private void splitInternalNode( SCKey newKey, LegacyBTreeNode newChild, int pos )
     {
-        InternalBTreeNode rightInternalNode = new InternalBTreeNode( order );
+        LegacyInternalBTreeNode rightInternalNode = new LegacyInternalBTreeNode( order );
 
         // Identify middle key, extract it and insert new key in correct order
 
-        TKey middleKey;
+        SCKey middleKey;
         if ( pos == order )
         {
             // key is middle
@@ -143,7 +146,7 @@ public class InternalBTreeNode extends BTreeNode
             rightInternalNode.children[i].setParent( rightInternalNode );
         }
 
-        InternalBTreeNode parent = getParentInMiddleOfSplit();
+        LegacyInternalBTreeNode parent = getParentInMiddleOfSplit();
 
         // Set parent
         rightInternalNode.setParent( parent );

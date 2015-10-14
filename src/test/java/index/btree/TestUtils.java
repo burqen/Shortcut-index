@@ -1,6 +1,9 @@
 package index.btree;
 
+import java.io.IOException;
 import java.util.Arrays;
+
+import org.neo4j.io.pagecache.PageCursor;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -34,4 +37,11 @@ public class TestUtils
     {
         assertEquals( "Expected right sibling to be " + expected + " but was " + actual, expected, actual );
     }
+
+    protected long[] key( long id, long prop )
+    {
+        return new long[]{ id, prop };
+    }
+
+
 }

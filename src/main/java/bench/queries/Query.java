@@ -3,6 +3,8 @@ package bench.queries;
 import bench.QueryType;
 import bench.Measurement;
 
+import java.io.IOException;
+
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
@@ -29,7 +31,7 @@ public abstract class Query
 
     public abstract void runQuery( ThreadToStatementContextBridge threadToStatementContextBridge,
             GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
-            throws EntityNotFoundException;
+            throws EntityNotFoundException, IOException;
 
     public abstract QueryType type();
 }

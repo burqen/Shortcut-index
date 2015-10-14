@@ -1,5 +1,7 @@
 package index.btree;
 
+import index.IdProvider;
+
 import java.util.LinkedList;
 import java.util.Queue;
 

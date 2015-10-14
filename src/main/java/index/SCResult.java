@@ -1,22 +1,22 @@
-package index.legacy;
+package index;
 
-public class TResult
+public class SCResult
 {
-    private final TKey key;
-    private final TValue value;
+    private final SCKey key;
+    private final SCValue value;
 
-    public TResult( TKey key, TValue value )
+    public SCResult( SCKey key, SCValue value )
     {
         this.key = key;
         this.value = value;
     }
 
-    public TKey getKey()
+    public SCKey getKey()
     {
         return key;
     }
 
-    public TValue getValue()
+    public SCValue getValue()
     {
         return value;
     }
@@ -30,12 +30,18 @@ public class TResult
     @Override
     public boolean equals( Object obj )
     {
-        if ( !( obj instanceof TResult ) )
+        if ( !( obj instanceof SCResult) )
             return false;
         if ( obj == this )
             return true;
 
-        TResult rhs = (TResult) obj;
+        SCResult rhs = (SCResult) obj;
         return this.getKey().equals( rhs.getKey() ) && getValue().equals( rhs.getValue() );
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.format( "(%d,%d):(%d,%d)", key.getId(), key.getProp(), value.getRelId(), value.getNodeId() );
     }
 }

@@ -3,7 +3,7 @@ package bench.queries.framework;
 import bench.QueryType;
 import bench.Measurement;
 import bench.queries.Query;
-import index.legacy.TResult;
+import index.SCResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,12 +33,12 @@ public abstract class QueryKernel extends Query
     protected abstract PrimitiveLongIterator startingPoints(
             ReadOperations operations, long[] inputData, int firstLabel ) throws EntityNotFoundException;
 
-    protected abstract boolean filterResultRow( TResult resultRow );
+    protected abstract boolean filterResultRow( SCResult resultRow );
 
     protected abstract void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
             long startPoint,
             int relType, int secondLabel,
-            int propKey, List<TResult> resultList );
+            int propKey, List<SCResult> resultList );
 
 
     @Override
@@ -47,7 +47,7 @@ public abstract class QueryKernel extends Query
             throws EntityNotFoundException
     {
         long start = System.nanoTime();
-        List<TResult> resultList;
+        List<SCResult> resultList;
         try ( Transaction tx = graphDb.beginTx() )
         {
             ReadOperations readOperations = threadToStatementContextBridge.get().readOperations();
@@ -61,7 +61,7 @@ public abstract class QueryKernel extends Query
         reportResult( resultList );
     }
 
-    protected List<TResult> doRunQuery(
+    protected List<SCResult> doRunQuery(
             ReadOperations operations, Measurement measurement, long[] inputData ) throws EntityNotFoundException
     {
         int firstLabel = operations.labelGetForName( firstLabel() );
@@ -69,7 +69,7 @@ public abstract class QueryKernel extends Query
         int secondLabel = operations.labelGetForName( secondLabel() );
         int propKey = operations.propertyKeyGetForName( propKey() );
 
-        List<TResult> resultList = new ArrayList<>();
+        List<SCResult> resultList = new ArrayList<>();
 
         PrimitiveLongIterator startingPoints = startingPoints( operations, inputData, firstLabel );
 
@@ -85,12 +85,12 @@ public abstract class QueryKernel extends Query
         return resultList;
     }
 
-    protected void reportResult( List<TResult> resultList )
+    protected void reportResult( List<SCResult> resultList )
     {
         // Do nothing here as default
     }
 
-    protected void massageRawResult( List<TResult> resultList )
+    protected void massageRawResult( List<SCResult> resultList )
     {
         // Do nothing here as default
     }

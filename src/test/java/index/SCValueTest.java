@@ -1,19 +1,20 @@
-package index.legacy;
+package index;
 
+import index.SCValue;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class TValueTest
+public class SCValueTest
 {
     @Test
     public void equalsAndHash()
     {
-        TValue key = new TValue( 1, 1l );
-        TValue same = new TValue( 1, 1l );
-        TValue similarId = new TValue( 1, 2l );
-        TValue similarProp = new TValue( 2, 1l );
+        SCValue key = new SCValue( 1, 1l );
+        SCValue same = new SCValue( 1, 1l );
+        SCValue similarId = new SCValue( 1, 2l );
+        SCValue similarProp = new SCValue( 2, 1l );
 
         assertTrue( key.equals( same ) );
         assertTrue( key.hashCode() == same.hashCode() );

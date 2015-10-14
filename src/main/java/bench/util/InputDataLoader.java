@@ -20,7 +20,7 @@ public class InputDataLoader
 {
     public static char csvSeparator = '|';
 
-    public List<long[]> load( String dataFileName, String[] expectedHeader ) throws FileNotFoundException
+    public List<long[]> load( String dataFileName, String[] expectedHeader, int inputSize ) throws FileNotFoundException
     {
         List<long[]> inputData = new ArrayList<>();
         if ( !dataFileName.equals( NO_INPUT ) )
@@ -39,7 +39,7 @@ public class InputDataLoader
 
                 // Ready to read input
                 int count = 0;
-                while ( (line = csvReader.readNext()) != null && count++ < Config.NUMBER_OF_QUERY_REPETITIONS )
+                while ( (line = csvReader.readNext()) != null && count++ < inputSize )
                 {
                     long[] input = new long[line.length];
                     for ( int i = 0; i < line.length; i++ )

@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
 import bench.queries.impl.description.Query3Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.legacy.TResult;
+import index.SCResult;
 
 import java.util.Collections;
 import java.util.List;
@@ -74,13 +74,13 @@ public class Query3Kernel extends QueryKernelWithPropertyOnRelationship
     }
 
     @Override
-    protected boolean filterResultRow( TResult resultRow )
+    protected boolean filterResultRow( SCResult resultRow )
     {
         return false;
     }
 
     @Override
-    protected void massageRawResult( List<TResult> resultList )
+    protected void massageRawResult( List<SCResult> resultList )
     {
         Collections.sort( resultList, (o1, o2) -> -1 * o1.getKey().compareTo( o2.getKey() ) );
     }

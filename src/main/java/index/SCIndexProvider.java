@@ -1,17 +1,15 @@
 package index;
 
-import index.legacy.LegacySCIndex;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.graphdb.Direction;
 
-public class ShortcutIndexProvider
+public class SCIndexProvider
 {
-    Map<SCIndexDescription,LegacySCIndex> indexes;
+    Map<SCIndexDescription,SCIndex> indexes;
 
-    public ShortcutIndexProvider()
+    public SCIndexProvider()
     {
         indexes = new HashMap<>();
     }
@@ -26,12 +24,12 @@ public class ShortcutIndexProvider
         return get( new SCIndexDescription( firstLabel, secondLabel, relationshipType,
                 direction, relationshipPropertyKey, nodePropertyKey ) );
     }
-    public LegacySCIndex get( SCIndexDescription description )
+    public SCIndex get( SCIndexDescription description )
     {
         return indexes.get( description );
     }
 
-    public void put( LegacySCIndex index )
+    public void put( SCIndex index )
     {
         indexes.put( index.getDescription(), index );
     }

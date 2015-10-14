@@ -4,12 +4,14 @@ import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
 import bench.queries.impl.description.Query2Description;
+import index.SCIndex;
 import index.SCIndexDescription;
-import index.legacy.LegacySCIndex;
-import index.legacy.RangeSeeker;
-import index.ShortcutIndexProvider;
-import index.legacy.TResult;
+import index.SCIndexProvider;
+import index.SCResult;
+import index.btree.RangePredicate;
+import index.btree.RangeSeeker;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,15 +25,16 @@ public class Query2Shortcut extends QueryShortcut
     public static SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
             "COMMENT_HAS_CREATOR", Direction.INCOMING, null, "creationDate" );
 
-    public Query2Shortcut( ShortcutIndexProvider indexes )
+    public Query2Shortcut( SCIndexProvider indexes )
     {
         super( indexes );
     }
 
     @Override
-    protected List<TResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
+    protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
+            throws IOException
     {
-        List<TResult> indexSeekResult = new ArrayList<>();
+        List<SCResult> indexSeekResult = new ArrayList<>();
         try
         {
             int firstLabel = operations.labelGetForName( indexDescription.firstLabel );
@@ -45,14 +48,15 @@ public class Query2Shortcut extends QueryShortcut
                         "Use correct input file." );
             }
 
-            LegacySCIndex index = indexes.get( indexDescription );
+            SCIndex index = indexes.get( indexDescription );
 
-            index.seek( new RangeSeeker( start, null, null ), indexSeekResult );
+            index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.noLimit( start ) ),
+                    indexSeekResult );
 
-            Iterator<TResult> resultIterator = indexSeekResult.iterator();
+            Iterator<SCResult> resultIterator = indexSeekResult.iterator();
             while ( resultIterator.hasNext() )
             {
-                TResult result = resultIterator.next();
+                SCResult result = resultIterator.next();
                 if ( filterResultRow( result ) )
                 {
                     resultIterator.remove();
@@ -68,7 +72,7 @@ public class Query2Shortcut extends QueryShortcut
     }
 
     @Override
-    protected boolean filterResultRow( TResult resultRow )
+    protected boolean filterResultRow( SCResult resultRow )
     {
         return false;
     }

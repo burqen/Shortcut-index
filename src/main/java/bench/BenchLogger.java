@@ -9,7 +9,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-public class BenchLogger
+public class BenchLogger implements Logger
 {
     private SortedMap<String, ResultRow> resultsToReport;
     private final PrintStream out;
@@ -111,5 +111,4 @@ public class BenchLogger
         }
         logStrategy.footer( out );
     }
-
 }

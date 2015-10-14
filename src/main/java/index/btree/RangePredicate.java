@@ -25,6 +25,15 @@ public interface RangePredicate
     }
 
     /**
+     * No demands. Useful for scans.
+     * @return      A new {@link index.btree.RangePredicate} that have no demands
+     */
+    public static RangePredicate acceptAll()
+    {
+        return key -> 0;
+    }
+
+    /**
      * Demands match on id and property val to be lower than prop
      * @param id    id to match
      * @param prop  property value to be lower than
@@ -101,6 +110,20 @@ public interface RangePredicate
             {
                 return key[0] < id ? -1 : 1;
             }
+        };
+    }
+
+    /**
+     * Demands match on id and property val
+     * @param id    id to match
+     * @param prop  property value to be equal to
+     * @return      A new {@link RangePredicate} representing an equal to limit
+     */
+    public static RangePredicate equalTo( long id, long prop )
+    {
+        return key -> {
+            int sign = (int) Math.signum( key[0] - id );
+            return sign == 0 ? (int) Math.signum( key[1] - prop ) : sign;
         };
     }
 }

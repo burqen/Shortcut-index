@@ -1,9 +1,9 @@
 package bench.queries.framework;
 
 import bench.Measurement;
-import index.legacy.TKey;
-import index.legacy.TResult;
-import index.legacy.TValue;
+import index.SCKey;
+import index.SCResult;
+import index.SCValue;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public abstract class QueryKernelWithPropertyOnRelationship extends QueryKernel
 
     @Override
     protected void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
-            long startPoint, int relType, int secondLabel, int propKey, List<TResult> resultList )
+            long startPoint, int relType, int secondLabel, int propKey, List<SCResult> resultList )
     {
 
         try
@@ -47,8 +47,8 @@ public abstract class QueryKernelWithPropertyOnRelationship extends QueryKernel
                 long otherNode = startPoint == extractor.startNode() ? extractor.endNode() : extractor.startNode();
                 if ( operations.nodeHasLabel( otherNode, secondLabel ) )
                 {
-                    TResult result = new TResult(
-                            new TKey( startPoint, prop ), new TValue( relationship, otherNode ) );
+                    SCResult result = new SCResult(
+                            new SCKey( startPoint, prop ), new SCValue( relationship, otherNode ) );
                     if ( !filterResultRow( result ) )
                     {
                         // Valid result. Report

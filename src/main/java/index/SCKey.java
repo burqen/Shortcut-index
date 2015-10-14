@@ -1,13 +1,13 @@
-package index.legacy;
+package index;
 
 import java.util.Objects;
 
-public class TKey implements Comparable<TKey>
+public class SCKey implements Comparable<SCKey>
 {
     private long id;
     private long prop;
 
-    public TKey( long id, long prop )
+    public SCKey( long id, long prop )
     {
         this.id = id;
         this.prop = prop;
@@ -24,7 +24,7 @@ public class TKey implements Comparable<TKey>
     }
 
     @Override
-    public int compareTo( TKey o )
+    public int compareTo( SCKey o )
     {
         Objects.requireNonNull( o );
         return id == o.id ? Long.compare( prop, o.prop ) : Long.compare( id, o.id );
@@ -37,12 +37,12 @@ public class TKey implements Comparable<TKey>
 
     @Override
     public boolean equals( Object obj ) {
-        if ( !( obj instanceof TKey ) )
+        if ( !( obj instanceof SCKey) )
             return false;
         if ( obj == this )
             return true;
 
-        TKey rhs = (TKey) obj;
+        SCKey rhs = (SCKey) obj;
         return this.compareTo( rhs ) == 0;
     }
 

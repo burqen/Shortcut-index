@@ -1,5 +1,7 @@
 package index.btree;
 
+import index.IdProvider;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 

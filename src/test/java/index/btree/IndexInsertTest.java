@@ -1,5 +1,6 @@
 package index.btree;
 
+import index.IdProvider;
 import index.storage.ByteArrayPageCursor;
 import index.storage.ByteArrayPagedFile;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import org.neo4j.io.pagecache.PagedFile;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class IndexInsertTest extends TestUtils
 {
@@ -198,28 +200,33 @@ public class IndexInsertTest extends TestUtils
             }
         }
 
+        // Check consistency on every level
+        checkKeyConsistencyFromRoot( cursor, node );
+    }
+
+    private void checkKeyConsistencyFromRoot( PageCursor cursor, Node node ) throws IOException
+    {
         int level = 0;
         long id;
         while ( node.isInternal( cursor ) )
         {
             System.out.println( "Level " + level++ );
             id = cursor.getCurrentPageId();
-            printKeysOfSiblings( cursor );
-            System.out.println();
+            checkKeyConsistencyOnLevel( cursor, node, level );
             cursor.next( id );
             cursor.next( node.childAt( cursor, 0 ) );
         }
 
         System.out.println( "Level " + level );
-        printKeysOfSiblings( cursor );
-        System.out.println();
+        checkKeyConsistencyOnLevel( cursor, node, level );
     }
 
-    private void printKeysOfSiblings( PageCursor cursor ) throws IOException
+    private void checkKeyConsistencyOnLevel( PageCursor cursor, Node node, int level ) throws IOException
     {
+        long[] lastKey = null;
         while ( true )
         {
-            printKeys( cursor );
+            lastKey = checkKeyConsistencyInNode( cursor, node, lastKey, level );
             long rightSibling = node.rightSibling( cursor );
             if ( rightSibling == Node.NO_NODE_FLAG )
             {
@@ -229,14 +236,20 @@ public class IndexInsertTest extends TestUtils
         }
     }
 
-    private void printKeys( PageCursor cursor )
+    private long[] checkKeyConsistencyInNode( PageCursor cursor, Node node, long[] lastKey, int level )
     {
         int keyCount = node.keyCount( cursor );
-        System.out.print( "|" );
         for ( int i = 0; i < keyCount; i++ )
         {
-            System.out.print( Arrays.toString( node.keyAt( cursor, i ) ) + " " );
+            long[] key = node.keyAt( cursor, i );
+            if ( lastKey != null )
+            {
+                assertTrue( "Expected keys to be in order, but lastKey was " + Arrays.toString( lastKey ) +
+                            " and key was " + Arrays.toString( key ) + " on level " + level,
+                        Node.KEY_COMPARATOR.compare( lastKey, key ) <= 0 );
+            }
+            lastKey = key;
         }
-        System.out.print( "|" );
+        return lastKey;
     }
 }

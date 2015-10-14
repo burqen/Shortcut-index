@@ -1,12 +1,13 @@
 package index.btree;
 
+import index.IdProvider;
 import index.SCIndex;
 import index.SCIndexDescription;
-import index.legacy.BTSeeker;
-import index.legacy.TResult;
+import index.SCResult;
+import index.Seeker;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.neo4j.io.pagecache.PageCursor;
@@ -23,17 +24,13 @@ public class Index implements SCIndex, IdProvider
 
     public Index( PagedFile pagedFile, SCIndexDescription description ) throws IOException
     {
-        this( pagedFile, description, 0 );
-    }
-
-    public Index( PagedFile pagedFile, SCIndexDescription description, int rootId ) throws IOException
-    {
         this.pagedFile = pagedFile;
         this.description = description;
-        this.rootId = rootId;
+        this.idPool = new IdPool();
+        this.rootId = this.idPool.acquireNewId();
         this.node = new Node( pagedFile.pageSize() );
         this.inserter = new IndexInsert( this, node );
-        this.idPool = new IdPool();
+
 
         // Initialize index root node to a leaf node. This should be changed when moving to persistent index.
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
@@ -69,16 +66,63 @@ public class Index implements SCIndex, IdProvider
         }
     }
 
-    public void seek( Seeker seeker, List<TResult> resultList ) throws IOException
+    public void seek( Seeker seeker, List<SCResult> resultList ) throws IOException
     {
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
 
-        seeker.seek( cursor, resultList );
+        seeker.seek( cursor, node, resultList );
     }
 
     public long acquireNewId()
     {
         return idPool.acquireNewId();
+    }
+
+    public void printTree() throws IOException
+    {
+        PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_SHARED_LOCK );
+        cursor.next();
+
+        int level = 0;
+        long id;
+        while ( node.isInternal( cursor ) )
+        {
+            System.out.println( "Level " + level++ );
+            id = cursor.getCurrentPageId();
+            printKeysOfSiblings( cursor, node );
+            System.out.println();
+            cursor.next( id );
+            cursor.next( node.childAt( cursor, 0 ) );
+        }
+
+        System.out.println( "Level " + level );
+        printKeysOfSiblings( cursor, node );
+        System.out.println();
+    }
+
+    protected static void printKeysOfSiblings( PageCursor cursor, Node node ) throws IOException
+    {
+        while ( true )
+        {
+            printKeys( cursor, node );
+            long rightSibling = node.rightSibling( cursor );
+            if ( rightSibling == Node.NO_NODE_FLAG )
+            {
+                break;
+            }
+            cursor.next( rightSibling );
+        }
+    }
+
+    protected static void printKeys( PageCursor cursor, Node node )
+    {
+        int keyCount = node.keyCount( cursor );
+        System.out.print( "|" );
+        for ( int i = 0; i < keyCount; i++ )
+        {
+            System.out.print( Arrays.toString( node.keyAt( cursor, i ) ) + " " );
+        }
+        System.out.print( "|" );
     }
 }

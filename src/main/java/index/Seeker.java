@@ -1,6 +1,6 @@
-package index.btree;
+package index;
 
-import index.legacy.TResult;
+import index.btree.Node;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,26 +15,20 @@ public interface Seeker
      * @param resultList    {@link java.util.List} where found results will be stored
      * @throws IOException  on cursor failure
      */
-    void seek( PageCursor cursor, List<TResult> resultList ) throws IOException;
+    void seek( PageCursor cursor, Node node, List<SCResult> resultList ) throws IOException;
 
     public abstract class CommonSeeker implements Seeker
     {
-        protected Node node;
 
-        public CommonSeeker( Node node )
-        {
-            this.node = node;
-        }
-
-        public void seek( PageCursor cursor, List<TResult> resultList ) throws IOException
+        public void seek( PageCursor cursor, Node node, List<SCResult> resultList ) throws IOException
         {
             if ( node.isInternal( cursor ) )
             {
-                seekInternal( cursor, resultList );
+                seekInternal( cursor, node, resultList );
             }
             else if ( node.isLeaf( cursor ) )
             {
-                seekLeaf( cursor, resultList );
+                seekLeaf( cursor, node, resultList );
             }
             else
             {
@@ -42,8 +36,8 @@ public interface Seeker
             }
         }
 
-        protected abstract void seekLeaf( PageCursor cursor, List<TResult> resultList ) throws IOException;
+        protected abstract void seekLeaf( PageCursor cursor, Node node, List<SCResult> resultList ) throws IOException;
 
-        protected abstract void seekInternal( PageCursor cursor, List<TResult> resultList ) throws IOException;
+        protected abstract void seekInternal( PageCursor cursor, Node node, List<SCResult> resultList ) throws IOException;
     }
 }

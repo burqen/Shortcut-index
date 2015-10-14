@@ -1,23 +1,26 @@
 package index.legacy;
 
+import index.SCKey;
+import index.SCResult;
+
 import java.util.List;
 
-public class ExactMatchSeeker extends BTSeeker.CommonSeeker
+public class LegacyExactMatchSeeker extends LegacyBTSeeker.LegacyCommonSeeker
 {
-    private final TKey matchKey;
+    private final SCKey matchKey;
 
-    public ExactMatchSeeker( TKey matchKey )
+    public LegacyExactMatchSeeker( SCKey matchKey )
     {
         this.matchKey = matchKey;
     }
 
-    protected void seekInternal( InternalBTreeNode internal, List<TResult> resultList )
+    protected void seekInternal( LegacyInternalBTreeNode internal, List<SCResult> resultList )
     {
-        BTreeNode child = null;
+        LegacyBTreeNode child = null;
 
         for ( int i = 0; i < internal.getKeyCount(); i++ )
         {
-            TKey key = internal.getKey( i );
+            SCKey key = internal.getKey( i );
             if ( key.compareTo( matchKey ) > 0 )
             {
                 child = internal.getChild( i );
@@ -32,21 +35,21 @@ public class ExactMatchSeeker extends BTSeeker.CommonSeeker
         seek( child, resultList );
     }
 
-    protected void seekLeaf( LeafBTreeNode leaf, List<TResult> resultList )
+    protected void seekLeaf( LegacyLeafBTreeNode leaf, List<SCResult> resultList )
     {
         for ( int i = 0; i < leaf.getKeyCount(); i++ )
         {
-            TKey key = leaf.getKey( i );
+            SCKey key = leaf.getKey( i );
             if ( key.compareTo( matchKey ) == 0 )
             {
-                resultList.add( new TResult( key, leaf.getValue( i ) ) );
+                resultList.add( new SCResult( key, leaf.getValue( i ) ) );
             }
             else if ( key.compareTo( matchKey ) > 0 )
             {
                 return;
             }
         }
-        LeafBTreeNode rightSibling = (LeafBTreeNode)leaf.getRightSibling();
+        LegacyLeafBTreeNode rightSibling = (LegacyLeafBTreeNode)leaf.getRightSibling();
         if ( rightSibling != null )
         {
             seekLeaf( rightSibling, resultList );

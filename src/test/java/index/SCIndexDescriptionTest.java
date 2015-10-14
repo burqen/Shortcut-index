@@ -1,4 +1,4 @@
-package index.legacy;
+package index;
 
 import index.SCIndexDescription;
 import org.junit.Test;

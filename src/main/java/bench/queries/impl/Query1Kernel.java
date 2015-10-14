@@ -3,7 +3,7 @@ package bench.queries.impl;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query1Description;
-import index.legacy.TResult;
+import index.SCResult;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -29,7 +29,7 @@ public class Query1Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    protected boolean filterResultRow( TResult resultRow )
+    protected boolean filterResultRow( SCResult resultRow )
     {
         return false;
     }

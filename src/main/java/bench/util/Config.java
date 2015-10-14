@@ -28,5 +28,5 @@ public class Config
 
     public static final int MAX_NUMBER_OF_QUERY_REPETITIONS = 10000;
 
-    public static final int NUMBER_OF_QUERY_REPETITIONS = 10;
+    public static final int NUMBER_OF_QUERY_REPETITIONS = 10000;
 }

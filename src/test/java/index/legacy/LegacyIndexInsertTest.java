@@ -1,6 +1,8 @@
 package index.legacy;
 
 import index.SCIndexDescription;
+import index.SCKey;
+import index.SCValue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -10,10 +12,10 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class SCIndexInsertTest
+public class LegacyIndexInsertTest
 {
     int order = 2;
-    LegacySCIndex index;
+    LegacyIndex index;
     Random rng = new Random();
     @Mock
     SCIndexDescription desc;
@@ -21,7 +23,7 @@ public class SCIndexInsertTest
     @Before
     public void setUpIndexClass()
     {
-        index = new LegacySCIndex( order, desc );
+        index = new LegacyIndex( order, desc );
 
     }
 
@@ -36,10 +38,10 @@ public class SCIndexInsertTest
     public void insertsInOrder()
     {
         int numberOfKeys = 100;
-        TKey[] keys = new TKey[numberOfKeys];
+        SCKey[] keys = new SCKey[numberOfKeys];
         for ( int i = 0; i < numberOfKeys; i++ )
         {
-            keys[i] = new TKey( i, i );
+            keys[i] = new SCKey( i, i );
             index.insert( keys[i], randomValue() );
         }
         index.printTree( System.out );
@@ -53,7 +55,7 @@ public class SCIndexInsertTest
         for ( int i = 0; i < numberOfKeys; i++ )
         {
             int key = rng.nextInt( 1000 );
-            index.insert( new TKey( key, key ), randomValue() );
+            index.insert( new SCKey( key, key ), randomValue() );
         }
         index.printTree( System.out );
     }
@@ -75,7 +77,7 @@ public class SCIndexInsertTest
     public void height()
     {
         int order = 2;
-        index = new LegacySCIndex( order, desc );
+        index = new LegacyIndex( order, desc );
 
         int maxNumberOfKeys;
         for ( int i = 0; i < 1000; i++ )
@@ -88,14 +90,14 @@ public class SCIndexInsertTest
 
     }
 
-    private TKey randomKey()
+    private SCKey randomKey()
     {
-        return new TKey( rng.nextLong(), rng.nextLong() );
+        return new SCKey( rng.nextLong(), rng.nextLong() );
     }
 
-    private TValue randomValue()
+    private SCValue randomValue()
     {
-        return new TValue( rng.nextLong(), rng.nextLong() );
+        return new SCValue( rng.nextLong(), rng.nextLong() );
     }
 
     private int maxNumberOfKeys( int order, int height )

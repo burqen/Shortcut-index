@@ -9,12 +9,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static index.btree.RangePredicate.acceptAll;
+import static index.btree.RangePredicate.equalTo;
+import static index.btree.RangePredicate.greater;
+import static index.btree.RangePredicate.greaterOrEqual;
+import static index.btree.RangePredicate.lower;
+import static index.btree.RangePredicate.lowerOrEqual;
+import static index.btree.RangePredicate.noLimit;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.Long.MIN_VALUE;
 import static org.junit.Assert.assertTrue;
 
 @RunWith( Parameterized.class )
-public class RangePredicateTest
+public class RangePredicateTest extends TestUtils
 {
     private RangePredicate pred;
     private int firstPos;
@@ -42,11 +49,6 @@ public class RangePredicateTest
         keys.add( key( 2, MAX_VALUE ) );
     }
 
-    private long[] key( long id, long prop )
-    {
-        return new long[]{ id, prop };
-    }
-
     @Test
     public void predicateGiveCorrectInRange()
     {
@@ -70,22 +72,28 @@ public class RangePredicateTest
     }
 
     @Parameterized.Parameters
-    public static List<Object[]> loggers() {
+    public static List<Object[]> rangePredicates() {
         return Arrays.asList( new Object[][]{
                 {
-                        RangePredicate.noLimit( 1 ), 5, 10
+                        noLimit( 1 ), 5, 10
                 },
                 {
-                        RangePredicate.lower( 1, 1 ), 5, 8
+                        lower( 1, 1 ), 5, 8
                 },
                 {
-                        RangePredicate.lowerOrEqual( 1, 1 ), 5, 9
+                        lowerOrEqual( 1, 1 ), 5, 9
                 },
                 {
-                        RangePredicate.greater( 1, -1 ), 7, 10
+                        greater( 1, -1 ), 7, 10
                 },
                 {
-                        RangePredicate.greaterOrEqual( 1, -1 ), 6, 10
+                        greaterOrEqual( 1, -1 ), 6, 10
+                },
+                {
+                        equalTo( 1, 0 ), 7, 8
+                },
+                {
+                        acceptAll(), 0, 16
                 }
         } );
     }

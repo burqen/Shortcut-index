@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
 import bench.queries.impl.description.Query4Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.legacy.TResult;
+import index.SCResult;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -66,7 +66,7 @@ public class Query4Kernel extends QueryKernelWithPropertyOnRelationship
     }
 
     @Override
-    protected boolean filterResultRow( TResult resultRow )
+    protected boolean filterResultRow( SCResult resultRow )
     {
         return false;
     }

@@ -1,19 +1,22 @@
-package index.legacy;
+package index;
 
+import index.SCKey;
+import index.SCResult;
+import index.SCValue;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class TResultTest
+public class SCResultTest
 {
     @Test
     public void equalsAndHash()
     {
-        TResult result = new TResult( new TKey( 1, 1 ), new TValue( 1, 1 ) );
-        TResult same = new TResult( new TKey( 1, 1 ), new TValue( 1, 1 ) );
-        TResult similarKey = new TResult( new TKey( 1, 1 ), new TValue( 2, 2 ) );
-        TResult similarValue = new TResult( new TKey( 2, 2 ), new TValue( 1, 1 ) );
+        SCResult result = new SCResult( new SCKey( 1, 1 ), new SCValue( 1, 1 ) );
+        SCResult same = new SCResult( new SCKey( 1, 1 ), new SCValue( 1, 1 ) );
+        SCResult similarKey = new SCResult( new SCKey( 1, 1 ), new SCValue( 2, 2 ) );
+        SCResult similarValue = new SCResult( new SCKey( 2, 2 ), new SCValue( 1, 1 ) );
 
         assertTrue( result.equals( same ) );
         assertTrue( result.hashCode() == same.hashCode() );

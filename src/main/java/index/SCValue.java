@@ -1,11 +1,11 @@
-package index.legacy;
+package index;
 
-public class TValue
+public class SCValue
 {
     private long relId;
     private long nodeId;
 
-    public TValue( long relId, long nodeId )
+    public SCValue( long relId, long nodeId )
     {
         this.relId = relId;
         this.nodeId = nodeId;
@@ -28,12 +28,12 @@ public class TValue
 
     @Override
     public boolean equals( Object obj ) {
-        if ( !( obj instanceof TValue ) )
+        if ( !( obj instanceof SCValue) )
             return false;
         if ( obj == this )
             return true;
 
-        TValue rhs = (TValue) obj;
+        SCValue rhs = (SCValue) obj;
         return relId == rhs.relId && nodeId == rhs.nodeId;
     }
 

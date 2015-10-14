@@ -1,23 +1,26 @@
 package index.legacy;
 
+import index.SCKey;
+import index.SCValue;
+
 import java.io.PrintStream;
 
-public class LeafBTreeNode extends BTreeNode
+public class LegacyLeafBTreeNode extends LegacyBTreeNode
 {
-    private TValue[] values;
+    private SCValue[] values;
 
-    public LeafBTreeNode( int order )
+    public LegacyLeafBTreeNode( int order )
     {
         super( order );
-        this.values = new TValue[order*2];
+        this.values = new SCValue[order*2];
     }
 
-    public void setValue( int i, TValue value )
+    public void setValue( int i, SCValue value )
     {
         values[i] = value;
     }
 
-    public TValue getValue( int i )
+    public SCValue getValue( int i )
     {
         return values[i];
     }
@@ -29,11 +32,11 @@ public class LeafBTreeNode extends BTreeNode
     }
 
     @Override
-    public void insert( long firstId, long propValue, TValue value )
+    public void insert( long firstId, long propValue, SCValue value )
     {
         int keyCount = getKeyCount();
         int pos = searchFirstGreaterThanOrEqualTo( firstId, propValue );
-        TKey key = new TKey( firstId, propValue );
+        SCKey key = new SCKey( firstId, propValue );
         if ( keyCount < order*2 )
         {
             // No overflow, insert key and value and move other keys and value accordingly.
@@ -59,9 +62,9 @@ public class LeafBTreeNode extends BTreeNode
         else
         {
             // Overflow, split
-            InternalBTreeNode parent = getParentInMiddleOfSplit();
+            LegacyInternalBTreeNode parent = getParentInMiddleOfSplit();
 
-            LeafBTreeNode rightLeaf = splitLeafNode( key, value, pos );
+            LegacyLeafBTreeNode rightLeaf = splitLeafNode( key, value, pos );
 
 
             parent.splitInChild( rightLeaf, rightLeaf.getKey( 0 ) );
@@ -77,7 +80,7 @@ public class LeafBTreeNode extends BTreeNode
     @Override
     public long totalKeyCount()
     {
-        BTreeNode rightSibling = getRightSibling();
+        LegacyBTreeNode rightSibling = getRightSibling();
         if ( rightSibling != null )
         {
             return getKeyCount() + rightSibling.totalKeyCount();
@@ -98,14 +101,14 @@ public class LeafBTreeNode extends BTreeNode
 
     /**
      * Split the leaf into two leaves. The newly created right leaf is returned.
-     * @param key       {@link index.legacy.TKey} Key to be inserted
-     * @param value     {@link index.legacy.TValue} Value to be associated with the key
+     * @param key       {@link index.SCKey} Key to be inserted
+     * @param value     {@link index.SCValue} Value to be associated with the key
      * @param pos       Position where the key fit in. Should be in range [0..order*2).
-     * @return          {@link index.legacy.LeafBTreeNode} Newly created right leaf.
+     * @return          {@link LegacyLeafBTreeNode} Newly created right leaf.
      */
-    private LeafBTreeNode splitLeafNode( TKey key, TValue value, int pos )
+    private LegacyLeafBTreeNode splitLeafNode( SCKey key, SCValue value, int pos )
     {
-        LeafBTreeNode rightLeaf = new LeafBTreeNode( order );
+        LegacyLeafBTreeNode rightLeaf = new LegacyLeafBTreeNode( order );
 
         // Insert key and value in order and keep the last key and value.
         while ( pos < getKeyCount() )

@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query6Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.legacy.TResult;
+import index.SCResult;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -81,7 +81,7 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    protected boolean filterResultRow( TResult resultRow )
+    protected boolean filterResultRow( SCResult resultRow )
     {
         return false;
     }

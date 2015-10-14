@@ -26,24 +26,6 @@ public class BenchLoggerTest
         throw new NotImplementedException();
     }
 
-    // TODO: Implement me
-//    @Test
-//    public void measurment()
-//    {
-//        logger.startQuery( "" );
-//        Measurement measurement = logger.measurement();
-//        assertEquals( "Expected to not have any successes.", 0, measurement.getSuccesses() );
-//        measurement.queryFinished();
-//        assertEquals( "Expected to have one (1) success.", 1, measurement.getSuccesses() );
-//        logger.finishQuery();
-//    }
-
-    @Test( expected = IllegalStateException.class )
-    public void reportOnNotStartedLogger()
-    {
-        logger.report( new LogCompleteHistogram());
-    }
-
     @Parameterized.Parameters
     public static List<Object[]> loggers() {
         return Arrays.asList( new Object[][]{

@@ -16,15 +16,24 @@ import bench.queries.impl.Query6Shortcut;
 import bench.util.Config;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
-import bench.util.LogSimple;
+import bench.util.StringToLoggerParser;
+import com.martiansoftware.jsap.FlaggedOption;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
+import com.martiansoftware.jsap.QualifiedSwitch;
+import com.martiansoftware.jsap.SimpleJSAP;
 import index.SCIndexDescription;
-import index.ShortcutIndexProvider;
-import index.legacy.LegacySCIndex;
+import index.SCIndexProvider;
+import index.btree.Index;
 import index.SCIndex;
+import index.storage.ByteArrayPagedFile;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.neo4j.graphdb.Direction;
@@ -33,9 +42,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterable;
-import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
@@ -49,63 +55,62 @@ import static bench.util.Config.GRAPH_DB_FOLDER;
 public class BenchmarkMain
 {
 
-    public static void main( String[] argv ) throws IOException, EntityNotFoundException
+    public static void main( String[] argv ) throws IOException, EntityNotFoundException, JSAPException
     {
         new BenchmarkMain().run( argv );
     }
 
-    private void run( String[] argv ) throws IOException, EntityNotFoundException
+    private void run( String[] argv ) throws IOException, EntityNotFoundException, JSAPException
     {
+        SimpleJSAP jsap = new SimpleJSAP(
+                "BenchmarkMain",
+                "Run benchmarks on selected queries",
+                new Parameter[] {
+                        new FlaggedOption( "logger", StringToLoggerParser.INSTANCE,
+                                "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
+                                .setList( false )
+                                .setHelp( "Decide which logger to use: simple, latex or histo" ),
+                        new FlaggedOption( "warmup", JSAP.INTEGER_PARSER, "10", JSAP.NOT_REQUIRED, 'w', "warmup",
+                                "Number of warm up iterations"),
+                        new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "1000", JSAP.NOT_REQUIRED, 's', "inputsize",
+                                "Max number of different input data per query, " +
+                                "decides how many time each query is run in every iteration." ),
+                        new FlaggedOption( "iteration", JSAP.INTEGER_PARSER, "10", JSAP.NOT_REQUIRED, 'i', "iteration",
+                                "Number of iterations to run after warm up." ),
+                        new FlaggedOption( "pagesize", JSAP.INTEGER_PARSER, "8192", JSAP.NOT_REQUIRED, 'p', "pagesize",
+                                "What page size in bytes to use" )
+                }
+        );
+
+        JSAPResult config = jsap.parse(argv);
+        if ( jsap.messagePrinted() ) System.exit( 1 );
+
+        LogStrategy strategy = (LogStrategy) config.getObject( "logger" );
+        int nbrOfWarmup = config.getInt( "warmup" );
+        int inputSize = config.getInt( "inputsize" );
+        int nbrOfIterations = config.getInt( "iteration" );
+        int pageSize = config.getInt( "pagesize" );
+
         String dbName = Config.LDBC_SF001;
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( GRAPH_DB_FOLDER, dbName );
 
-        if ( argv[0].equals( "bench" ) )
-        {
-            benchRun( graphDb );
-        }
-        else if (argv[0].equals( "alt" ) )
-        {
-            try ( Transaction tx = graphDb.beginTx() )
-            {
-                System.out.println( "ALL PROPERTY KEYS" );
-                ResourceIterable<String> allPropertyKeys = GlobalGraphOperations.at( graphDb ).getAllPropertyKeys();
-                for ( String propKey : allPropertyKeys )
-                {
-                    System.out.println( propKey );
-                }
-                System.out.println();
-
-                System.out.println( "ALL RELATIONSHIP TYPES" );
-                for ( RelationshipType next : GlobalGraphOperations.at( graphDb ).getAllRelationshipTypes() )
-                {
-                    System.out.println( next.name() );
-                }
-                System.out.println();
-
-                System.out.println( "ALL COMMENT" );
-                printNodesWithLabel( graphDb, "Comment" );
-
-                tx.success();
-            }
-
-        }
+        benchRun( graphDb, strategy, nbrOfWarmup, inputSize, nbrOfIterations, pageSize );
     }
 
-    private void benchRun( GraphDatabaseService graphDb ) throws IOException, EntityNotFoundException
+    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, int nbrOfWarmup, int inputSize,
+            int nbrOfIterations, int pageSize ) throws IOException, EntityNotFoundException
     {
-        int order = 64;
-        ShortcutIndexProvider indexes = new ShortcutIndexProvider();
+        SCIndexProvider indexes = new SCIndexProvider();
 
-        // Index for query 1 and 2
-        addIndexForQuery( Query1Shortcut.indexDescription, graphDb, order, indexes );
-        addIndexForQuery( Query3Shortcut.indexDescription, graphDb, order, indexes );
-        addIndexForQuery( Query4Shortcut.indexDescription, graphDb, order, indexes );
-        addIndexForQuery( Query5Shortcut.indexDescription, graphDb, order, indexes );
-        addIndexForQuery( Query6Shortcut.indexDescription, graphDb, order, indexes );
+        // Populate indexes
+        addIndexForQuery( Query1Shortcut.indexDescription, graphDb, pageSize, indexes );
+        addIndexForQuery( Query3Shortcut.indexDescription, graphDb, pageSize, indexes );
+        addIndexForQuery( Query4Shortcut.indexDescription, graphDb, pageSize, indexes );
+        addIndexForQuery( Query5Shortcut.indexDescription, graphDb, pageSize, indexes );
+        addIndexForQuery( Query6Shortcut.indexDescription, graphDb, pageSize, indexes );
 
-
-
+        // Kernel queries
         Query[] kernelQueries = new Query[]{
                 new Query1Kernel(),
                 new Query2Kernel(),
@@ -115,6 +120,7 @@ public class BenchmarkMain
                 new Query6Kernel(),
         };
 
+        // Shortcut queries
         Query[] shortcutQueries = new Query[]{
                 new Query1Shortcut( indexes ),
                 new Query2Shortcut( indexes ),
@@ -124,71 +130,95 @@ public class BenchmarkMain
                 new Query6Shortcut( indexes ),
         };
 
-        // Logger
-        BenchLogger logger = new BenchLogger( System.out );
-
-        // --- WITH KERNEL ---
-        for ( Query query : kernelQueries )
-        {
-            benchmarkQuery( query, logger, graphDb, query.inputFile() );
-        }
-
-        // --- WITH SHORTCUT ---
+        // Input data
+        Map<String,List<long[]>> inputData = new HashMap<>();
+        InputDataLoader inputDataLoader = new InputDataLoader();
         for ( Query query : shortcutQueries )
         {
-            benchmarkQuery( query, logger, graphDb, query.inputFile() );
+            if ( !inputData.containsKey( query.inputFile() ) )
+            {
+                List<long[]> data = inputDataLoader.load( query.inputFile(), query.inputDataHeader(), inputSize );
+                if ( data == null )
+                {
+                    throw new RuntimeException( "Failed to load input data for query " + query.cypher() +
+                                                " using file " + query.inputFile() );
+                }
+                inputData.put( query.inputFile(), data );
+            }
         }
 
-        logger.report( new LogSimple() );
+        // Logger
+        Logger liveLogger = new BenchLogger( System.out );
+        Logger warmUpLogger = Logger.DUMMY_LOGGER;
+
+        // --- WITH KERNEL ---
+        benchmarkQueriesWithWarmUp( kernelQueries, warmUpLogger, liveLogger, graphDb, inputData,
+                nbrOfWarmup, nbrOfIterations );
+
+        // --- WITH SHORTCUT ---
+        benchmarkQueriesWithWarmUp( shortcutQueries, warmUpLogger, liveLogger, graphDb, inputData,
+                nbrOfWarmup, nbrOfIterations );
+
+        liveLogger.report( logStrategy );
     }
 
-    private void addIndexForQuery( SCIndexDescription description, GraphDatabaseService graphDb, int order,
-            ShortcutIndexProvider indexes ) throws IOException
+    private void benchmarkQueriesWithWarmUp( Query[] queries, Logger warmupLogger, Logger liveLogger,
+            GraphDatabaseService graphDb, Map<String,List<long[]>> inputData, int nbrOfWarmup, int nbrOfIterations )
+            throws IOException, EntityNotFoundException
     {
-        LegacySCIndex index = new LegacySCIndex( order, description );
-        populateShortcutIndex( graphDb, index, description );
-        indexes.put( index );
+        // Warm up
+        for ( int i = 0; i < nbrOfWarmup; i++ )
+        {
+            for ( Query query : queries )
+            {
+                benchmarkQuery( query, warmupLogger, graphDb, inputData.get( query.inputFile() ) );
+            }
+        }
+        // Live
+        for ( int i = 0; i < nbrOfIterations; i++ )
+        {
+            for ( Query query : queries )
+            {
+                benchmarkQuery( query, liveLogger, graphDb, inputData.get( query.inputFile() ) );
+            }
+        }
     }
 
     private void benchmarkQuery(
-            Query query, BenchLogger logger, GraphDatabaseService graphDb, String dataFileName )
-            throws FileNotFoundException, EntityNotFoundException
+            Query query, Logger logger, GraphDatabaseService graphDb, List<long[]> inputData )
+            throws IOException, EntityNotFoundException
     {
-        // Load input data
-        InputDataLoader inputDataLoader = new InputDataLoader();
-        List<long[]> inputData = inputDataLoader.load( dataFileName, query.inputDataHeader() );
-        if ( inputData == null )
+        // Get context bridge
+        ThreadToStatementContextBridge threadToStatementContextBridge =
+                ((GraphDatabaseAPI) graphDb).getDependencyResolver()
+                        .resolveDependency( ThreadToStatementContextBridge.class );
+
+        // Start logging
+        Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
+
+        // Start clock
+        long start = System.nanoTime();
+        boolean first = true;
+        // Run query
+        for ( long[] input : inputData )
         {
-            Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
-            measurement.error( "Failed to load input data" );
-        }
-        else
-        {
-
-            // Get context bridge
-            ThreadToStatementContextBridge threadToStatementContextBridge =
-                    ((GraphDatabaseAPI) graphDb).getDependencyResolver()
-                            .resolveDependency( ThreadToStatementContextBridge.class );
-
-            // Start logging
-            Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
-
-            // Start clock
-            long start = System.nanoTime();
-            boolean first = true;
-            // Run query
-            for ( long[] input : inputData )
+            query.runQuery( threadToStatementContextBridge, graphDb, measurement, input );
+            if ( first )
             {
-                query.runQuery( threadToStatementContextBridge, graphDb, measurement, input );
-                if ( first )
-                {
-                    measurement.firstQueryFinished( (System.nanoTime() - start) / 1000 );
-                    first = false;
-                }
+                measurement.firstQueryFinished( (System.nanoTime() - start) / 1000 );
+                first = false;
             }
-            measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
-
         }
+        measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
+    }
+
+    private void addIndexForQuery( SCIndexDescription description, GraphDatabaseService graphDb, int pageSize,
+            SCIndexProvider indexes ) throws IOException
+    {
+        ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
+        SCIndex index = new Index( pagedFile, description );
+        populateShortcutIndex( graphDb, index, description );
+        indexes.put( index );
     }
 
     private void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
@@ -206,7 +236,6 @@ public class BenchmarkMain
                     desc.secondLabel, desc.relationshipPropertyKey, true );
         }
     }
-
 
     // TODO: Fix this to populate all indexes at once
     private void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
@@ -307,31 +336,5 @@ public class BenchmarkMain
                 tx.success();
             }
         }
-    }
-
-    private void printNodesWithLabel( GraphDatabaseService graphDb, String label )
-    {
-        ResourceIterator<Node> nodes = graphDb.findNodes( DynamicLabel.label( label ) );
-        while ( nodes.hasNext() )
-        {
-            printNode( nodes.next() );
-        }
-    }
-
-
-    private void printNode( Node node )
-    {
-        for ( Label label : node.getLabels() )
-        {
-            System.out.print( label.name() + " " );
-        }
-        System.out.println();
-
-        for ( String propKey : node.getPropertyKeys() )
-        {
-            System.out.print( "    " + propKey + ": " );
-            System.out.println( node.getProperty( propKey ) );
-        }
-        System.out.println();
     }
 }

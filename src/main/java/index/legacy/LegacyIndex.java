@@ -1,37 +1,32 @@
 package index.legacy;
 
 import index.SCIndexDescription;
-import index.SCIndex;
+import index.SCKey;
+import index.SCResult;
+import index.SCValue;
 
 import java.io.PrintStream;
 import java.util.List;
 
-public class LegacySCIndex implements SCIndex
+public class LegacyIndex
 {
     private final SCIndexDescription description;
 
-    private BTreeNode root;
+    private LegacyBTreeNode root;
 
-    public LegacySCIndex( int order, SCIndexDescription description )
+    public LegacyIndex( int order, SCIndexDescription description )
     {
 
         this.description = description;
-        root = new LeafBTreeNode( order );
+        root = new LegacyLeafBTreeNode( order );
     }
 
-    @Override
     public SCIndexDescription getDescription()
     {
         return description;
     }
 
-    @Override
-    public void insert( long[] key, long[] value )
-    {
-        insert( new TKey( key[0], key[1] ), new TValue( value[0], value[1] ) );
-    }
-
-    public void insert( TKey key, TValue value )
+    public void insert( SCKey key, SCValue value )
     {
         root.insert( key.getId(), key.getProp(), value );
 
@@ -42,7 +37,7 @@ public class LegacySCIndex implements SCIndex
         }
     }
 
-    public void seek( BTSeeker seeker, List<TResult> list )
+    public void seek( LegacyBTSeeker seeker, List<SCResult> list )
     {
         seeker.seek( root, list );
     }
