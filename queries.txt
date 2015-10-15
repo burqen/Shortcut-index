@@ -49,6 +49,9 @@ MATCH (f:Forum {id:{1}}) -[r:CONTAINER_OF]-> (p:Post)
 WHERE {2} <= p.creationDate < {3}
 RETURN id(f), id(r), id(p), p.creationDate
 
+Learned from part one:
+Density of indexed neighborhood is very important!
+
 // PART TWO. Two hops away. Combining use cases. Illustrate performance difference more (possibly).
 
 // MOTIVATIONAL QUERY (LDBC 2) the holy grail

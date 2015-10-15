@@ -13,9 +13,11 @@ public class BenchLogger implements Logger
 {
     private SortedMap<String, ResultRow> resultsToReport;
     private final PrintStream out;
+    private BenchConfig benchConfig;
 
-    public BenchLogger( PrintStream out ) {
+    public BenchLogger( PrintStream out, BenchConfig benchConfig ) {
         this.out = out;
+        this.benchConfig = benchConfig;
         resultsToReport = new TreeMap<>();
     }
 
@@ -104,7 +106,7 @@ public class BenchLogger implements Logger
 
     public void report( LogStrategy logStrategy )
     {
-        logStrategy.header( out );
+        logStrategy.header( out, benchConfig );
         for ( ResultRow resultRow : resultsToReport.values() )
         {
             logStrategy.reportRow( out, resultRow );

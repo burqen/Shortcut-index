@@ -1,5 +1,6 @@
 package bench.util;
 
+import bench.BenchConfig;
 import bench.LogStrategy;
 import bench.Measurement;
 import org.HdrHistogram.Histogram;
@@ -15,10 +16,14 @@ public class LogLatexTable implements LogStrategy
     private boolean hasWrittenHeader;
 
     @Override
-    public void header( PrintStream out )
+    public void header( PrintStream out, BenchConfig benchConfig )
     {
         if ( !hasWrittenHeader )
         {
+            String caption = String.format( "Result table. " +
+                                            "Page size: %d, number of warm up runs: %d, input data size: %d",
+                    benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
+            String label = String.format( "tbl:result" );
             String header = String.format( "\\begin{table}\n" +
                             "\\begin{center}\n" +
                             "\\caption{%s}\n" +
@@ -26,7 +31,7 @@ public class LogLatexTable implements LogStrategy
                             "\\begin{tabular}{ | c | c | c | c | c | }\n" +
                             "\\thickhline\n" +
                             "\\multicolumn{2}{|c|}{ Query } & Neo4j (µs) & Shortcut (µs)& Speedup  \\\\ \n" +
-                            "\\thickhline" , "Result table", "tbl:result" );
+                            "\\thickhline" , caption, label );
             out.print( header );
             out.print( "\n" );
             hasWrittenHeader = true;

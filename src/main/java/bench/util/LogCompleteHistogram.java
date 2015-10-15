@@ -1,5 +1,6 @@
 package bench.util;
 
+import bench.BenchConfig;
 import bench.LogStrategy;
 import bench.QueryType;
 import bench.Measurement;
@@ -10,9 +11,13 @@ import java.io.PrintStream;
 public class LogCompleteHistogram implements LogStrategy
 {
     @Override
-    public void header( PrintStream out )
+    public void header( PrintStream out, BenchConfig benchConfig )
     {
         // No header
+        String runConfigurations = String.format( "Run configurations:\n" +
+                                                  "Page size: %d, Warm ups: %d, Input data size: %d\n",
+                benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
+        out.print( runConfigurations );
     }
 
     @Override

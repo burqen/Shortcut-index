@@ -29,7 +29,7 @@ public class BenchLoggerTest
     @Parameterized.Parameters
     public static List<Object[]> loggers() {
         return Arrays.asList( new Object[][]{
-                { new BenchLogger( Mockito.mock( PrintStream.class ) ) }
+                { new BenchLogger( Mockito.mock( PrintStream.class ), Mockito.mock( BenchConfig.class ) ) }
         } );
     }
 

@@ -6,7 +6,7 @@ import java.io.PrintStream;
 
 public interface LogStrategy
 {
-    void header( PrintStream out );
+    void header( PrintStream out, BenchConfig benchConfig );
 
     void reportRow( PrintStream out, ResultRow resultRow );
 

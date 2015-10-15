@@ -22,7 +22,6 @@ import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
-import com.martiansoftware.jsap.QualifiedSwitch;
 import com.martiansoftware.jsap.SimpleJSAP;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
@@ -88,27 +87,28 @@ public class BenchmarkMain
         LogStrategy strategy = (LogStrategy) config.getObject( "logger" );
         int nbrOfWarmup = config.getInt( "warmup" );
         int inputSize = config.getInt( "inputsize" );
-        int nbrOfIterations = config.getInt( "iteration" );
         int pageSize = config.getInt( "pagesize" );
+
+        BenchConfig benchConfig = new BenchConfig( pageSize, inputSize, nbrOfWarmup );
 
         String dbName = Config.LDBC_SF001;
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( GRAPH_DB_FOLDER, dbName );
 
-        benchRun( graphDb, strategy, nbrOfWarmup, inputSize, nbrOfIterations, pageSize );
+        benchRun( graphDb, strategy, benchConfig );
     }
 
-    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, int nbrOfWarmup, int inputSize,
-            int nbrOfIterations, int pageSize ) throws IOException, EntityNotFoundException
+    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, BenchConfig benchConfig )
+            throws IOException, EntityNotFoundException
     {
         SCIndexProvider indexes = new SCIndexProvider();
 
         // Populate indexes
-        addIndexForQuery( Query1Shortcut.indexDescription, graphDb, pageSize, indexes );
-        addIndexForQuery( Query3Shortcut.indexDescription, graphDb, pageSize, indexes );
-        addIndexForQuery( Query4Shortcut.indexDescription, graphDb, pageSize, indexes );
-        addIndexForQuery( Query5Shortcut.indexDescription, graphDb, pageSize, indexes );
-        addIndexForQuery( Query6Shortcut.indexDescription, graphDb, pageSize, indexes );
+        addIndexForQuery( Query1Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
+        addIndexForQuery( Query3Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
+        addIndexForQuery( Query4Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
+        addIndexForQuery( Query5Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
+        addIndexForQuery( Query6Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
 
         // Kernel queries
         Query[] kernelQueries = new Query[]{
@@ -137,7 +137,8 @@ public class BenchmarkMain
         {
             if ( !inputData.containsKey( query.inputFile() ) )
             {
-                List<long[]> data = inputDataLoader.load( query.inputFile(), query.inputDataHeader(), inputSize );
+                List<long[]> data = inputDataLoader.load( query.inputFile(), query.inputDataHeader(),
+                        benchConfig.inputSize() );
                 if ( data == null )
                 {
                     throw new RuntimeException( "Failed to load input data for query " + query.cypher() +
@@ -148,22 +149,22 @@ public class BenchmarkMain
         }
 
         // Logger
-        Logger liveLogger = new BenchLogger( System.out );
+        Logger liveLogger = new BenchLogger( System.out, benchConfig );
         Logger warmUpLogger = Logger.DUMMY_LOGGER;
 
         // --- WITH KERNEL ---
         benchmarkQueriesWithWarmUp( kernelQueries, warmUpLogger, liveLogger, graphDb, inputData,
-                nbrOfWarmup, nbrOfIterations );
+                benchConfig.numberOfWarmups() );
 
         // --- WITH SHORTCUT ---
         benchmarkQueriesWithWarmUp( shortcutQueries, warmUpLogger, liveLogger, graphDb, inputData,
-                nbrOfWarmup, nbrOfIterations );
+                benchConfig.numberOfWarmups() );
 
         liveLogger.report( logStrategy );
     }
 
     private void benchmarkQueriesWithWarmUp( Query[] queries, Logger warmupLogger, Logger liveLogger,
-            GraphDatabaseService graphDb, Map<String,List<long[]>> inputData, int nbrOfWarmup, int nbrOfIterations )
+            GraphDatabaseService graphDb, Map<String,List<long[]>> inputData, int nbrOfWarmup )
             throws IOException, EntityNotFoundException
     {
         // Warm up
@@ -175,12 +176,9 @@ public class BenchmarkMain
             }
         }
         // Live
-        for ( int i = 0; i < nbrOfIterations; i++ )
+        for ( Query query : queries )
         {
-            for ( Query query : queries )
-            {
-                benchmarkQuery( query, liveLogger, graphDb, inputData.get( query.inputFile() ) );
-            }
+            benchmarkQuery( query, liveLogger, graphDb, inputData.get( query.inputFile() ) );
         }
     }
 
