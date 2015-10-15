@@ -152,15 +152,43 @@ public class BenchmarkMain
         Logger liveLogger = new BenchLogger( System.out, benchConfig );
         Logger warmUpLogger = Logger.DUMMY_LOGGER;
 
+        // Pause to start recorder
+
         // --- WITH KERNEL ---
         benchmarkQueriesWithWarmUp( kernelQueries, warmUpLogger, liveLogger, graphDb, inputData,
                 benchConfig.numberOfWarmups() );
+
+//        pause( 10 );
 
         // --- WITH SHORTCUT ---
         benchmarkQueriesWithWarmUp( shortcutQueries, warmUpLogger, liveLogger, graphDb, inputData,
                 benchConfig.numberOfWarmups() );
 
+//        pause( 20 );
+
         liveLogger.report( logStrategy );
+    }
+
+    // Can be used to pause execution and turn on flight recorder
+    private void pause( int seconds )
+    {
+        System.out.println( "Resuming operation in..." );
+        long currentTime = System.currentTimeMillis();
+        long endTime = currentTime + seconds * 1000; // 10 sec from now
+        int countDown = seconds;
+        while ( currentTime < endTime )
+        {
+            System.out.println( countDown-- );
+            try
+            {
+                Thread.sleep( 1000 );
+            }
+            catch ( InterruptedException e )
+            {
+                e.printStackTrace();
+            }
+            currentTime = System.currentTimeMillis();
+        }
     }
 
     private void benchmarkQueriesWithWarmUp( Query[] queries, Logger warmupLogger, Logger liveLogger,
