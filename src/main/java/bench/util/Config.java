@@ -2,6 +2,7 @@ package bench.util;
 
 public class Config
 {
+    // LDBC
     public static final String QUERY2_PARAMETERS =
             "data/ldbc_sf001_p006_Neo4jDb_substitution_parameters/query_2_param.txt";
 
@@ -18,8 +19,22 @@ public class Config
 
     public static final String LDBC_SF001 = "ldbc_sf001_p006_Neo4jDb";
 
+    // LABORATORY
+    public static final String LAB_ = "LAB_";
+
+    public static final int FANOUT1 = 10;
+    public static final int FANOUT2 = 100;
+    public static final int FANOUT3 = 1000;
+    public static final int FANOUT4 = 10000;
+    public static final int FANOUT5 = 100000;
+
+    public static final int NUMBER_OF_PERSONS_IN_LAB = 1000;
+
+    // COMMONS
     public static final String GRAPH_DB_FOLDER = "src/main/resources/";
 
+
+    // BENCHMARK
     public static final String NO_INPUT = "";
 
     public static final String[] NO_HEADER = new String[0];
@@ -27,6 +42,4 @@ public class Config
     public static final long[] NO_DATA = new long[0];
 
     public static final int MAX_NUMBER_OF_QUERY_REPETITIONS = 10000;
-
-    public static final int NUMBER_OF_QUERY_REPETITIONS = 10000;
 }
