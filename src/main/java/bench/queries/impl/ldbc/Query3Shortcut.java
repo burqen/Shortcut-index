@@ -1,9 +1,9 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
-import bench.queries.impl.description.Query2Description;
+import bench.queries.impl.description.Query3Description;
 import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
@@ -13,6 +13,7 @@ import index.btree.RangeSeeker;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,15 +21,10 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query2Shortcut extends QueryShortcut
+public class Query3Shortcut extends QueryShortcut
 {
-    public static SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
-            "COMMENT_HAS_CREATOR", Direction.INCOMING, null, "creationDate" );
-
-    public Query2Shortcut( SCIndexProvider indexes )
-    {
-        super( indexes );
-    }
+    public SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Post",
+            "LIKES_POST", Direction.OUTGOING, "creationDate", null );
 
     @Override
     protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
@@ -53,6 +49,9 @@ public class Query2Shortcut extends QueryShortcut
             index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.noLimit( start ) ),
                     indexSeekResult );
 
+            // Reverse order will match "ORDER BY r.creationDate DESC"
+            Collections.reverse( indexSeekResult );
+
             Iterator<SCResult> resultIterator = indexSeekResult.iterator();
             while ( resultIterator.hasNext() )
             {
@@ -62,7 +61,6 @@ public class Query2Shortcut extends QueryShortcut
                     resultIterator.remove();
                 }
             }
-
         }
         catch ( EntityNotFoundException e )
         {
@@ -78,8 +76,14 @@ public class Query2Shortcut extends QueryShortcut
     }
 
     @Override
+    public SCIndexDescription indexDescription()
+    {
+        return indexDescription;
+    }
+
+    @Override
     public QueryDescription queryDescription()
     {
-        return Query2Description.instance;
+        return Query3Description.instance;
     }
 }

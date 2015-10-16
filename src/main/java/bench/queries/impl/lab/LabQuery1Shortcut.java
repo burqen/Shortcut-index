@@ -1,12 +1,11 @@
-package bench.queries.impl;
+package bench.queries.impl.lab;
 
 import bench.Measurement;
+import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
-import bench.queries.impl.description.Query5Description;
 import index.SCIndex;
 import index.SCIndexDescription;
-import index.SCIndexProvider;
 import index.SCResult;
 import index.btree.RangePredicate;
 import index.btree.RangeSeeker;
@@ -20,14 +19,23 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query5Shortcut extends QueryShortcut
+public class LabQuery1Shortcut extends QueryShortcut
 {
-    public static SCIndexDescription indexDescription = new SCIndexDescription( "Company", "Person",
-            "WORKS_AT", Direction.INCOMING, "workFrom", null );
+    public SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
+            "CREATED", Direction.OUTGOING, null, "date" );
 
-    public Query5Shortcut( SCIndexProvider indexes )
+    private long lowerBoundary;
+    private long upperBoundary;
+
+    public LabQuery1Shortcut( int percentageOfRange )
     {
-        super( indexes );
+        if ( percentageOfRange < 1 || percentageOfRange > 100 )
+        {
+            throw new IllegalArgumentException( "Percentage is outside range 1-100: " + percentageOfRange );
+        }
+        // CONTINUE HERE!
+        lowerBoundary = 0; // TODO: BETTER VALUE NEEDED
+        upperBoundary = 10000000; // TODO: BETTER VALUE NEEDED
     }
 
     @Override
@@ -50,7 +58,10 @@ public class Query5Shortcut extends QueryShortcut
 
             SCIndex index = indexes.get( indexDescription );
 
-            index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.lower( start, 2010l ) ),
+
+            index.seek( new RangeSeeker(
+                    RangePredicate.greaterOrEqual( start, lowerBoundary ),
+                    RangePredicate.lower( start, upperBoundary ) ),
                     indexSeekResult );
 
             Iterator<SCResult> resultIterator = indexSeekResult.iterator();
@@ -77,8 +88,14 @@ public class Query5Shortcut extends QueryShortcut
     }
 
     @Override
+    public SCIndexDescription indexDescription()
+    {
+        return indexDescription;
+    }
+
+    @Override
     public QueryDescription queryDescription()
     {
-        return Query5Description.instance;
+        return LABQuery1Description.instance;
     }
 }

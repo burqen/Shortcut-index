@@ -29,18 +29,17 @@ public class LabEnvironmentGenerator
 
     enum Rels implements RelationshipType
     {
-        CREATED,
-        KNOWS
+        CREATED
     }
 
     /**
      * Generate a lab environment following the lab scheme.
      * Will use a uniform distribution for creationDate on Comments. From (including) 2010 to (excluding) 2013
-     * @param path
-     * @param fanOut
-     * @param nbrOfHubs
+     * @param path  {@link String} directory where generated database should be stored
+     * @paran lab   {@link Lab} deciding parameters for dataset
+     * @param out   {@link PrintStream} to print report to
      */
-    public static void generate( String path, int fanOut, int nbrOfHubs, PrintStream out )
+    public static void generate( String path, Lab lab, PrintStream out )
     {
         Calendar cal = new GregorianCalendar();
         cal.set( 2010, Calendar.JANUARY, 1 );
@@ -50,7 +49,7 @@ public class LabEnvironmentGenerator
 
         Random rnd = new Random();
 
-        String datasetName = Config.LAB_ + fanOut;
+        String datasetName = lab.dbName;
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( path, datasetName );
 
         List<Node> persons = new ArrayList<>();
@@ -59,12 +58,12 @@ public class LabEnvironmentGenerator
 
         // GENERATE PERSONS
         int createdPersons = 0;
-        while ( createdPersons < nbrOfHubs )
+        while ( createdPersons < lab.nbrOfPersons )
         {
             try ( Transaction tx = graphDb.beginTx() )
             {
                 int inThisTransaction = 0;
-                while ( createdPersons + inThisTransaction < nbrOfHubs && inThisTransaction < transactionSize )
+                while ( createdPersons + inThisTransaction < lab.nbrOfPersons && inThisTransaction < transactionSize )
                 {
                     persons.add( graphDb.createNode( Nodes.Person ) );
                     inThisTransaction++;
@@ -81,13 +80,13 @@ public class LabEnvironmentGenerator
         {
             Node person = personsIterator.next();
             int createdCommentsForThisPerson = 0;
-            while ( createdCommentsForThisPerson < fanOut )
+            while ( createdCommentsForThisPerson < lab.fanOut )
             {
                 try ( Transaction tx = graphDb.beginTx() )
                 {
                     int inThisTransaction = 0;
                     while ( inThisTransaction < transactionSize &&
-                            createdCommentsForThisPerson + inThisTransaction < fanOut )
+                            createdCommentsForThisPerson + inThisTransaction < lab.fanOut )
                     {
                         Node comment = graphDb.createNode( Nodes.Comment );
                         long date = lowerBoundary + (long) (rnd.nextDouble() * ( upperBoundary - lowerBoundary ));
@@ -104,15 +103,14 @@ public class LabEnvironmentGenerator
 
         out.print(
                 String.format( "Generated dataset\nPath: %s\nPersons: %d\nComments: %d\nFanOut: %d\n",
-                        path + datasetName, createdPersons, createdComments, fanOut )
+                        path + datasetName, createdPersons, createdComments, lab.fanOut )
         );
     }
 
     public static void main( String[] args )
     {
         String path = Config.GRAPH_DB_FOLDER;
-        int fanOut = Config.FANOUT1;
-        int nbrOfHubs = Config.NUMBER_OF_PERSONS_IN_LAB;
-        LabEnvironmentGenerator.generate( path, fanOut, nbrOfHubs, System.out );
+        Lab lab = Config.LAB_10;
+        LabEnvironmentGenerator.generate( path, lab, System.out );
     }
 }

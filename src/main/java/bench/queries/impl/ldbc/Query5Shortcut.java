@@ -1,14 +1,15 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
-import bench.queries.impl.description.Query4Description;
+import bench.queries.impl.description.Query5Description;
 import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCResult;
-import index.btree.util.SeekerFactory;
+import index.btree.RangePredicate;
+import index.btree.RangeSeeker;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,15 +20,10 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query4Shortcut extends QueryShortcut
+public class Query5Shortcut extends QueryShortcut
 {
-    public static SCIndexDescription indexDescription = new SCIndexDescription( "University", "Person",
-            "STUDY_AT", Direction.INCOMING, "classYear", null );
-
-    public Query4Shortcut( SCIndexProvider indexes )
-    {
-        super( indexes );
-    }
+    public SCIndexDescription indexDescription = new SCIndexDescription( "Company", "Person",
+            "WORKS_AT", Direction.INCOMING, "workFrom", null );
 
     @Override
     protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
@@ -49,7 +45,8 @@ public class Query4Shortcut extends QueryShortcut
 
             SCIndex index = indexes.get( indexDescription );
 
-            index.seek( SeekerFactory.exactMatch( start, 2010l ), indexSeekResult );
+            index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.lower( start, 2010l ) ),
+                    indexSeekResult );
 
             Iterator<SCResult> resultIterator = indexSeekResult.iterator();
             while ( resultIterator.hasNext() )
@@ -75,8 +72,14 @@ public class Query4Shortcut extends QueryShortcut
     }
 
     @Override
+    public SCIndexDescription indexDescription()
+    {
+        return indexDescription;
+    }
+
+    @Override
     public QueryDescription queryDescription()
     {
-        return Query4Description.instance;
+        return Query5Description.instance;
     }
 }

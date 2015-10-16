@@ -1,5 +1,7 @@
 package bench.queries;
 
+import bench.Environment;
+
 public abstract class QueryDescription
 {
     public abstract String queryName();
@@ -9,6 +11,8 @@ public abstract class QueryDescription
     public abstract String[] inputDataHeader();
 
     public abstract String inputFile();
+
+    public abstract Environment environment();
 
     @Override
     public int hashCode() {

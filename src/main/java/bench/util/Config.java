@@ -1,5 +1,7 @@
 package bench.util;
 
+import bench.laboratory.Lab;
+
 public class Config
 {
     // LDBC
@@ -20,19 +22,17 @@ public class Config
     public static final String LDBC_SF001 = "ldbc_sf001_p006_Neo4jDb";
 
     // LABORATORY
-    public static final String LAB_ = "LAB_";
+    public static final String LAB_QUERY1_PARAMETERS =
+            "data/lab_substitution_parameters/lab_query_1_param.txt";
 
-    public static final int FANOUT1 = 10;
-    public static final int FANOUT2 = 100;
-    public static final int FANOUT3 = 1000;
-    public static final int FANOUT4 = 10000;
-    public static final int FANOUT5 = 100000;
-
-    public static final int NUMBER_OF_PERSONS_IN_LAB = 1000;
+    public static final Lab LAB_10      = new Lab( "LAB_10",   10,   1000 );
+    public static final Lab LAB_50      = new Lab( "LAB_50",   50,   1000 );
+    public static final Lab LAB_200     = new Lab( "LAB_200",  200,  1000 );
+    public static final Lab LAB_500     = new Lab( "LAB_500",  500,  1000 );
+    public static final Lab LAB_1000    = new Lab( "LAB_1000", 1000, 1000 );
 
     // COMMONS
     public static final String GRAPH_DB_FOLDER = "src/main/resources/";
-
 
     // BENCHMARK
     public static final String NO_INPUT = "";

@@ -11,7 +11,12 @@ SCAN
 
 Potentially bad at
 
----
+------------------------
+__    ____  ____   ___
+(  )  (    \(  _ \ / __)
+/ (_/\ ) D ( ) _ (( (__
+\____/(____/(____/ \___)
+------------------------
 
 // PART ONE. Simple, illustrate one use case with one hop.
 
@@ -61,6 +66,28 @@ RETURN friend.id AS personId, friend.firstName AS personFirstName, friend.lastNa
  message.creationDate AS messageDate
 ORDER BY messageDate DESC, messageId ASC
 LIMIT {3}
+
+------------------
+ __     __   ____
+(  )   / _\ (  _ \
+/ (_/\/    \ ) _ (
+\____/\_/\_/(____/
+------------------
+
+// LAB Query 1 - 4
+// Range covers % of total range -> % of neighbourhood because of uniform distribution
+// 1: 100%, 2: 75%, 3: 50%, 4: 25% 5: 1%
+MATCH (p:Person)-[r:CREATED]->(c:Comment)
+WHERE id(p) = {1} AND {2} <= c.date < {3}
+RETURN id(p), id(r), id(c), c.date
+
+
+----------------------------------------
+  __   ____   ___  _  _  __  _  _  ____
+ / _\ (  _ \ / __)/ )( \(  )/ )( \(  __)
+/    \ )   /( (__ ) __ ( )( \ \/ / ) _)
+\_/\_/(__\_) \___)\_)(_/(__) \__/ (____)
+----------------------------------------
 
 
  *************

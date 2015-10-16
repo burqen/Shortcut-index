@@ -1,7 +1,10 @@
 package bench.queries;
 
+import bench.Environment;
 import bench.QueryType;
 import bench.Measurement;
+import index.SCIndexDescription;
+import index.SCIndexProvider;
 
 import java.io.IOException;
 
@@ -27,11 +30,20 @@ public abstract class Query
         return queryDescription().inputFile();
     }
 
+    public Environment environment()
+    {
+        return queryDescription().environment();
+    }
+
     public abstract QueryDescription queryDescription();
+
+    public abstract SCIndexDescription indexDescription();
 
     public abstract void runQuery( ThreadToStatementContextBridge threadToStatementContextBridge,
             GraphDatabaseService graphDb, Measurement measurement, long[] inputData )
             throws EntityNotFoundException, IOException;
 
     public abstract QueryType type();
+
+    public abstract void setIndexes( SCIndexProvider indexes );
 }

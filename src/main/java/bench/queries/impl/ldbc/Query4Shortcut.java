@@ -1,20 +1,17 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.Measurement;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
-import bench.queries.impl.description.Query6Description;
+import bench.queries.impl.description.Query4Description;
 import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCResult;
-import index.btree.RangePredicate;
-import index.btree.RangeSeeker;
+import index.btree.util.SeekerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,23 +19,10 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query6Shortcut extends QueryShortcut
+public class Query4Shortcut extends QueryShortcut
 {
-    public static SCIndexDescription indexDescription = new SCIndexDescription( "Forum", "Post",
-            "CONTAINER_OF", Direction.OUTGOING, null, "creationDate" );
-
-    private long lowerBoundary;
-    private long upperBoundary;
-
-    public Query6Shortcut( SCIndexProvider indexes )
-    {
-        super( indexes );
-        Calendar cal = new GregorianCalendar();
-        cal.set( 2011, Calendar.JANUARY, 1 );
-        lowerBoundary = cal.getTimeInMillis();
-        cal.set( 2012, Calendar.JANUARY, 1 );
-        upperBoundary = cal.getTimeInMillis();
-    }
+    public SCIndexDescription indexDescription = new SCIndexDescription( "University", "Person",
+            "STUDY_AT", Direction.INCOMING, "classYear", null );
 
     @Override
     protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
@@ -60,9 +44,8 @@ public class Query6Shortcut extends QueryShortcut
 
             SCIndex index = indexes.get( indexDescription );
 
+            index.seek( SeekerFactory.exactMatch( start, 2010l ), indexSeekResult );
 
-            index.seek( new RangeSeeker( RangePredicate.greaterOrEqual( start, lowerBoundary ),
-                    RangePredicate.lower( start, upperBoundary ) ), indexSeekResult );
             Iterator<SCResult> resultIterator = indexSeekResult.iterator();
             while ( resultIterator.hasNext() )
             {
@@ -87,8 +70,14 @@ public class Query6Shortcut extends QueryShortcut
     }
 
     @Override
+    public SCIndexDescription indexDescription()
+    {
+        return indexDescription;
+    }
+
+    @Override
     public QueryDescription queryDescription()
     {
-        return Query6Description.instance;
+        return Query4Description.instance;
     }
 }

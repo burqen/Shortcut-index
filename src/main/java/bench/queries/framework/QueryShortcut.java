@@ -3,6 +3,7 @@ package bench.queries.framework;
 import bench.QueryType;
 import bench.Measurement;
 import bench.queries.Query;
+import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCResult;
 
@@ -16,12 +17,7 @@ import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 
 public abstract class QueryShortcut extends Query
 {
-    protected final SCIndexProvider indexes;
-
-    public QueryShortcut( SCIndexProvider indexes )
-    {
-        this.indexes = indexes;
-    }
+    protected SCIndexProvider indexes;
 
     @Override
     public void runQuery( ThreadToStatementContextBridge threadToStatementContextBridge, GraphDatabaseService graphDb,
@@ -40,6 +36,12 @@ public abstract class QueryShortcut extends Query
         measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
 
         reportResult( resultList );
+    }
+
+    @Override
+    public void setIndexes( SCIndexProvider indexes )
+    {
+        this.indexes = indexes;
     }
 
     protected void reportResult( List<SCResult> resultList )

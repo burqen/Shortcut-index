@@ -1,12 +1,11 @@
 package bench;
 
-import bench.util.StringToLoggerParser;
+import bench.util.arguments.LoggerParser;
 import com.martiansoftware.jsap.FlaggedOption;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
-import com.martiansoftware.jsap.QualifiedSwitch;
 import com.martiansoftware.jsap.SimpleJSAP;
 
 import java.io.IOException;
@@ -20,7 +19,7 @@ public class FigureOutJSAP
                 "BenchmarkMain",
                 "Run benchmarks on selected queries",
                 new Parameter[] {
-                        new FlaggedOption( "logger", StringToLoggerParser.INSTANCE,
+                        new FlaggedOption( "logger", LoggerParser.INSTANCE,
                                 "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
                                 .setList( false )
                                 .setHelp( "Decide which logger to use: simple, latex or histo" ),

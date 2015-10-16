@@ -1,4 +1,4 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;

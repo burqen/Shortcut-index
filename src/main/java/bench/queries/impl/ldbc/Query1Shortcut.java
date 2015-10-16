@@ -1,4 +1,4 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.Measurement;
 import bench.queries.QueryDescription;
@@ -20,19 +20,14 @@ import org.neo4j.kernel.api.ReadOperations;
 
 public class Query1Shortcut extends QueryShortcut
 {
-    public static SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
+    private SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
             "COMMENT_HAS_CREATOR", Direction.INCOMING, null, "creationDate" );
-
-    public Query1Shortcut( SCIndexProvider indexes )
-    {
-        super( indexes );
-    }
 
     @Override
     protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
             throws IOException
     {
-        SCIndex index = indexes.get( indexDescription );
+        SCIndex index = indexes.get( indexDescription() );
 
         List<SCResult> indexSeekResult = new ArrayList<>();
         index.seek( SeekerFactory.scanner(), indexSeekResult );
@@ -52,6 +47,12 @@ public class Query1Shortcut extends QueryShortcut
     protected boolean filterResultRow( SCResult resultRow )
     {
         return false;
+    }
+
+    @Override
+    public SCIndexDescription indexDescription()
+    {
+        return indexDescription;
     }
 
     @Override

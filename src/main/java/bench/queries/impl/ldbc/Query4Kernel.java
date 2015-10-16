@@ -1,60 +1,52 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
-import bench.queries.impl.description.Query3Description;
+import bench.queries.impl.description.Query4Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;
-
-import java.util.Collections;
-import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query3Kernel extends QueryKernelWithPropertyOnRelationship
+public class Query4Kernel extends QueryKernelWithPropertyOnRelationship
 {
-    public Query3Kernel()
-    {
-        super();
-    }
-
     @Override
     protected boolean filterOnRelationshipProperty( long prop )
     {
-        return false;
+        return prop != 2010;
     }
 
     @Override
     protected String firstLabel()
     {
-        return "Person";
+        return "University";
     }
 
     @Override
     protected String secondLabel()
     {
-        return "Post";
+        return "Person";
     }
 
     @Override
     protected String relType()
     {
-        return "LIKES_POST";
+        return "STUDY_AT";
     }
 
     @Override
     protected Direction direction()
     {
-        return Direction.OUTGOING;
+        return Direction.INCOMING;
     }
 
     @Override
     protected String propKey()
     {
-        return "creationDate";
+        return "classYear";
     }
 
     @Override
@@ -80,14 +72,8 @@ public class Query3Kernel extends QueryKernelWithPropertyOnRelationship
     }
 
     @Override
-    protected void massageRawResult( List<SCResult> resultList )
-    {
-        Collections.sort( resultList, (o1, o2) -> -1 * o1.getKey().compareTo( o2.getKey() ) );
-    }
-
-    @Override
     public QueryDescription queryDescription()
     {
-        return Query3Description.instance;
+        return Query4Description.instance;
     }
 }

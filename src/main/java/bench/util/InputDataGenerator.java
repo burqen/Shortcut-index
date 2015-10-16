@@ -1,10 +1,10 @@
 package bench.util;
 
-import bench.queries.impl.Query2Kernel;
-import bench.queries.impl.Query4Kernel;
+import bench.queries.impl.ldbc.Query2Kernel;
+import bench.queries.impl.ldbc.Query4Kernel;
 import bench.queries.Query;
-import bench.queries.impl.Query5Kernel;
-import bench.queries.impl.Query6Kernel;
+import bench.queries.impl.ldbc.Query5Kernel;
+import bench.queries.impl.ldbc.Query6Kernel;
 
 import java.io.File;
 import java.io.FileOutputStream;

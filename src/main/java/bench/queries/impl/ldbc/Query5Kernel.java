@@ -1,9 +1,8 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
-import bench.queries.framework.QueryKernelWithPropertyOnNode;
-import bench.queries.impl.description.Query2Description;
-import bench.util.Config;
+import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
+import bench.queries.impl.description.Query5Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;
 
@@ -12,29 +11,30 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query2Kernel extends QueryKernelWithPropertyOnNode
+public class Query5Kernel extends QueryKernelWithPropertyOnRelationship
 {
-    public Query2Kernel()
+    @Override
+    protected boolean filterOnRelationshipProperty( long prop )
     {
-        super();
+        return prop >= 2010l;
     }
 
     @Override
     protected String firstLabel()
     {
-        return "Person";
+        return "Company";
     }
 
     @Override
     protected String secondLabel()
     {
-        return "Comment";
+        return "Person";
     }
 
     @Override
     protected String relType()
     {
-        return "COMMENT_HAS_CREATOR";
+        return "WORKS_AT";
     }
 
     @Override
@@ -46,28 +46,7 @@ public class Query2Kernel extends QueryKernelWithPropertyOnNode
     @Override
     protected String propKey()
     {
-        return "creationDate";
-    }
-
-    @Override
-    protected boolean filterOnNodeProperty( long prop )
-    {
-        return false;
-    }
-
-    @Override
-    public String[] inputDataHeader()
-    {
-        return new String[]{ "Person" };
-    }
-
-    @Override
-    public String cypher()
-    {
-        return "// QUERY 2 - SEEK\n" +
-               "// All comments written by person\n" +
-               "MATCH (p:Person {id:{1}}) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)\n" +
-               "RETURN id(p), id(r), id(c), c.creationDate\n";
+        return "workFrom";
     }
 
     @Override
@@ -93,14 +72,8 @@ public class Query2Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    public String inputFile()
-    {
-        return Config.QUERY2_PARAMETERS;
-    }
-
-    @Override
     public QueryDescription queryDescription()
     {
-        return Query2Description.instance;
+        return Query5Description.instance;
     }
 }

@@ -1,11 +1,14 @@
-package bench.util;
+package bench.util.arguments;
 
+import bench.util.LogCompleteHistogram;
+import bench.util.LogLatexTable;
+import bench.util.LogSimple;
 import com.martiansoftware.jsap.ParseException;
 import com.martiansoftware.jsap.StringParser;
 
-public class StringToLoggerParser extends StringParser
+public class LoggerParser extends StringParser
 {
-    public static StringParser INSTANCE = new StringToLoggerParser();
+    public static StringParser INSTANCE = new LoggerParser();
 
     @Override
     public Object parse( String s ) throws ParseException

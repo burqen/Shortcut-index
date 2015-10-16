@@ -3,6 +3,8 @@ package bench.queries.framework;
 import bench.QueryType;
 import bench.Measurement;
 import bench.queries.Query;
+import index.SCIndexDescription;
+import index.SCIndexProvider;
 import index.SCResult;
 
 import java.util.ArrayList;
@@ -106,5 +108,17 @@ public abstract class QueryKernel extends Query
     public QueryType type()
     {
         return QueryType.KERNEL;
+    }
+
+    @Override
+    public void setIndexes( SCIndexProvider indexes )
+    {
+        // Do nothing, kernel queries don't use an SCIndex
+    }
+
+    @Override
+    public SCIndexDescription indexDescription()
+    {
+        return null;
     }
 }

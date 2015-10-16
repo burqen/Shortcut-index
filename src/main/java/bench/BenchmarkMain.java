@@ -1,28 +1,21 @@
 package bench;
 
-import bench.queries.impl.Query1Kernel;
-import bench.queries.impl.Query1Shortcut;
-import bench.queries.impl.Query2Kernel;
-import bench.queries.impl.Query2Shortcut;
-import bench.queries.impl.Query3Kernel;
-import bench.queries.impl.Query3Shortcut;
-import bench.queries.impl.Query4Kernel;
-import bench.queries.impl.Query4Shortcut;
+import bench.queries.impl.lab.LabQuery1Shortcut;
 import bench.queries.Query;
-import bench.queries.impl.Query5Kernel;
-import bench.queries.impl.Query5Shortcut;
-import bench.queries.impl.Query6Kernel;
-import bench.queries.impl.Query6Shortcut;
-import bench.util.Config;
+import bench.util.Dataset;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
-import bench.util.StringToLoggerParser;
+import bench.util.arguments.DatasetParser;
+import bench.util.arguments.LoggerParser;
+
+import bench.util.arguments.WorkloadParser;
 import com.martiansoftware.jsap.FlaggedOption;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.SimpleJSAP;
+
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.btree.Index;
@@ -31,6 +24,7 @@ import index.storage.ByteArrayPagedFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -49,8 +43,6 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.tooling.GlobalGraphOperations;
 
-import static bench.util.Config.GRAPH_DB_FOLDER;
-
 public class BenchmarkMain
 {
 
@@ -65,7 +57,7 @@ public class BenchmarkMain
                 "BenchmarkMain",
                 "Run benchmarks on selected queries",
                 new Parameter[] {
-                        new FlaggedOption( "logger", StringToLoggerParser.INSTANCE,
+                        new FlaggedOption( "logger", LoggerParser.INSTANCE,
                                 "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
                                 .setList( false )
                                 .setHelp( "Decide which logger to use: simple, latex or histo" ),
@@ -74,10 +66,16 @@ public class BenchmarkMain
                         new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "1000", JSAP.NOT_REQUIRED, 's', "inputsize",
                                 "Max number of different input data per query, " +
                                 "decides how many time each query is run in every iteration." ),
-                        new FlaggedOption( "iteration", JSAP.INTEGER_PARSER, "10", JSAP.NOT_REQUIRED, 'i', "iteration",
-                                "Number of iterations to run after warm up." ),
                         new FlaggedOption( "pagesize", JSAP.INTEGER_PARSER, "8192", JSAP.NOT_REQUIRED, 'p', "pagesize",
-                                "What page size in bytes to use" )
+                                "What page size in bytes to use" ),
+                        new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
+                                JSAP.NO_SHORTFLAG, "dataset",
+                                "Decide what dataset to use. ldbc1, lab10 50 200 500 1000" ),
+                        new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
+                                JSAP.NO_SHORTFLAG, "workload",
+                                "What workload to use. Environment need to match dataset. " +
+                                "<ldbcall | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
+                                "lab100 | lab75 | lab50 | lab 25 | lab1>" )
                 }
         );
 
@@ -88,52 +86,43 @@ public class BenchmarkMain
         int nbrOfWarmup = config.getInt( "warmup" );
         int inputSize = config.getInt( "inputsize" );
         int pageSize = config.getInt( "pagesize" );
+        Dataset dataset = (Dataset) config.getObject( "dataset" );
 
         BenchConfig benchConfig = new BenchConfig( pageSize, inputSize, nbrOfWarmup );
 
-        String dbName = Config.LDBC_SF001;
+        // Prepare workload
+        Workload workload = new Workload( dataset.environment );
 
-        GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( GRAPH_DB_FOLDER, dbName );
+        GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
 
-        benchRun( graphDb, strategy, benchConfig );
+        benchRun( graphDb, strategy, workload, benchConfig );
     }
 
-    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, BenchConfig benchConfig )
+    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, Workload workload,
+            BenchConfig benchConfig )
             throws IOException, EntityNotFoundException
     {
         SCIndexProvider indexes = new SCIndexProvider();
 
         // Populate indexes
-        addIndexForQuery( Query1Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
-        addIndexForQuery( Query3Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
-        addIndexForQuery( Query4Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
-        addIndexForQuery( Query5Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
-        addIndexForQuery( Query6Shortcut.indexDescription, graphDb, benchConfig.pageSize(), indexes );
+        Iterator<SCIndexDescription> indexDescriptions = workload.indexDescriptions();
+        while ( indexDescriptions.hasNext() )
+        {
+            SCIndexDescription description = indexDescriptions.next();
+            addIndexForQuery( description, graphDb, benchConfig.pageSize(), indexes );
+        }
 
-        // Kernel queries
-        Query[] kernelQueries = new Query[]{
-                new Query1Kernel(),
-                new Query2Kernel(),
-                new Query3Kernel(),
-                new Query4Kernel(),
-                new Query5Kernel(),
-                new Query6Kernel(),
-        };
-
-        // Shortcut queries
-        Query[] shortcutQueries = new Query[]{
-                new Query1Shortcut( indexes ),
-                new Query2Shortcut( indexes ),
-                new Query3Shortcut( indexes ),
-                new Query4Shortcut( indexes ),
-                new Query5Shortcut( indexes ),
-                new Query6Shortcut( indexes ),
-        };
+        // Give indexes to shortcut queries
+        List<Query> queries = workload.queries();
+        for ( Query query : queries )
+        {
+            query.setIndexes( indexes );
+        }
 
         // Input data
         Map<String,List<long[]>> inputData = new HashMap<>();
         InputDataLoader inputDataLoader = new InputDataLoader();
-        for ( Query query : shortcutQueries )
+        for ( Query query : queries )
         {
             if ( !inputData.containsKey( query.inputFile() ) )
             {
@@ -154,17 +143,9 @@ public class BenchmarkMain
 
         // Pause to start recorder
 
-        // --- WITH KERNEL ---
-        benchmarkQueriesWithWarmUp( kernelQueries, warmUpLogger, liveLogger, graphDb, inputData,
+        // --- RUN QUERIES ---
+        benchmarkQueriesWithWarmUp( queries, warmUpLogger, liveLogger, graphDb, inputData,
                 benchConfig.numberOfWarmups() );
-
-//        pause( 10 );
-
-        // --- WITH SHORTCUT ---
-        benchmarkQueriesWithWarmUp( shortcutQueries, warmUpLogger, liveLogger, graphDb, inputData,
-                benchConfig.numberOfWarmups() );
-
-//        pause( 20 );
 
         liveLogger.report( logStrategy );
     }
@@ -191,7 +172,7 @@ public class BenchmarkMain
         }
     }
 
-    private void benchmarkQueriesWithWarmUp( Query[] queries, Logger warmupLogger, Logger liveLogger,
+    private void benchmarkQueriesWithWarmUp( List<Query> queries, Logger warmupLogger, Logger liveLogger,
             GraphDatabaseService graphDb, Map<String,List<long[]>> inputData, int nbrOfWarmup )
             throws IOException, EntityNotFoundException
     {

@@ -1,8 +1,9 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
-import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
-import bench.queries.impl.description.Query4Description;
+import bench.queries.framework.QueryKernelWithPropertyOnNode;
+import bench.queries.impl.description.Query2Description;
+import bench.util.Config;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;
 
@@ -11,30 +12,29 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query4Kernel extends QueryKernelWithPropertyOnRelationship
+public class Query2Kernel extends QueryKernelWithPropertyOnNode
 {
-    @Override
-    protected boolean filterOnRelationshipProperty( long prop )
+    public Query2Kernel()
     {
-        return prop != 2010;
+        super();
     }
 
     @Override
     protected String firstLabel()
     {
-        return "University";
+        return "Person";
     }
 
     @Override
     protected String secondLabel()
     {
-        return "Person";
+        return "Comment";
     }
 
     @Override
     protected String relType()
     {
-        return "STUDY_AT";
+        return "COMMENT_HAS_CREATOR";
     }
 
     @Override
@@ -46,7 +46,28 @@ public class Query4Kernel extends QueryKernelWithPropertyOnRelationship
     @Override
     protected String propKey()
     {
-        return "classYear";
+        return "creationDate";
+    }
+
+    @Override
+    protected boolean filterOnNodeProperty( long prop )
+    {
+        return false;
+    }
+
+    @Override
+    public String[] inputDataHeader()
+    {
+        return new String[]{ "Person" };
+    }
+
+    @Override
+    public String cypher()
+    {
+        return "// QUERY 2 - SEEK\n" +
+               "// All comments written by person\n" +
+               "MATCH (p:Person {id:{1}}) <-[r:COMMENT_HAS_CREATOR]- (c:Comment)\n" +
+               "RETURN id(p), id(r), id(c), c.creationDate\n";
     }
 
     @Override
@@ -74,6 +95,6 @@ public class Query4Kernel extends QueryKernelWithPropertyOnRelationship
     @Override
     public QueryDescription queryDescription()
     {
-        return Query4Description.instance;
+        return Query2Description.instance;
     }
 }

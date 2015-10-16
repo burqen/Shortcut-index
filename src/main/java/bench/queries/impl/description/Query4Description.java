@@ -3,12 +3,12 @@ package bench.queries.impl.description;
 import bench.queries.QueryDescription;
 import bench.util.Config;
 
-public class Query4Description extends QueryDescription
+public class Query4Description extends LDBCQueryDescription
 {
     @Override
     public String queryName()
     {
-        return "Query4";
+        return "LDBC Query4";
     }
 
     @Override

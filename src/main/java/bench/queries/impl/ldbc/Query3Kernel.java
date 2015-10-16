@@ -1,52 +1,60 @@
-package bench.queries.impl;
+package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnRelationship;
-import bench.queries.impl.description.Query5Description;
+import bench.queries.impl.description.Query3Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query5Kernel extends QueryKernelWithPropertyOnRelationship
+public class Query3Kernel extends QueryKernelWithPropertyOnRelationship
 {
+    public Query3Kernel()
+    {
+        super();
+    }
+
     @Override
     protected boolean filterOnRelationshipProperty( long prop )
     {
-        return prop >= 2010l;
+        return false;
     }
 
     @Override
     protected String firstLabel()
     {
-        return "Company";
+        return "Person";
     }
 
     @Override
     protected String secondLabel()
     {
-        return "Person";
+        return "Post";
     }
 
     @Override
     protected String relType()
     {
-        return "WORKS_AT";
+        return "LIKES_POST";
     }
 
     @Override
     protected Direction direction()
     {
-        return Direction.INCOMING;
+        return Direction.OUTGOING;
     }
 
     @Override
     protected String propKey()
     {
-        return "workFrom";
+        return "creationDate";
     }
 
     @Override
@@ -72,8 +80,14 @@ public class Query5Kernel extends QueryKernelWithPropertyOnRelationship
     }
 
     @Override
+    protected void massageRawResult( List<SCResult> resultList )
+    {
+        Collections.sort( resultList, (o1, o2) -> -1 * o1.getKey().compareTo( o2.getKey() ) );
+    }
+
+    @Override
     public QueryDescription queryDescription()
     {
-        return Query5Description.instance;
+        return Query3Description.instance;
     }
 }

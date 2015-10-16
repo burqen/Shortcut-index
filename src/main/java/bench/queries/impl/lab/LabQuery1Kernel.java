@@ -1,55 +1,55 @@
-package bench.queries.impl;
+package bench.queries.impl.lab;
 
+import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryKernelWithPropertyOnNode;
-import bench.queries.impl.description.Query6Description;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;
-
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query6Kernel extends QueryKernelWithPropertyOnNode
+public class LabQuery1Kernel extends QueryKernelWithPropertyOnNode
 {
     private long lowerBoundary;
     private long upperBoundary;
 
-    public Query6Kernel()
+    public LabQuery1Kernel( int percentageOfRange )
     {
-        Calendar cal = new GregorianCalendar();
-        cal.set( 2011, Calendar.JANUARY, 1 );
-        lowerBoundary = cal.getTimeInMillis();
-        cal.set( 2012, Calendar.JANUARY, 1 );
-        upperBoundary = cal.getTimeInMillis();
+        if ( percentageOfRange < 1 || percentageOfRange > 100 )
+        {
+            throw new IllegalArgumentException( "Percentage is outside range 1-100: " + percentageOfRange );
+        }
+        // CONTINUE HERE!
+        lowerBoundary = 0; // TODO: BETTER VALUE NEEDED
+        upperBoundary = 10000000; // TODO: BETTER VALUE NEEDED
     }
+
 
     @Override
     protected boolean filterOnNodeProperty( long prop )
     {
-        return prop < lowerBoundary || upperBoundary <= prop;
+        return prop < lowerBoundary || prop >= upperBoundary;
     }
 
     @Override
     protected String firstLabel()
     {
-        return "Forum";
+        return "Person";
     }
 
     @Override
     protected String secondLabel()
     {
-        return "Post";
+        return "Comment";
     }
 
     @Override
     protected String relType()
     {
-        return "CONTAINER_OF";
+        return "CREATED";
     }
 
     @Override
@@ -61,7 +61,7 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     @Override
     protected String propKey()
     {
-        return "creationDate";
+        return "date";
     }
 
     @Override
@@ -86,9 +86,10 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
         return false;
     }
 
+
     @Override
     public QueryDescription queryDescription()
     {
-        return Query6Description.instance;
+        return LABQuery1Description.instance;
     }
 }
