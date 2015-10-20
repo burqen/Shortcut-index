@@ -1,9 +1,8 @@
-package bench.queries.framework;
+package bench.queries.impl.framework;
 
 import bench.QueryType;
 import bench.Measurement;
 import bench.queries.Query;
-import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCResult;
 

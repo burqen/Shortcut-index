@@ -1,5 +1,6 @@
-package bench;
+package bench.util;
 
+import bench.Environment;
 import bench.queries.Query;
 import index.SCIndexDescription;
 

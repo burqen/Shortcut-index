@@ -1,7 +1,7 @@
 package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
-import bench.queries.framework.QueryKernelWithPropertyOnNode;
+import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query1Description;
 import index.SCResult;
 

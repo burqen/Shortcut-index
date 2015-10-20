@@ -1,6 +1,6 @@
 package bench.util.arguments;
 
-import bench.Workload;
+import bench.util.Workload;
 import bench.queries.Query;
 import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.lab.LabQuery1Shortcut;

@@ -4,6 +4,7 @@ import bench.queries.Query;
 import bench.util.Dataset;
 import bench.util.GraphDatabaseProvider;
 import bench.util.InputDataLoader;
+import bench.util.Workload;
 import bench.util.arguments.DatasetParser;
 import bench.util.arguments.LoggerParser;
 

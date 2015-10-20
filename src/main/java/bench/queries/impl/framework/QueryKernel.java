@@ -1,4 +1,4 @@
-package bench.queries.framework;
+package bench.queries.impl.framework;
 
 import bench.QueryType;
 import bench.Measurement;
