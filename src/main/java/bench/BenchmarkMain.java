@@ -7,6 +7,7 @@ import bench.util.InputDataLoader;
 import bench.util.arguments.DatasetParser;
 import bench.util.arguments.LoggerParser;
 
+import bench.util.arguments.OutputtargetParser;
 import bench.util.arguments.WorkloadParser;
 import com.martiansoftware.jsap.FlaggedOption;
 import com.martiansoftware.jsap.JSAP;
@@ -22,6 +23,7 @@ import index.SCIndex;
 import index.storage.ByteArrayPagedFile;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -73,7 +75,10 @@ public class BenchmarkMain
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +
                                 "<ldbcall | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
-                                "lab100 | lab75 | lab50 | lab 25 | lab1>" )
+                                "lab100 | lab75 | lab50 | lab 25 | lab1>" ),
+                        new FlaggedOption( "output", OutputtargetParser.INSTANCE, "system", JSAP.NOT_REQUIRED,
+                                JSAP.NO_SHORTFLAG, "output", "Name of output file to append result to. Default is" +
+                                                             " system." )
                 }
         );
 
@@ -86,6 +91,7 @@ public class BenchmarkMain
         int pageSize = config.getInt( "pagesize" );
         Dataset dataset = (Dataset) config.getObject( "dataset" );
         Workload workload = (Workload) config.getObject( "workload" );
+        PrintStream output = (PrintStream) config.getObject( "output" );
 
         // Make sure entire workload fits dataset
         for ( Query query : workload.queries() )
@@ -101,11 +107,11 @@ public class BenchmarkMain
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
 
-        benchRun( graphDb, strategy, workload, benchConfig, dataset );
+        benchRun( graphDb, strategy, workload, benchConfig, dataset, output );
     }
 
     private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, Workload workload,
-            BenchConfig benchConfig, Dataset dataset )
+            BenchConfig benchConfig, Dataset dataset, PrintStream output )
             throws IOException, EntityNotFoundException
     {
         SCIndexProvider indexes = new SCIndexProvider();
@@ -144,7 +150,7 @@ public class BenchmarkMain
         }
 
         // Logger
-        Logger liveLogger = new BenchLogger( System.out, benchConfig, dataset );
+        Logger liveLogger = new BenchLogger( output, benchConfig, dataset );
         Logger warmUpLogger = Logger.DUMMY_LOGGER;
 
         // Pause to start recorder
@@ -154,6 +160,7 @@ public class BenchmarkMain
                 benchConfig.numberOfWarmups() );
 
         liveLogger.report( logStrategy );
+        liveLogger.close();
     }
 
     // Can be used to pause execution and turn on flight recorder

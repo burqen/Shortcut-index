@@ -203,6 +203,7 @@ public class InputDataGenerator
         else
         {
             System.out.println( "File " + filePath + " already exist. Please delete it before generating a new.");
+            return null;
         }
 
         out = new FileOutputStream( file );

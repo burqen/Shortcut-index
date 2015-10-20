@@ -1,6 +1,5 @@
 package bench;
 
-import bench.queries.Query;
 import bench.queries.QueryDescription;
 import bench.util.Dataset;
 import bench.util.ResultRow;
@@ -116,5 +115,12 @@ public class BenchLogger implements Logger
             logStrategy.reportRow( out, resultRow );
         }
         logStrategy.footer( out );
+        out.print( "\n" );
+    }
+
+    @Override
+    public void close()
+    {
+        out.close();
     }
 }

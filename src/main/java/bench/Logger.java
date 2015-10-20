@@ -82,5 +82,14 @@ public interface Logger
         {
 
         }
+
+        @Override
+        public void close()
+        {
+
+        }
     };
+
+    void close();
+
 }
