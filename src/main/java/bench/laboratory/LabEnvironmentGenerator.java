@@ -5,11 +5,8 @@ import bench.util.GraphDatabaseProvider;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -19,6 +16,7 @@ import org.neo4j.graphdb.Transaction;
 
 public class LabEnvironmentGenerator
 {
+    public static final int RANGE_MAX = 8000;
     public static final String creationDate = "date";
 
     enum Nodes implements Label
@@ -34,20 +32,13 @@ public class LabEnvironmentGenerator
 
     /**
      * Generate a lab environment following the lab scheme.
-     * Will use a uniform distribution for creationDate on Comments. From (including) 2010 to (excluding) 2013
      * @param path  {@link String} directory where generated database should be stored
      * @paran lab   {@link Lab} deciding parameters for dataset
      * @param out   {@link PrintStream} to print report to
      */
     public static void generate( String path, Lab lab, PrintStream out )
     {
-        Calendar cal = new GregorianCalendar();
-        cal.set( 2010, Calendar.JANUARY, 1 );
-        long lowerBoundary = cal.getTimeInMillis();
-        cal.set( 2013, Calendar.JANUARY, 1 );
-        long upperBoundary = cal.getTimeInMillis();
-
-        Random rnd = new Random();
+        int delta = RANGE_MAX / lab.fanOut;
 
         String datasetName = lab.dbName;
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( path, datasetName );
@@ -86,19 +77,19 @@ public class LabEnvironmentGenerator
                 {
                     int inThisTransaction = 0;
                     while ( inThisTransaction < transactionSize &&
-                            createdCommentsForThisPerson + inThisTransaction < lab.fanOut )
+                            createdCommentsForThisPerson < lab.fanOut )
                     {
                         Node comment = graphDb.createNode( Nodes.Comment );
-                        long date = lowerBoundary + (long) (rnd.nextDouble() * ( upperBoundary - lowerBoundary ));
+                        int date = createdCommentsForThisPerson * delta;
                         comment.setProperty( creationDate, date );
                         person.createRelationshipTo( comment, Rels.CREATED );
                         inThisTransaction++;
+                        createdCommentsForThisPerson++;
+                        createdComments++;
                     }
-                    createdCommentsForThisPerson += inThisTransaction;
                     tx.success();
                 }
             }
-            createdComments += createdCommentsForThisPerson;
         }
 
         out.print(
@@ -110,7 +101,10 @@ public class LabEnvironmentGenerator
     public static void main( String[] args )
     {
         String path = Config.GRAPH_DB_FOLDER;
-        Lab lab = Config.LAB_10;
-        LabEnvironmentGenerator.generate( path, lab, System.out );
+        LabEnvironmentGenerator.generate( path, Config.LAB_8, System.out );
+        LabEnvironmentGenerator.generate( path, Config.LAB_40, System.out );
+        LabEnvironmentGenerator.generate( path, Config.LAB_200, System.out );
+        LabEnvironmentGenerator.generate( path, Config.LAB_400, System.out );
+        LabEnvironmentGenerator.generate( path, Config.LAB_800, System.out );
     }
 }

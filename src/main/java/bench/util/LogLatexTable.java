@@ -16,13 +16,13 @@ public class LogLatexTable implements LogStrategy
     private boolean hasWrittenHeader;
 
     @Override
-    public void header( PrintStream out, BenchConfig benchConfig )
+    public void header( PrintStream out, BenchConfig benchConfig, Dataset dataset )
     {
         if ( !hasWrittenHeader )
         {
-            String caption = String.format( "Result table. " +
-                                            "Page size: %d, number of warm up runs: %d, input data size: %d",
-                    benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
+            String caption = String.format( "Result table. Dataset: %s" +
+                                            ", page size: %d, number of warm up runs: %d, input data size: %d",
+                    dataset.dbName, benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
             String label = String.format( "tbl:result" );
             String header = String.format( "\\begin{table}\n" +
                             "\\begin{center}\n" +

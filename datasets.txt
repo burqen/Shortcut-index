@@ -17,37 +17,37 @@ relationship: 33'601'872
 
 LAB
 
-lab10
-nodes: 11'000
-relationships: 10'000
-[Person]            1'000
-[Comment]           10'000
-[CREATED]           10'000
+lab8
+nodes: 90'000
+relationships: 80'000
+[Person]            10'000
+[Comment]           80'000
+[CREATED]           80'000
 
-lab50
-nodes: 51'000
-relationships 50'000
-[Person]            1'000
-[Comment]           50'000
-[CREATED]           50'000
+lab40
+nodes: 410'000
+relationships 400'000
+[Person]            10'000
+[Comment]           400'000
+[CREATED]           400'000
 
 lab200
-nodes: 201'000
-relationships 200'000
-[Person]            1'000
-[Comment]           200'000
-[CREATED]           200'000
+nodes: 2'010'000
+relationships 2'000'000
+[Person]            10'000
+[Comment]           2'000'000
+[CREATED]           2'000'000
 
-lab500
-nodes: 501'000
-relationships 500'000
-[Person]            1'000
-[Comment]           500'000
-[CREATED]           500'000
+lab400
+nodes: 4'010'000
+relationships 4'000'000
+[Person]            10'000
+[Comment]           4'000'000
+[CREATED]           4'000'000
 
-lab1000
-nodes: 1'001'000
-relationships 1'000'000
-[Person]            1'000
-[Comment]           1'000'000
-[CREATED]           1'000'000
+lab800
+nodes: 8'010'000
+relationships 8'000'000
+[Person]            10'000
+[Comment]           8'000'000
+[CREATED]           8'000'000

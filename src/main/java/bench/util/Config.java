@@ -25,11 +25,11 @@ public class Config
     public static final String LAB_QUERY1_PARAMETERS =
             "data/lab_substitution_parameters/lab_query_1_param.txt";
 
-    public static final Lab LAB_10      = new Lab( "LAB_10",   10,   1000 );
-    public static final Lab LAB_50      = new Lab( "LAB_50",   50,   1000 );
-    public static final Lab LAB_200     = new Lab( "LAB_200",  200,  1000 );
-    public static final Lab LAB_500     = new Lab( "LAB_500",  500,  1000 );
-    public static final Lab LAB_1000    = new Lab( "LAB_1000", 1000, 1000 );
+    public static final Lab LAB_8       = new Lab( "LAB_8",     8, 10000 );
+    public static final Lab LAB_40      = new Lab( "LAB_40",   40, 10000 );
+    public static final Lab LAB_200     = new Lab( "LAB_200", 200, 10000 );
+    public static final Lab LAB_400     = new Lab( "LAB_400", 400, 10000 );
+    public static final Lab LAB_800     = new Lab( "LAB_800", 800, 10000 );
 
     // COMMONS
     public static final String GRAPH_DB_FOLDER = "src/main/resources/";

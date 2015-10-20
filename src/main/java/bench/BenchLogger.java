@@ -1,6 +1,8 @@
 package bench;
 
+import bench.queries.Query;
 import bench.queries.QueryDescription;
+import bench.util.Dataset;
 import bench.util.ResultRow;
 import org.HdrHistogram.Histogram;
 
@@ -13,11 +15,13 @@ public class BenchLogger implements Logger
 {
     private SortedMap<String, ResultRow> resultsToReport;
     private final PrintStream out;
-    private BenchConfig benchConfig;
+    private final BenchConfig benchConfig;
+    private final Dataset dataset;
 
-    public BenchLogger( PrintStream out, BenchConfig benchConfig ) {
+    public BenchLogger( PrintStream out, BenchConfig benchConfig, Dataset dataset ) {
         this.out = out;
         this.benchConfig = benchConfig;
+        this.dataset = dataset;
         resultsToReport = new TreeMap<>();
     }
 
@@ -106,7 +110,7 @@ public class BenchLogger implements Logger
 
     public void report( LogStrategy logStrategy )
     {
-        logStrategy.header( out, benchConfig );
+        logStrategy.header( out, benchConfig, dataset );
         for ( ResultRow resultRow : resultsToReport.values() )
         {
             logStrategy.reportRow( out, resultRow );

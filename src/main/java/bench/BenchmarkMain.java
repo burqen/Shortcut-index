@@ -1,6 +1,5 @@
 package bench;
 
-import bench.queries.impl.lab.LabQuery1Shortcut;
 import bench.queries.Query;
 import bench.util.Dataset;
 import bench.util.GraphDatabaseProvider;
@@ -45,7 +44,6 @@ import org.neo4j.tooling.GlobalGraphOperations;
 
 public class BenchmarkMain
 {
-
     public static void main( String[] argv ) throws IOException, EntityNotFoundException, JSAPException
     {
         new BenchmarkMain().run( argv );
@@ -60,17 +58,17 @@ public class BenchmarkMain
                         new FlaggedOption( "logger", LoggerParser.INSTANCE,
                                 "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
                                 .setList( false )
-                                .setHelp( "Decide which logger to use: simple, latex or histo" ),
+                                .setHelp( "Decide which logger to use: simple, simpletime, latex, histo or histotime" ),
                         new FlaggedOption( "warmup", JSAP.INTEGER_PARSER, "10", JSAP.NOT_REQUIRED, 'w', "warmup",
                                 "Number of warm up iterations"),
-                        new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "1000", JSAP.NOT_REQUIRED, 's', "inputsize",
+                        new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "10000", JSAP.NOT_REQUIRED, 's', "inputsize",
                                 "Max number of different input data per query, " +
                                 "decides how many time each query is run in every iteration." ),
                         new FlaggedOption( "pagesize", JSAP.INTEGER_PARSER, "8192", JSAP.NOT_REQUIRED, 'p', "pagesize",
                                 "What page size in bytes to use" ),
                         new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "dataset",
-                                "Decide what dataset to use. ldbc1, lab10 50 200 500 1000" ),
+                                "Decide what dataset to use. ldbc1, lab8 40 200 400 800" ),
                         new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +
@@ -87,19 +85,27 @@ public class BenchmarkMain
         int inputSize = config.getInt( "inputsize" );
         int pageSize = config.getInt( "pagesize" );
         Dataset dataset = (Dataset) config.getObject( "dataset" );
+        Workload workload = (Workload) config.getObject( "workload" );
+
+        // Make sure entire workload fits dataset
+        for ( Query query : workload.queries() )
+        {
+            if ( query.environment() != dataset.environment )
+            {
+                throw new IllegalStateException( "Environment for " + query.queryDescription().queryName() +
+                " does not match environment of dataset " + dataset.dbName );
+            }
+        }
 
         BenchConfig benchConfig = new BenchConfig( pageSize, inputSize, nbrOfWarmup );
 
-        // Prepare workload
-        Workload workload = new Workload( dataset.environment );
-
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
 
-        benchRun( graphDb, strategy, workload, benchConfig );
+        benchRun( graphDb, strategy, workload, benchConfig, dataset );
     }
 
     private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, Workload workload,
-            BenchConfig benchConfig )
+            BenchConfig benchConfig, Dataset dataset )
             throws IOException, EntityNotFoundException
     {
         SCIndexProvider indexes = new SCIndexProvider();
@@ -138,7 +144,7 @@ public class BenchmarkMain
         }
 
         // Logger
-        Logger liveLogger = new BenchLogger( System.out, benchConfig );
+        Logger liveLogger = new BenchLogger( System.out, benchConfig, dataset );
         Logger warmUpLogger = Logger.DUMMY_LOGGER;
 
         // Pause to start recorder

@@ -1,5 +1,6 @@
 package bench.util;
 
+import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.ldbc.Query2Kernel;
 import bench.queries.impl.ldbc.Query4Kernel;
 import bench.queries.Query;
@@ -37,7 +38,8 @@ public class InputDataGenerator
             System.exit( 1 );
         }
 
-        String dbName = Config.LDBC_SF001;
+//        String dbName = Config.LDBC_SF001; // LDBC
+        String dbName = Config.LAB_8.dbName; // LAB_8
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( Config.GRAPH_DB_FOLDER, dbName );
 
@@ -57,12 +59,13 @@ public class InputDataGenerator
             case "query6":
                 generateInputForQuery( graphDb, new Query6Kernel() );
                 break;
+            case "labquery1":
+                generateInputForQuery( graphDb, new LabQuery1Kernel( 1 ) );
+                break;
             default:
                 System.out.println( "Unexpected input. Only accept query2, query4, query5, query6" );
             }
-
         }
-
     }
 
     private void generateInputForQuery( GraphDatabaseService graphDb, Query query ) throws IOException
@@ -196,6 +199,10 @@ public class InputDataGenerator
         if ( !file.exists() )
         {
             file.createNewFile();
+        }
+        else
+        {
+            System.out.println( "File " + filePath + " already exist. Please delete it before generating a new.");
         }
 
         out = new FileOutputStream( file );

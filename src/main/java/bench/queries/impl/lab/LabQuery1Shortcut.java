@@ -1,6 +1,7 @@
 package bench.queries.impl.lab;
 
 import bench.Measurement;
+import bench.laboratory.LabEnvironmentGenerator;
 import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.QueryDescription;
 import bench.queries.framework.QueryShortcut;
@@ -21,21 +22,22 @@ import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
 public class LabQuery1Shortcut extends QueryShortcut
 {
+    private final int percentageOfRange;
     public SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
             "CREATED", Direction.OUTGOING, null, "date" );
 
-    private long lowerBoundary;
-    private long upperBoundary;
+    private int lowerBoundary;
+    private int upperBoundary;
 
     public LabQuery1Shortcut( int percentageOfRange )
     {
+        this.percentageOfRange = percentageOfRange;
         if ( percentageOfRange < 1 || percentageOfRange > 100 )
         {
             throw new IllegalArgumentException( "Percentage is outside range 1-100: " + percentageOfRange );
         }
-        // CONTINUE HERE!
-        lowerBoundary = 0; // TODO: BETTER VALUE NEEDED
-        upperBoundary = 10000000; // TODO: BETTER VALUE NEEDED
+        lowerBoundary = 0;
+        upperBoundary = percentageOfRange * LabEnvironmentGenerator.RANGE_MAX / 100;
     }
 
     @Override
@@ -96,6 +98,6 @@ public class LabQuery1Shortcut extends QueryShortcut
     @Override
     public QueryDescription queryDescription()
     {
-        return LABQuery1Description.instance;
+        return LABQuery1Description.instance( percentageOfRange );
     }
 }

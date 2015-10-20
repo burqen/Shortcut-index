@@ -4,6 +4,11 @@ import org.HdrHistogram.Histogram;
 
 public class LogSimple extends LogCompleteHistogram
 {
+    public LogSimple( boolean printRowCount )
+    {
+        super( printRowCount );
+    }
+
     @Override
     protected String histogramString( Histogram histogram, String name )
     {

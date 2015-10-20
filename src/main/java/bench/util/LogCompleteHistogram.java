@@ -10,13 +10,21 @@ import java.io.PrintStream;
 
 public class LogCompleteHistogram implements LogStrategy
 {
+
+    private final boolean printRowCount;
+
+    public LogCompleteHistogram( boolean printRowCount )
+    {
+        this.printRowCount = printRowCount;
+    }
     @Override
-    public void header( PrintStream out, BenchConfig benchConfig )
+    public void header( PrintStream out, BenchConfig benchConfig, Dataset dataset )
     {
         // No header
         String runConfigurations = String.format( "Run configurations:\n" +
+                                                  "Dataset: %s\n" +
                                                   "Page size: %d, Warm ups: %d, Input data size: %d\n",
-                benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
+                dataset.dbName, benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
         out.print( runConfigurations );
     }
 
@@ -40,9 +48,12 @@ public class LogCompleteHistogram implements LogStrategy
                 out.print( histogramString( kernelTime, typeName + " Run Time (µs)" ) );
                 out.print( "\n" );
 
-                Histogram kernelCount = measurement.rowHistogram();
-                out.print( histogramString( kernelCount, typeName + " Result Rows" ) );
-                out.print( "\n" );
+                if ( printRowCount )
+                {
+                    Histogram kernelCount = measurement.rowHistogram();
+                    out.print( histogramString( kernelCount, typeName + " Result Rows" ) );
+                    out.print( "\n" );
+                }
             }
             else
             {

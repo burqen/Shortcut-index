@@ -36,7 +36,6 @@ public class WorkloadParser extends StringParser
                         new Query5Shortcut(),
                         new Query6Shortcut(),
                 };
-
         Query[] kernelLDBCQueries = new Query[]
                 {
                         new Query1Kernel(),
@@ -48,12 +47,19 @@ public class WorkloadParser extends StringParser
                 };
         Query[] shortcutLABQueries = new Query[]
                 {
-                    new LabQuery1Shortcut( 1 )
+                        new LabQuery1Shortcut( 1 ),
+                        new LabQuery1Shortcut( 25 ),
+                        new LabQuery1Shortcut( 50 ),
+                        new LabQuery1Shortcut( 75 ),
+                        new LabQuery1Shortcut( 100 )
                 };
-
         Query[] kernelLABQueries = new Query[]
                 {
-                        new LabQuery1Kernel( 1 )
+                        new LabQuery1Kernel( 1 ),
+                        new LabQuery1Kernel( 25 ),
+                        new LabQuery1Kernel( 50 ),
+                        new LabQuery1Kernel( 75 ),
+                        new LabQuery1Kernel( 100 ),
                 };
 
         Workload workload;
@@ -104,10 +110,28 @@ public class WorkloadParser extends StringParser
             workload.addQuery( shortcutLABQueries[0] );
             workload.addQuery( kernelLABQueries[0] );
             break;
+        case "lab25":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[1] );
+            workload.addQuery( kernelLABQueries[1] );
+            break;
+        case "lab50":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[2] );
+            workload.addQuery( kernelLABQueries[2] );
+            break;
+        case "lab75":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[3] );
+            workload.addQuery( kernelLABQueries[3] );
+            break;
+        case "lab100":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[4] );
+            workload.addQuery( kernelLABQueries[4] );
+            break;
         default:
             throw new IllegalArgumentException( "Can not create workload from argument: " + s );
-
-//            "lab100 | lab75 | lab50 | lab 25 | lab1>
         }
         workload.buildIndexDescriptions();
         return workload;

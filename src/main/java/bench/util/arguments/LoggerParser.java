@@ -16,11 +16,15 @@ public class LoggerParser extends StringParser
         switch ( s )
         {
         case "simple":
-            return new LogSimple();
+            return new LogSimple( true );
+        case "simpletime":
+            return new LogSimple( false );
         case "latex":
             return new LogLatexTable();
         case "histo":
-            return new LogCompleteHistogram();
+            return new LogCompleteHistogram( true );
+        case "histotime":
+            return new LogCompleteHistogram( false );
         default:
             return null;
         }

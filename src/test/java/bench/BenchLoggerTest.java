@@ -1,5 +1,6 @@
 package bench;
 
+import bench.util.Dataset;
 import bench.util.LogCompleteHistogram;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +30,9 @@ public class BenchLoggerTest
     @Parameterized.Parameters
     public static List<Object[]> loggers() {
         return Arrays.asList( new Object[][]{
-                { new BenchLogger( Mockito.mock( PrintStream.class ), Mockito.mock( BenchConfig.class ) ) }
+                { new BenchLogger( Mockito.mock( PrintStream.class ),
+                        Mockito.mock( BenchConfig.class ),
+                        Mockito.mock( Dataset.class) ) }
         } );
     }
 

@@ -15,16 +15,16 @@ public class DatasetParser extends StringParser
         {
         case "ldbc1":
             return new Dataset( Config.GRAPH_DB_FOLDER, Config.LDBC_SF001, Environment.LDBC );
-        case "lab10":
-            return new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_10.dbName, Environment.LAB );
-        case "lab50":
-            return new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_50.dbName, Environment.LAB );
+        case "lab8":
+            return new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_8.dbName, Environment.LAB );
+        case "lab40":
+            return new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_40.dbName, Environment.LAB );
         case "lab200":
             return new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_200.dbName, Environment.LAB );
-        case "lab500":
-            return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_500.dbName, Environment.LAB );
-        case "lab1000":
-            return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_1000.dbName, Environment.LAB );
+        case "lab400":
+            return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_400.dbName, Environment.LAB );
+        case "lab800":
+            return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_800.dbName, Environment.LAB );
         default:
             return null;
         }
