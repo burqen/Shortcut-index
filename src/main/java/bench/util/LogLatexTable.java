@@ -6,6 +6,8 @@ import bench.Measurement;
 import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import static bench.QueryType.KERNEL;
 import static bench.QueryType.SHORTCUT;
@@ -22,7 +24,10 @@ public class LogLatexTable implements LogStrategy
         {
             String caption = String.format( "Result table. Dataset: %s" +
                                             ", page size: %d, number of warm up runs: %d, input data size: %d",
-                    dataset.dbName, benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
+                    dataset.dbName,
+                    benchConfig.pageSize(),
+                    benchConfig.numberOfWarmups(),
+                    benchConfig.inputSize() );
             String label = String.format( "tbl:result" );
             String header = String.format( "\\begin{table}\n" +
                             "\\begin{center}\n" +
@@ -31,7 +36,7 @@ public class LogLatexTable implements LogStrategy
                             "\\begin{tabular}{ | c | c | c | c | c | }\n" +
                             "\\thickhline\n" +
                             "\\multicolumn{2}{|c|}{ Query } & Neo4j (µs) & Shortcut (µs)& Speedup  \\\\ \n" +
-                            "\\thickhline" , caption, label );
+                            "\\thickhline" , latexSafe( caption ), latexSafe( label ) );
             out.print( header );
             out.print( "\n" );
             hasWrittenHeader = true;
@@ -115,7 +120,7 @@ public class LogLatexTable implements LogStrategy
                                        "        & last & %,d & %,d & %,.2fx \\\\ \\cline{2-5}\n" +
                                        "        & avg & %,.0f & %,.0f & %,.2fx \\\\ \\cline{2-5}\n" +
                                        "        \\thickhline\n",
-                queryName,
+                latexSafe( queryName ),
                 kernelFirst,
                 shortcutFirst,
                 firstSpeedup,
@@ -137,5 +142,27 @@ public class LogLatexTable implements LogStrategy
                         "\\end{table}";
         out.print( footer );
         out.print( "\n");
+    }
+
+    private String latexSafe( String s )
+    {
+        StringBuilder builder = new StringBuilder();
+        List<Character> symbolsToEscape = new ArrayList<>();
+        symbolsToEscape.add( '%' );
+        symbolsToEscape.add( '_' );
+
+        for ( int i = 0; i < s.length(); i++ )
+        {
+            char c = s.charAt( i );
+            if ( symbolsToEscape.contains( c ) )
+            {
+                builder.append( "\\" );
+            }
+            builder.append( c );
+        }
+
+        String result = builder.toString();
+
+        return result;
     }
 }
