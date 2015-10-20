@@ -210,14 +210,12 @@ public class IndexInsertTest extends TestUtils
         long id;
         while ( node.isInternal( cursor ) )
         {
-            System.out.println( "Level " + level++ );
             id = cursor.getCurrentPageId();
             checkKeyConsistencyOnLevel( cursor, node, level );
             cursor.next( id );
             cursor.next( node.childAt( cursor, 0 ) );
         }
 
-        System.out.println( "Level " + level );
         checkKeyConsistencyOnLevel( cursor, node, level );
     }
 
