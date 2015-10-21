@@ -1,25 +1,45 @@
 package index.btree;
 
+import index.SCIndex;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.neo4j.io.pagecache.PageCursor;
+import org.neo4j.io.pagecache.PagedFile;
 
+import static index.btree.TestUtils.PageCursorFactory;
+import static index.btree.TestUtils.mapTempFileWithMuninnPageCache;
 import static junit.framework.TestCase.assertEquals;
 
 @RunWith( Parameterized.class )
 public class IndexSearchTest
 {
+    private final PageCursorFactory factory;
+
+    private PageCursor cursor;
+    private Node node;
+
     @Before
-    public void reset()
+    public void reset() throws IOException
     {
+        cursor = factory.create();
+        cursor.next();
+
         node.setKeyCount( cursor, 0 );
+    }
+
+    @After
+    public void tearDown()
+    {
+        cursor.close();
     }
 
     @Test
@@ -96,34 +116,61 @@ public class IndexSearchTest
     }
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data()
+    public static Collection<Object[]> data() throws IOException
     {
         int pageSize = 512;
         Node node = new Node( pageSize );
-        ByteBuffer buffer = ByteBuffer.allocate( pageSize );
-        PageCursor leafCursor = new ByteBufferCursor( buffer );
-        node.initializeLeaf( leafCursor );
 
-        buffer = ByteBuffer.allocate( 128 );
-        PageCursor internalCursor = new ByteBufferCursor( buffer );
-        node.initializeInternal( internalCursor );
+        byte[] leaf = new byte[pageSize];
+        byte[] internal = new byte[pageSize];
+
+        ByteBufferCursor leafCursor = new ByteBufferCursor( ByteBuffer.wrap( leaf ) );
+        leafCursor.next();
+        node.initializeLeaf( leafCursor );
+        leafCursor.close();
+
+        ByteBufferCursor internalCursor = new ByteBufferCursor( ByteBuffer.wrap( internal ) );
+        internalCursor.next();
+        node.initializeLeaf( internalCursor );
+        internalCursor.close();
+
+        String leafFilePrefix = SCIndex.filePrefix + "leaf";
+        String internalFilePrecix = SCIndex.filePrefix + "internal";
+        String fileSuffix = SCIndex.indexFileSuffix;
+
+        int cacheSize = 1000000;
+        PagedFile leafFile = mapTempFileWithMuninnPageCache( cacheSize, pageSize, leafFilePrefix, fileSuffix );
+        PageCursor munninLeaf = leafFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
+        munninLeaf.next();
+        node.initializeLeaf( munninLeaf );
+        munninLeaf.close();
+
+        PagedFile internalFile = mapTempFileWithMuninnPageCache( cacheSize, pageSize, internalFilePrecix, fileSuffix );
+        PageCursor munninInternal = internalFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
+        munninInternal.next();
+        node.initializeInternal( munninInternal );
+        munninInternal.close();
+
         return Arrays.asList( new Object[][]
                 {
                         {
-                            leafCursor, node
+                                (PageCursorFactory) () -> new ByteBufferCursor( ByteBuffer.wrap( leaf ) ), node
                         },
                         {
-                            internalCursor, node
+                                (PageCursorFactory) () -> new ByteBufferCursor( ByteBuffer.wrap( internal ) ), node
+                        },
+                        {
+                                (PageCursorFactory) () -> leafFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK ), node
+                        },
+                        {
+                                (PageCursorFactory) () -> internalFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK ), node
                         }
                 } );
     }
 
-    private PageCursor cursor;
-    private Node node;
-
-    public IndexSearchTest( PageCursor cursor, Node node )
+    public IndexSearchTest( PageCursorFactory factory, Node node )
     {
-        this.cursor = cursor;
+        this.factory = factory;
         this.node = node;
     }
 }

@@ -6,15 +6,20 @@ import index.SCIndexDescription;
 import index.SCResult;
 import index.Seeker;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
 
 public class Index implements SCIndex, IdProvider
 {
+    private final File metaFile;
+    private final int pageSize;
+
     private PagedFile pagedFile;
     private SCIndexDescription description;
     private long rootId;
@@ -22,8 +27,67 @@ public class Index implements SCIndex, IdProvider
     private IdPool idPool;
     private Node node;
 
+    /**
+     * Initiate an already existing index from file and meta file
+     * @param pageCache     {@link PageCache} to use to map index file
+     * @param indexFile     {@link File} containing the actual index
+     * @param metaFile      {@link File} containing the meta data about the index
+     * @throws IOException
+     */
+    public Index( PageCache pageCache, File indexFile, File metaFile ) throws IOException
+    {
+        this.metaFile = metaFile;
+        SCMetaData meta = SCMetaData.parseMeta( metaFile );
+
+        this.pageSize = meta.pageSize;
+        this.pagedFile = pageCache.map( indexFile, pageSize );
+        this.description = meta.description;
+        this.rootId = meta.rootId;
+        this.node = new Node( meta.pageSize );
+        this.inserter = new IndexInsert( this, node );
+    }
+
+    /**
+     * Initiate a completely new index
+     * @param pageCache     {@link PageCache} to use to map index file
+     * @param indexFile     {@link File} containing the actual index
+     * @param metaFile      {@link File} conaining the meta data about the index
+     * @param description   {@link index.SCIndexDescription} description of the index
+     * @param pageSize      page size to use for index
+     * @throws IOException
+     */
+    public Index( PageCache pageCache, File indexFile, File metaFile, SCIndexDescription description, int pageSize )
+            throws IOException
+    {
+        this.metaFile = metaFile;
+        this.pageSize = pageSize;
+        this.pagedFile = pageCache.map( indexFile, pageSize );
+        this.description = description;
+        this.idPool = new IdPool();
+        this.rootId = this.idPool.acquireNewId();
+        this.node = new Node( pageSize );
+        this.inserter = new IndexInsert( this, node );
+
+        SCMetaData.writeMetaData( metaFile, description, pageSize, rootId );
+
+        // Initialize index root node to a leaf node.
+        PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
+        cursor.next();
+        node.initializeLeaf( cursor );
+        cursor.close();
+    }
+
+    /**
+     * THIS SHOULD ONLY BE USED FOR NONE PERSISTENT INDEXES
+     * DOES NOT SAVE META DATA
+     * @param pagedFile
+     * @param description
+     * @throws IOException
+     */
     public Index( PagedFile pagedFile, SCIndexDescription description ) throws IOException
     {
+        this.metaFile = null;
+        this.pageSize = pagedFile.pageSize();
         this.pagedFile = pagedFile;
         this.description = description;
         this.idPool = new IdPool();
@@ -36,6 +100,7 @@ public class Index implements SCIndex, IdProvider
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
         node.initializeLeaf( cursor );
+        cursor.close();
     }
 
     @Override
@@ -63,22 +128,32 @@ public class Index implements SCIndex, IdProvider
             node.setKeyCount( cursor, 1 );
             node.setChildAt( cursor, split.left, 0 );
             node.setChildAt( cursor, split.right, 1 );
+
+            if ( metaFile != null )
+            {
+                SCMetaData.writeMetaData( metaFile, description, pageSize, rootId );
+            }
         }
+        cursor.close();
     }
 
+    @Override
     public void seek( Seeker seeker, List<SCResult> resultList ) throws IOException
     {
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
 
         seeker.seek( cursor, node, resultList );
+        cursor.close();
     }
 
+    @Override
     public long acquireNewId()
     {
         return idPool.acquireNewId();
     }
 
+    // Utility method
     public void printTree() throws IOException
     {
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_SHARED_LOCK );
@@ -99,8 +174,29 @@ public class Index implements SCIndex, IdProvider
         System.out.println( "Level " + level );
         printKeysOfSiblings( cursor, node );
         System.out.println();
+        cursor.close();
     }
 
+    /**
+     * Closes this stream and releases any system resources associated
+     * with it. If the stream is already closed then invoking this
+     * method has no effect.
+     * <p>
+     * <p> As noted in {@link AutoCloseable#close()}, cases where the
+     * close may fail require careful attention. It is strongly advised
+     * to relinquish the underlying resources and to internally
+     * <em>mark</em> the {@code Closeable} as closed, prior to throwing
+     * the {@code IOException}.
+     *
+     * @throws java.io.IOException if an I/O error occurs
+     */
+    @Override
+    public void close() throws IOException
+    {
+        pagedFile.close();
+    }
+
+    // Utility method
     protected static void printKeysOfSiblings( PageCursor cursor, Node node ) throws IOException
     {
         while ( true )
@@ -115,6 +211,7 @@ public class Index implements SCIndex, IdProvider
         }
     }
 
+    // Utility method
     protected static void printKeys( PageCursor cursor, Node node )
     {
         int keyCount = node.keyCount( cursor );

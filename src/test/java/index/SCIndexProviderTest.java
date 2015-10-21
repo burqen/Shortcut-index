@@ -1,12 +1,9 @@
 package index;
 
 import index.btree.Index;
-import index.legacy.LegacyIndex;
 import index.storage.ByteArrayPagedFile;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 

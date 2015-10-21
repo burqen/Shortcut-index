@@ -17,12 +17,15 @@ import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.SimpleJSAP;
 
+import com.martiansoftware.jsap.Switch;
+import com.sun.deploy.config.Config;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.btree.Index;
 import index.SCIndex;
 import index.storage.ByteArrayPagedFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -40,6 +43,13 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
+import org.neo4j.io.fs.DefaultFileSystemAbstraction;
+import org.neo4j.io.pagecache.PageCache;
+import org.neo4j.io.pagecache.PageSwapperFactory;
+import org.neo4j.io.pagecache.impl.SingleFilePageSwapperFactory;
+import org.neo4j.io.pagecache.impl.muninn.MuninnPageCache;
+import org.neo4j.io.pagecache.tracing.DefaultPageCacheTracer;
+import org.neo4j.io.pagecache.tracing.PageCacheTracer;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
@@ -68,7 +78,9 @@ public class BenchmarkMain
                                 "Max number of different input data per query, " +
                                 "decides how many time each query is run in every iteration." ),
                         new FlaggedOption( "pagesize", JSAP.INTEGER_PARSER, "8192", JSAP.NOT_REQUIRED, 'p', "pagesize",
-                                "What page size in bytes to use" ),
+                                "What page size to use in B" ),
+                        new FlaggedOption( "cachesize", JSAP.INTEGER_PARSER, "2048", JSAP.NOT_REQUIRED,
+                                JSAP.NO_SHORTFLAG, "cachesize", "Max size of index cache in MB" ),
                         new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "dataset",
                                 "Decide what dataset to use. ldbc1, lab8 40 200 400 800" ),
@@ -78,8 +90,9 @@ public class BenchmarkMain
                                 "<ldbcall | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
                                 "lab100 | lab75 | lab50 | lab 25 | lab1>" ),
                         new FlaggedOption( "output", OutputtargetParser.INSTANCE, "system", JSAP.NOT_REQUIRED,
-                                JSAP.NO_SHORTFLAG, "output", "Name of output file to append result to. Default is" +
-                                                             " system." )
+                                JSAP.NO_SHORTFLAG, "output", "Name of output file to append result to. " +
+                                                             "Default is system." ),
+                        new Switch( "forceNew", JSAP.NO_SHORTFLAG, "force", "Switch to force creation of new index." )
                 }
         );
 
@@ -90,9 +103,11 @@ public class BenchmarkMain
         int nbrOfWarmup = config.getInt( "warmup" );
         int inputSize = config.getInt( "inputsize" );
         int pageSize = config.getInt( "pagesize" );
+        int cachePages = config.getInt( "cachesize" ) * 1000000 / pageSize;
         Dataset dataset = (Dataset) config.getObject( "dataset" );
         Workload workload = (Workload) config.getObject( "workload" );
         PrintStream output = (PrintStream) config.getObject( "output" );
+        boolean forceNew = Config.getBooleanProperty( "forceNew" );
 
         // Make sure entire workload fits dataset
         for ( Query query : workload.queries() )
@@ -104,34 +119,20 @@ public class BenchmarkMain
             }
         }
 
-        BenchConfig benchConfig = new BenchConfig( pageSize, inputSize, nbrOfWarmup );
+        BenchConfig benchConfig = new BenchConfig( pageSize, cachePages, inputSize, nbrOfWarmup );
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
 
-        benchRun( graphDb, strategy, workload, benchConfig, dataset, output );
+        // TODO: Should hold all indexes so that we can close them. Don't only give them to queries.
+        List<Query> queries = loadIndexes( graphDb, dataset, benchConfig, workload, forceNew );
+
+        benchRun( graphDb, strategy, queries, benchConfig, dataset, output );
     }
 
-    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, Workload workload,
+    private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, List<Query> queries,
             BenchConfig benchConfig, Dataset dataset, PrintStream output )
             throws IOException, EntityNotFoundException
     {
-        SCIndexProvider indexes = new SCIndexProvider();
-
-        // Populate indexes
-        Iterator<SCIndexDescription> indexDescriptions = workload.indexDescriptions();
-        while ( indexDescriptions.hasNext() )
-        {
-            SCIndexDescription description = indexDescriptions.next();
-            addIndexForQuery( description, graphDb, benchConfig.pageSize(), indexes );
-        }
-
-        // Give indexes to shortcut queries
-        List<Query> queries = workload.queries();
-        for ( Query query : queries )
-        {
-            query.setIndexes( indexes );
-        }
-
         // Input data
         Map<String,List<long[]>> inputData = new HashMap<>();
         InputDataLoader inputDataLoader = new InputDataLoader();
@@ -162,6 +163,29 @@ public class BenchmarkMain
 
         liveLogger.report( logStrategy );
         liveLogger.close();
+    }
+
+    private List<Query> loadIndexes( GraphDatabaseService graphDb, Dataset dataset, BenchConfig benchConfig,
+            Workload workload, boolean forceNew )
+            throws IOException
+    {
+        SCIndexProvider provider = new SCIndexProvider();
+
+        // Populate provider
+        Iterator<SCIndexDescription> indexDescriptions = workload.indexDescriptions();
+        while ( indexDescriptions.hasNext() )
+        {
+            SCIndexDescription description = indexDescriptions.next();
+            addIndexForQuery( description, graphDb, benchConfig.pageSize(), benchConfig.cachePages(), provider );
+        }
+
+        // Give provider to shortcut queries
+        List<Query> queries = workload.queries();
+        for ( Query query : queries )
+        {
+            query.setIndexProvider( provider );
+        }
+        return queries;
     }
 
     // Can be used to pause execution and turn on flight recorder
@@ -234,10 +258,22 @@ public class BenchmarkMain
     }
 
     private void addIndexForQuery( SCIndexDescription description, GraphDatabaseService graphDb, int pageSize,
-            SCIndexProvider indexes ) throws IOException
+            int cachePages, SCIndexProvider indexes ) throws IOException
     {
-        ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
-        SCIndex index = new Index( pagedFile, description );
+        String prefix = SCIndex.filePrefix;
+        String suffix = SCIndex.indexFileSuffix;
+        String metaSuffix = SCIndex.metaFileSuffix;
+        File indexFile = File.createTempFile( prefix, suffix );
+        File metaFile = File.createTempFile( prefix, metaSuffix );
+
+        PageSwapperFactory swapper = new SingleFilePageSwapperFactory();
+        swapper.setFileSystemAbstraction( new DefaultFileSystemAbstraction() );
+        PageCacheTracer tracer = new DefaultPageCacheTracer();
+
+        PageCache muninnPageCache = new MuninnPageCache( swapper, cachePages, pageSize, tracer );
+
+        SCIndex index = new Index( muninnPageCache, indexFile, metaFile, description, pageSize );
+
         populateShortcutIndex( graphDb, index, description );
         indexes.put( index );
     }

@@ -23,8 +23,14 @@ public class LogCompleteHistogram implements LogStrategy
         // No header
         String runConfigurations = String.format( "Run configurations:\n" +
                                                   "Dataset: %s\n" +
-                                                  "Page size: %d, Warm ups: %d, Input data size: %d\n",
-                dataset.dbName, benchConfig.pageSize(), benchConfig.numberOfWarmups(), benchConfig.inputSize() );
+                                                  "Page size: %d Bytes, Cache pages: %,d, Cache size: %d MB," +
+                                                  " Warm ups: %d, Input data size: %d\n",
+                dataset.dbName,
+                benchConfig.pageSize(),
+                benchConfig.cachePages(),
+                benchConfig.pageSize() * benchConfig.cachePages() / 1000000,
+                benchConfig.numberOfWarmups(),
+                benchConfig.inputSize() );
         out.print( runConfigurations );
     }
 

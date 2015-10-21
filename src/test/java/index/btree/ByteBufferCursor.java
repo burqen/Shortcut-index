@@ -10,11 +10,12 @@ import org.neo4j.io.pagecache.PageCursor;
 
 public class ByteBufferCursor implements PageCursor
 {
-    private final ByteBuffer buffer;
+    private ByteBuffer buffer;
+    private ByteBuffer next;
 
     public ByteBufferCursor( ByteBuffer buffer )
     {
-        this.buffer = buffer;
+        this.next = buffer;
     }
 
     @Override
@@ -80,7 +81,12 @@ public class ByteBufferCursor implements PageCursor
     @Override
     public boolean next() throws IOException
     {
-        throw new NotImplementedException();
+        if ( buffer == null )
+        {
+            buffer = next;
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -92,7 +98,7 @@ public class ByteBufferCursor implements PageCursor
     @Override
     public void close()
     {
-        throw new NotImplementedException();
+        buffer = null;
     }
 
     @Override

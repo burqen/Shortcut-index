@@ -69,7 +69,7 @@ public class ByteArrayPagedFile implements PagedFile
     @Override
     public void close() throws IOException
     {
-        throw new NotImplementedException();
+        pages = null;
     }
 
     protected byte[] getPage( long pageId )

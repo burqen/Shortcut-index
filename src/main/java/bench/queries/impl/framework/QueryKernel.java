@@ -111,7 +111,7 @@ public abstract class QueryKernel extends Query
     }
 
     @Override
-    public void setIndexes( SCIndexProvider indexes )
+    public void setIndexProvider( SCIndexProvider indexes )
     {
         // Do nothing, kernel queries don't use an SCIndex
     }

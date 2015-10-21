@@ -22,10 +22,13 @@ public class LogLatexTable implements LogStrategy
     {
         if ( !hasWrittenHeader )
         {
-            String caption = String.format( "Result table. Dataset: %s" +
-                                            ", page size: %d, number of warm up runs: %d, input data size: %d",
+            String caption = String.format( "Dataset: %s" +
+                                            ", page size: %d Bytes, cache pages: %,d, total cache size: %d MB, number of warm up runs: %d, " +
+                                            "input data size: %d",
                     dataset.dbName,
                     benchConfig.pageSize(),
+                    benchConfig.cachePages(),
+                    benchConfig.pageSize() * benchConfig.cachePages() / 1000000,
                     benchConfig.numberOfWarmups(),
                     benchConfig.inputSize() );
             String label = String.format( "tbl:result" );

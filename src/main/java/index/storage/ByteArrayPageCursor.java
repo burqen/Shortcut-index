@@ -468,7 +468,7 @@ public abstract class ByteArrayPageCursor implements PageCursor
     @Override
     public void close()
     {
-        throw new NotImplementedException();
+        pagedFile = null;
     }
 
     /**

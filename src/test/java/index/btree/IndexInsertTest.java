@@ -1,10 +1,13 @@
 package index.btree;
 
 import index.IdProvider;
-import index.storage.ByteArrayPageCursor;
+import index.SCIndex;
 import index.storage.ByteArrayPagedFile;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,38 +20,79 @@ import java.util.Random;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
 
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@RunWith( Parameterized.class )
 public class IndexInsertTest extends TestUtils
 {
-    private long x = 0xADCDCC;
-    private long y = 0xDDADA;
-    private ByteArrayPageCursor cursor;
     private Node node;
     private IndexInsert inserter;
     private IdProvider idProvider;
 
-    @Before
-    public void setup() throws IOException
+    private static int pageSize = 256;
+
+    private static PagedFile pagedFile;
+    private PageCursor cursor;
+    private long rootId;
+
+    private PagedFileFactory factory;
+
+    @Parameterized.Parameters
+    public static List<Object[]> pageFileFactory() throws IOException
     {
-        int pageSize = 256;
-        ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
+        int cacheSize = 1000000;
+        String filePrefix = SCIndex.filePrefix + "01";
+        String fileSuffix = SCIndex.indexFileSuffix;
+        return Arrays.asList( new Object[][]{
+                {
+                        (PagedFileFactory) () -> new ByteArrayPagedFile( pageSize )
+                },
+                {
+                        (PagedFileFactory) () -> mapTempFileWithMuninnPageCache( cacheSize, pageSize, filePrefix,
+                                fileSuffix )
+                }
+        } );
+    }
+
+    public IndexInsertTest( PagedFileFactory factory )
+    {
+        this.factory = factory;
+    }
+
+    @Before
+    public void setUp() throws IOException
+    {
+        pagedFile = factory.create();
+
         node = new Node( pageSize );
         idProvider = new IdPool();
-        long rootId = idProvider.acquireNewId();
+        rootId = idProvider.acquireNewId();
         inserter = new IndexInsert( idProvider, node );
         cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
         node.initializeLeaf( cursor );
+        cursor.close();
+
+        // SetUp cursor for test call
+        cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
+        cursor.next();
+    }
+
+    @After
+    public void tearDown() throws IOException
+    {
+        cursor.close();
+        pagedFile.close();
     }
 
     @Test
     public void insertSingle() throws IOException
     {
-        long[] key = new long[]{ x, y };
-        long[] value = new long[]{ x, y };
+        long x = 0xADCDCC;
+        long y = 0xDDADA;
+        long[] key = new long[]{x, y};
+        long[] value = new long[]{x, y};
         inserter.insert( cursor, key, value );
         int pos = IndexSearch.search( cursor, node, key );
         assertKey( key, node.keyAt( cursor, pos ) );

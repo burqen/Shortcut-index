@@ -38,7 +38,7 @@ public abstract class QueryShortcut extends Query
     }
 
     @Override
-    public void setIndexes( SCIndexProvider indexes )
+    public void setIndexProvider( SCIndexProvider indexes )
     {
         this.indexes = indexes;
     }

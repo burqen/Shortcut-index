@@ -1,34 +1,76 @@
 package index.btree;
 
+import index.SCIndex;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 import org.neo4j.io.pagecache.PageCursor;
+import org.neo4j.io.pagecache.PagedFile;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
+@RunWith( Parameterized.class )
 public class NodeTest extends TestUtils
 {
+    private final PageCursorFactory factory;
     private PageCursor cursor;
     private Node node;
 
     long x = 0xABCFACCC;
     long y = 0xFCDCDFFF;
+    private static int pageSize = 512;
 
-    @Before
-    public void setup()
+    @Parameterized.Parameters
+    public static List<Object[]> pageCursorFactory() throws IOException
     {
-        int pageSize = 512;
         byte[] data = new byte[pageSize];
         ByteBuffer buffer = ByteBuffer.wrap( data );
-        cursor = new ByteBufferCursor( buffer );
+
+        int cacheSize = 1000000;
+        String filePrefix = SCIndex.filePrefix + "01";
+        String fileSuffix = SCIndex.indexFileSuffix;
+
+        PagedFile pagedFile = mapTempFileWithMuninnPageCache( cacheSize, pageSize, filePrefix, fileSuffix );
+
+        return Arrays.asList( new Object[][]
+                {
+                        {
+                                (PageCursorFactory) () -> new ByteBufferCursor( buffer )
+                        },
+                        {
+                                (PageCursorFactory) () -> pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK )
+                        }
+                } );
+    }
+
+    public NodeTest( PageCursorFactory factory )
+    {
+        this.factory = factory;
+    }
+
+    @Before
+    public void setUp() throws IOException
+    {
+        cursor = factory.create();
         node = new Node( pageSize );
+        cursor.next();
+    }
+
+    @After
+    public void tearDown()
+    {
+        cursor.close();
     }
 
     @Test

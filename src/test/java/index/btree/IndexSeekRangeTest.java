@@ -1,5 +1,6 @@
 package index.btree;
 
+import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCKey;
 import index.SCResult;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.neo4j.io.pagecache.PagedFile;
 
 import static index.btree.RangePredicate.acceptAll;
 import static index.btree.RangePredicate.equalTo;
@@ -88,44 +91,77 @@ public class IndexSeekRangeTest extends TestUtils
     }
 
     @Parameterized.Parameters
-    public static List<Object[]> rangePredicates()
+    public static List<Object[]> rangePredicates() throws IOException
     {
+        int pageSize = 256;
+        int cacheSize = 1000000;
+        String filePrefix = SCIndex.filePrefix + "01";
+        String fileSuffix = SCIndex.indexFileSuffix;
+
+        ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
+
+        PagedFile muninnPagedFile = mapTempFileWithMuninnPageCache( cacheSize, pageSize, filePrefix, fileSuffix );
+
         return Arrays.asList( new Object[][]{
                 {
-                        greaterOrEqual( 1l, 0l ), lower( 1, 5 ), 11, 16
+                        greaterOrEqual( 1l, 0l ), lower( 1, 5 ), 11, 16, pagedFile
                 },
                 {
-                        greaterOrEqual( 1l, 0l ), lowerOrEqual( 1, 5 ), 11, 17
+                        greaterOrEqual( 1l, 0l ), lowerOrEqual( 1, 5 ), 11, 17, pagedFile
                 },
                 {
-                        greater( 1l, 0l ), lower( 1, 5 ), 12, 16
+                        greater( 1l, 0l ), lower( 1, 5 ), 12, 16, pagedFile
                 },
                 {
-                        greater( 1l, 0l ), lowerOrEqual( 1, 5 ), 12, 17
+                        greater( 1l, 0l ), lowerOrEqual( 1, 5 ), 12, 17, pagedFile
                 },
                 {
-                        noLimit( 1l ), lowerOrEqual( 1, 5 ), 5, 17
+                        noLimit( 1l ), lowerOrEqual( 1, 5 ), 5, 17, pagedFile
                 },
                 {
-                        noLimit( 1l ), noLimit( 1l ), 5, 18
+                        noLimit( 1l ), noLimit( 1l ), 5, 18, pagedFile
                 },
                 {
-                        noLimit( 0l ), noLimit( 1l ), 0, 18
+                        noLimit( 0l ), noLimit( 1l ), 0, 18, pagedFile
                 },
                 {
-                        equalTo( 1, 1 ), equalTo( 1, 1 ), 12, 13
+                        equalTo( 1, 1 ), equalTo( 1, 1 ), 12, 13, pagedFile
                 },
                 {
-                        acceptAll(), acceptAll(), 0, 23
+                        acceptAll(), acceptAll(), 0, 23, pagedFile
+                }, // USE MUNINN
+                {
+                        greaterOrEqual( 1l, 0l ), lower( 1, 5 ), 11, 16, muninnPagedFile
+                },
+                {
+                        greaterOrEqual( 1l, 0l ), lowerOrEqual( 1, 5 ), 11, 17, muninnPagedFile
+                },
+                {
+                        greater( 1l, 0l ), lower( 1, 5 ), 12, 16, muninnPagedFile
+                },
+                {
+                        greater( 1l, 0l ), lowerOrEqual( 1, 5 ), 12, 17, muninnPagedFile
+                },
+                {
+                        noLimit( 1l ), lowerOrEqual( 1, 5 ), 5, 17, muninnPagedFile
+                },
+                {
+                        noLimit( 1l ), noLimit( 1l ), 5, 18, muninnPagedFile
+                },
+                {
+                        noLimit( 0l ), noLimit( 1l ), 0, 18, muninnPagedFile
+                },
+                {
+                        equalTo( 1, 1 ), equalTo( 1, 1 ), 12, 13, muninnPagedFile
+                },
+                {
+                        acceptAll(), acceptAll(), 0, 23, muninnPagedFile
                 }
         } );
     }
 
-
-    public IndexSeekRangeTest( RangePredicate from, RangePredicate to, int fromPos, int toPos ) throws IOException
+    public IndexSeekRangeTest( RangePredicate from, RangePredicate to, int fromPos, int toPos, PagedFile pagedFile ) throws IOException
     {
-        int pageSize = 256;
-        ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
         index = new Index( pagedFile, Mockito.mock( SCIndexDescription.class ) );
         this.fromPos = fromPos;
         this.toPos = toPos;

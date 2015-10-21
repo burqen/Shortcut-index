@@ -45,5 +45,5 @@ public abstract class Query
 
     public abstract QueryType type();
 
-    public abstract void setIndexes( SCIndexProvider indexes );
+    public abstract void setIndexProvider( SCIndexProvider indexes );
 }
