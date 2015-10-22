@@ -1,9 +1,9 @@
 package bench.util;
 
+import bench.queries.Query;
 import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.ldbc.Query2Kernel;
 import bench.queries.impl.ldbc.Query4Kernel;
-import bench.queries.Query;
 import bench.queries.impl.ldbc.Query5Kernel;
 import bench.queries.impl.ldbc.Query6Kernel;
 

@@ -1,6 +1,5 @@
 package bench.util.arguments;
 
-import bench.util.Workload;
 import bench.queries.Query;
 import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.lab.LabQuery1Shortcut;
@@ -16,6 +15,7 @@ import bench.queries.impl.ldbc.Query5Kernel;
 import bench.queries.impl.ldbc.Query5Shortcut;
 import bench.queries.impl.ldbc.Query6Kernel;
 import bench.queries.impl.ldbc.Query6Shortcut;
+import bench.util.Workload;
 import com.martiansoftware.jsap.ParseException;
 import com.martiansoftware.jsap.StringParser;
 

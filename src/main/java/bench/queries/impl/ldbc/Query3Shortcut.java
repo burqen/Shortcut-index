@@ -2,8 +2,8 @@ package bench.queries.impl.ldbc;
 
 import bench.Measurement;
 import bench.queries.QueryDescription;
-import bench.queries.impl.framework.QueryShortcut;
 import bench.queries.impl.description.Query3Description;
+import bench.queries.impl.framework.QueryShortcut;
 import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCResult;

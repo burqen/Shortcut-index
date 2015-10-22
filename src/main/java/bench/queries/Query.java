@@ -1,15 +1,14 @@
 package bench.queries;
 
 import bench.Environment;
-import bench.QueryType;
 import bench.Measurement;
+import bench.QueryType;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 
 import java.io.IOException;
 
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 

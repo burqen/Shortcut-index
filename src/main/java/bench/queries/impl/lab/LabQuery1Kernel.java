@@ -1,8 +1,8 @@
 package bench.queries.impl.lab;
 
 import bench.laboratory.LabEnvironmentGenerator;
-import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.QueryDescription;
+import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;

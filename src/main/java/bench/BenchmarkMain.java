@@ -3,11 +3,11 @@ package bench;
 import bench.queries.Query;
 import bench.util.Dataset;
 import bench.util.GraphDatabaseProvider;
+import bench.util.IndexLoader;
 import bench.util.InputDataLoader;
 import bench.util.Workload;
 import bench.util.arguments.DatasetParser;
 import bench.util.arguments.LoggerParser;
-
 import bench.util.arguments.OutputtargetParser;
 import bench.util.arguments.WorkloadParser;
 import com.martiansoftware.jsap.FlaggedOption;
@@ -16,31 +16,19 @@ import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.SimpleJSAP;
-
 import com.martiansoftware.jsap.Switch;
-import com.sun.deploy.config.Config;
-import index.SCIndexDescription;
 import index.SCIndexProvider;
-import index.btree.Index;
-import index.SCIndex;
-import index.storage.ByteArrayPagedFile;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
@@ -54,7 +42,6 @@ import org.neo4j.io.pagecache.tracing.PageCacheTracer;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 public class BenchmarkMain
 {
@@ -126,10 +113,17 @@ public class BenchmarkMain
         // Open database
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
 
-        // Load indexes
-        SCIndexProvider provider = loadIndexes( graphDb, benchConfig, workload );
+        // Initiate page cache
+        PageSwapperFactory swapper = new SingleFilePageSwapperFactory();
+        swapper.setFileSystemAbstraction( new DefaultFileSystemAbstraction() );
+        PageCacheTracer tracer = new DefaultPageCacheTracer();
+        PageCache pageCache = new MuninnPageCache( swapper, cachePages, pageSize, tracer );
 
-        // Give provider to shortcut queries
+        // Load indexes
+        String indexPath = dataset.dbPath + dataset.dbName + "/index/";
+        SCIndexProvider provider = IndexLoader.loadIndexes( graphDb, pageCache, indexPath, benchConfig, workload );
+
+        // Give index provider to shortcut queries
         List<Query> queries = workload.queries();
         for ( Query query : queries )
         {
@@ -212,22 +206,6 @@ public class BenchmarkMain
         measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
     }
 
-    private SCIndexProvider loadIndexes( GraphDatabaseService graphDb, BenchConfig benchConfig, Workload workload )
-            throws IOException
-    {
-        SCIndexProvider provider = new SCIndexProvider();
-
-        // Populate provider
-        Iterator<SCIndexDescription> indexDescriptions = workload.indexDescriptions();
-        while ( indexDescriptions.hasNext() )
-        {
-            SCIndexDescription description = indexDescriptions.next();
-            addIndexForQuery( description, graphDb, benchConfig.pageSize(), benchConfig.cachePages(), provider );
-        }
-
-        return provider;
-    }
-
     private Map<String,List<long[]>> loadInputData( BenchConfig benchConfig, List<Query> queries )
             throws FileNotFoundException
     {
@@ -250,86 +228,6 @@ public class BenchmarkMain
         }
 
         return inputData;
-    }
-
-    private void addIndexForQuery( SCIndexDescription description, GraphDatabaseService graphDb, int pageSize,
-            int cachePages, SCIndexProvider indexes ) throws IOException
-    {
-        String prefix = SCIndex.filePrefix;
-        String suffix = SCIndex.indexFileSuffix;
-        String metaSuffix = SCIndex.metaFileSuffix;
-        File indexFile = File.createTempFile( prefix, suffix );
-        File metaFile = File.createTempFile( prefix, metaSuffix );
-
-        PageSwapperFactory swapper = new SingleFilePageSwapperFactory();
-        swapper.setFileSystemAbstraction( new DefaultFileSystemAbstraction() );
-        PageCacheTracer tracer = new DefaultPageCacheTracer();
-
-        PageCache muninnPageCache = new MuninnPageCache( swapper, cachePages, pageSize, tracer );
-
-        SCIndex index = new Index( muninnPageCache, indexFile, metaFile, description, pageSize );
-
-        populateShortcutIndex( graphDb, index, description );
-        indexes.put( index );
-    }
-
-    private void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
-            SCIndexDescription desc ) throws IOException
-    {
-        if ( desc.nodePropertyKey != null )
-        {
-            populateShortcutIndex( graphDb, index, desc.firstLabel, desc.relationshipType, desc.direction,
-                    desc.secondLabel, desc.nodePropertyKey, false );
-
-        }
-        else
-        {
-            populateShortcutIndex( graphDb, index, desc.firstLabel, desc.relationshipType, desc.direction,
-                    desc.secondLabel, desc.relationshipPropertyKey, true );
-        }
-    }
-
-    // TODO: Fix this to populate all indexes at once
-    private void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
-            String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
-            throws IOException
-    {
-        System.out.println( "INDEX PATTERN: " + index.getDescription() );
-        System.out.print( "Building... " );
-        int numberOfInsert = 0;
-        try ( Transaction tx = graphDb.beginTx() )
-        {
-            Label firstLabel = DynamicLabel.label( firstLabelName );
-            Label secondLabel = DynamicLabel.label( secondLabelName );
-
-            for ( Relationship rel : GlobalGraphOperations.at( graphDb ).getAllRelationships() )
-            {
-                if ( rel.getType().name().equals( relTypeName ) )
-                {
-                    Node first;
-                    Node second;
-                    if ( dir == Direction.OUTGOING )
-                    {
-                        first = rel.getStartNode();
-                        second = rel.getEndNode();
-                    }
-                    else
-                    {
-                        first = rel.getEndNode();
-                        second = rel.getStartNode();
-                    }
-                    if ( first.hasLabel( firstLabel ) && second.hasLabel( secondLabel ) )
-                    {
-                        numberOfInsert++;
-                        long prop = propOnRel ? ((Number) rel.getProperty( propName )).longValue() :
-                                    ((Number) second.getProperty( propName )).longValue();
-                        index.insert( new long[]{first.getId(), prop }, new long[]{ rel.getId(), second.getId() } );
-                    }
-                }
-            }
-            tx.success();
-        }
-        System.out.printf( "OK [index size %d]\n", numberOfInsert );
     }
 
     @SuppressWarnings( "unused" )

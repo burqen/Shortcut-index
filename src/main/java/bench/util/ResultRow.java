@@ -1,7 +1,7 @@
 package bench.util;
 
-import bench.QueryType;
 import bench.Measurement;
+import bench.QueryType;
 import bench.queries.QueryDescription;
 
 public class ResultRow

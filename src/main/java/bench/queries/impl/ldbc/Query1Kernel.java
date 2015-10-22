@@ -1,8 +1,8 @@
 package bench.queries.impl.ldbc;
 
 import bench.queries.QueryDescription;
-import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import bench.queries.impl.description.Query1Description;
+import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import index.SCResult;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;

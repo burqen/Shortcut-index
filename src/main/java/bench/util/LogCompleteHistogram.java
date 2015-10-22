@@ -2,8 +2,8 @@ package bench.util;
 
 import bench.BenchConfig;
 import bench.LogStrategy;
-import bench.QueryType;
 import bench.Measurement;
+import bench.QueryType;
 import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;

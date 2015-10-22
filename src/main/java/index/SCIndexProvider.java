@@ -33,4 +33,9 @@ public class SCIndexProvider
     {
         indexes.put( index.getDescription(), index );
     }
+
+    public boolean contains( SCIndexDescription description )
+    {
+        return indexes.containsKey( description );
+    }
 }

@@ -2,8 +2,8 @@ package bench.queries.impl.lab;
 
 import bench.Measurement;
 import bench.laboratory.LabEnvironmentGenerator;
-import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.QueryDescription;
+import bench.queries.impl.description.LABQuery1Description;
 import bench.queries.impl.framework.QueryShortcut;
 import index.SCIndex;
 import index.SCIndexDescription;
