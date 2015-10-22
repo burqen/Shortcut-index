@@ -28,10 +28,12 @@ public class ByteArrayPagedFileTest
         pagedFile.flushAndForce();
     }
 
-    @Test(expected = NotImplementedException.class)
-    public void closeNotImplemented() throws IOException
+    @Test
+    public void closeShouldMakePagedFileNotPossibleToUse() throws IOException
     {
+        // TODO: Determine behaviour!
         pagedFile.close();
+        pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
     }
 
     @Test
