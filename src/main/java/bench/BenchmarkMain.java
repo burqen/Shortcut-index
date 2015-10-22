@@ -26,6 +26,7 @@ import index.SCIndex;
 import index.storage.ByteArrayPagedFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -107,7 +108,7 @@ public class BenchmarkMain
         Dataset dataset = (Dataset) config.getObject( "dataset" );
         Workload workload = (Workload) config.getObject( "workload" );
         PrintStream output = (PrintStream) config.getObject( "output" );
-        boolean forceNew = Config.getBooleanProperty( "forceNew" );
+        //boolean forceNew = Config.getBooleanProperty( "forceNew" );
 
         // Make sure entire workload fits dataset
         for ( Query query : workload.queries() )
@@ -119,37 +120,37 @@ public class BenchmarkMain
             }
         }
 
+        // Setup run configurations
         BenchConfig benchConfig = new BenchConfig( pageSize, cachePages, inputSize, nbrOfWarmup );
 
+        // Open database
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
 
-        // TODO: Should hold all indexes so that we can close them. Don't only give them to queries.
-        List<Query> queries = loadIndexes( graphDb, dataset, benchConfig, workload, forceNew );
+        // Load indexes
+        SCIndexProvider provider = loadIndexes( graphDb, benchConfig, workload );
 
-        benchRun( graphDb, strategy, queries, benchConfig, dataset, output );
+        // Give provider to shortcut queries
+        List<Query> queries = workload.queries();
+        for ( Query query : queries )
+        {
+            query.setIndexProvider( provider );
+        }
+
+        // Load input data
+        Map<String,List<long[]>> inputData = loadInputData( benchConfig, queries );
+
+        // Run workload
+        benchRun( graphDb, strategy, queries, benchConfig, dataset, inputData, output );
     }
 
     private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, List<Query> queries,
-            BenchConfig benchConfig, Dataset dataset, PrintStream output )
+            BenchConfig benchConfig, Dataset dataset, Map<String,List<long[]>> inputData, PrintStream output )
             throws IOException, EntityNotFoundException
     {
-        // Input data
-        Map<String,List<long[]>> inputData = new HashMap<>();
-        InputDataLoader inputDataLoader = new InputDataLoader();
-        for ( Query query : queries )
-        {
-            if ( !inputData.containsKey( query.inputFile() ) )
-            {
-                List<long[]> data = inputDataLoader.load( query.inputFile(), query.inputDataHeader(),
-                        benchConfig.inputSize() );
-                if ( data == null )
-                {
-                    throw new RuntimeException( "Failed to load input data for query " + query.cypher() +
-                                                " using file " + query.inputFile() );
-                }
-                inputData.put( query.inputFile(), data );
-            }
-        }
+        // Get context bridge
+        ThreadToStatementContextBridge threadToStatementContextBridge =
+                ((GraphDatabaseAPI) graphDb).getDependencyResolver()
+                        .resolveDependency( ThreadToStatementContextBridge.class );
 
         // Logger
         Logger liveLogger = new BenchLogger( output, benchConfig, dataset );
@@ -158,60 +159,17 @@ public class BenchmarkMain
         // Pause to start recorder
 
         // --- RUN QUERIES ---
-        benchmarkQueriesWithWarmUp( queries, warmUpLogger, liveLogger, graphDb, inputData,
-                benchConfig.numberOfWarmups() );
+        benchmarkQueriesWithWarmUp( queries, warmUpLogger, liveLogger, graphDb, threadToStatementContextBridge,
+                inputData, benchConfig.numberOfWarmups() );
 
         liveLogger.report( logStrategy );
         liveLogger.close();
     }
 
-    private List<Query> loadIndexes( GraphDatabaseService graphDb, Dataset dataset, BenchConfig benchConfig,
-            Workload workload, boolean forceNew )
-            throws IOException
-    {
-        SCIndexProvider provider = new SCIndexProvider();
-
-        // Populate provider
-        Iterator<SCIndexDescription> indexDescriptions = workload.indexDescriptions();
-        while ( indexDescriptions.hasNext() )
-        {
-            SCIndexDescription description = indexDescriptions.next();
-            addIndexForQuery( description, graphDb, benchConfig.pageSize(), benchConfig.cachePages(), provider );
-        }
-
-        // Give provider to shortcut queries
-        List<Query> queries = workload.queries();
-        for ( Query query : queries )
-        {
-            query.setIndexProvider( provider );
-        }
-        return queries;
-    }
-
-    // Can be used to pause execution and turn on flight recorder
-    private void pause( int seconds )
-    {
-        System.out.println( "Resuming operation in..." );
-        long currentTime = System.currentTimeMillis();
-        long endTime = currentTime + seconds * 1000; // 10 sec from now
-        int countDown = seconds;
-        while ( currentTime < endTime )
-        {
-            System.out.println( countDown-- );
-            try
-            {
-                Thread.sleep( 1000 );
-            }
-            catch ( InterruptedException e )
-            {
-                e.printStackTrace();
-            }
-            currentTime = System.currentTimeMillis();
-        }
-    }
 
     private void benchmarkQueriesWithWarmUp( List<Query> queries, Logger warmupLogger, Logger liveLogger,
-            GraphDatabaseService graphDb, Map<String,List<long[]>> inputData, int nbrOfWarmup )
+            GraphDatabaseService graphDb, ThreadToStatementContextBridge threadToStatementContextBridge,
+            Map<String,List<long[]>> inputData, int nbrOfWarmup )
             throws IOException, EntityNotFoundException
     {
         // Warm up
@@ -219,25 +177,22 @@ public class BenchmarkMain
         {
             for ( Query query : queries )
             {
-                benchmarkQuery( query, warmupLogger, graphDb, inputData.get( query.inputFile() ) );
+                benchmarkQuery( query, warmupLogger, graphDb, threadToStatementContextBridge,
+                        inputData.get( query.inputFile() ) );
             }
         }
         // Live
         for ( Query query : queries )
         {
-            benchmarkQuery( query, liveLogger, graphDb, inputData.get( query.inputFile() ) );
+            benchmarkQuery( query, liveLogger, graphDb, threadToStatementContextBridge,
+                    inputData.get( query.inputFile() ) );
         }
     }
 
-    private void benchmarkQuery(
-            Query query, Logger logger, GraphDatabaseService graphDb, List<long[]> inputData )
+    private void benchmarkQuery( Query query, Logger logger, GraphDatabaseService graphDb,
+            ThreadToStatementContextBridge threadToStatementContextBridge, List<long[]> inputData )
             throws IOException, EntityNotFoundException
     {
-        // Get context bridge
-        ThreadToStatementContextBridge threadToStatementContextBridge =
-                ((GraphDatabaseAPI) graphDb).getDependencyResolver()
-                        .resolveDependency( ThreadToStatementContextBridge.class );
-
         // Start logging
         Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
 
@@ -255,6 +210,46 @@ public class BenchmarkMain
             }
         }
         measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
+    }
+
+    private SCIndexProvider loadIndexes( GraphDatabaseService graphDb, BenchConfig benchConfig, Workload workload )
+            throws IOException
+    {
+        SCIndexProvider provider = new SCIndexProvider();
+
+        // Populate provider
+        Iterator<SCIndexDescription> indexDescriptions = workload.indexDescriptions();
+        while ( indexDescriptions.hasNext() )
+        {
+            SCIndexDescription description = indexDescriptions.next();
+            addIndexForQuery( description, graphDb, benchConfig.pageSize(), benchConfig.cachePages(), provider );
+        }
+
+        return provider;
+    }
+
+    private Map<String,List<long[]>> loadInputData( BenchConfig benchConfig, List<Query> queries )
+            throws FileNotFoundException
+    {
+        Map<String,List<long[]>> inputData = new HashMap<>();
+        InputDataLoader inputDataLoader = new InputDataLoader();
+
+        for ( Query query : queries )
+        {
+            if ( !inputData.containsKey( query.inputFile() ) )
+            {
+                List<long[]> data = inputDataLoader.load( query.inputFile(), query.inputDataHeader(),
+                        benchConfig.inputSize() );
+                if ( data == null )
+                {
+                    throw new RuntimeException( "Failed to load input data for query " + query.cypher() +
+                                                " using file " + query.inputFile() );
+                }
+                inputData.put( query.inputFile(), data );
+            }
+        }
+
+        return inputData;
     }
 
     private void addIndexForQuery( SCIndexDescription description, GraphDatabaseService graphDb, int pageSize,
@@ -335,6 +330,29 @@ public class BenchmarkMain
             tx.success();
         }
         System.out.printf( "OK [index size %d]\n", numberOfInsert );
+    }
+
+    @SuppressWarnings( "unused" )
+    // Can be used to pause execution and turn on flight recorder
+    private void pause( int seconds )
+    {
+        System.out.println( "Resuming operation in..." );
+        long currentTime = System.currentTimeMillis();
+        long endTime = currentTime + seconds * 1000; // 10 sec from now
+        int countDown = seconds;
+        while ( currentTime < endTime )
+        {
+            System.out.println( countDown-- );
+            try
+            {
+                Thread.sleep( 1000 );
+            }
+            catch ( InterruptedException e )
+            {
+                e.printStackTrace();
+            }
+            currentTime = System.currentTimeMillis();
+        }
     }
 
     @SuppressWarnings( "unused" )
