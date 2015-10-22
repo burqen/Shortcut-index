@@ -135,6 +135,9 @@ public class BenchmarkMain
 
         // Run workload
         benchRun( graphDb, strategy, queries, benchConfig, dataset, inputData, output );
+
+        // Close
+        provider.close();
     }
 
     private void benchRun( GraphDatabaseService graphDb, LogStrategy logStrategy, List<Query> queries,

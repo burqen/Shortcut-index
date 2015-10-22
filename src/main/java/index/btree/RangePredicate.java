@@ -122,8 +122,8 @@ public interface RangePredicate
     public static RangePredicate equalTo( long id, long prop )
     {
         return key -> {
-            int sign = (int) Math.signum( key[0] - id );
-            return sign == 0 ? (int) Math.signum( key[1] - prop ) : sign;
+            int sign = Long.compare( key[0], id );
+            return sign != 0 ? sign : Long.compare( key[1], prop );
         };
     }
 }

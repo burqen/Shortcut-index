@@ -1,5 +1,6 @@
 package index;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,5 +38,13 @@ public class SCIndexProvider
     public boolean contains( SCIndexDescription description )
     {
         return indexes.containsKey( description );
+    }
+
+    public void close() throws IOException
+    {
+        for ( Map.Entry<SCIndexDescription,SCIndex> entry : indexes.entrySet() )
+        {
+            entry.getValue().close();
+        }
     }
 }
