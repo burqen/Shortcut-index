@@ -2,34 +2,22 @@ package index.btree;
 
 import index.IdProvider;
 
-import java.util.LinkedList;
-import java.util.Queue;
-
 public class IdPool implements IdProvider
 {
-    private Queue<Long> freedIds;
-    private long currentId;
+    private long lastUsedId;
 
     public IdPool()
     {
-        freedIds = new LinkedList<>();
+        this( 0 );
     }
-
-    public void returnId( long id )
+    public IdPool( long lastUsedId )
     {
-        freedIds.offer( id );
+        this.lastUsedId = lastUsedId;
     }
 
     @Override
     public long acquireNewId()
     {
-        if ( freedIds.isEmpty() )
-        {
-            return currentId++;
-        }
-        else
-        {
-            return freedIds.poll();
-        }
+        return ++lastUsedId;
     }
 }

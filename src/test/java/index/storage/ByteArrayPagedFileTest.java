@@ -29,14 +29,6 @@ public class ByteArrayPagedFileTest
     }
 
     @Test
-    public void closeShouldMakePagedFileNotPossibleToUse() throws IOException
-    {
-        // TODO: Determine behaviour!
-        pagedFile.close();
-        pagedFile.io( 0, PagedFile.PF_EXCLUSIVE_LOCK );
-    }
-
-    @Test
     public void increaseLastPageId() throws IOException
     {
         pagedFile.increaseLastPageIdTo( 5 );

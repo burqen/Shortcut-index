@@ -5,19 +5,24 @@ import index.SCIndexDescription;
 import index.SCKey;
 import index.SCResult;
 import index.Seeker;
-import index.storage.ByteArrayPagedFile;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.Mockito;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.neo4j.io.pagecache.PagedFile;
+import org.neo4j.io.fs.DefaultFileSystemAbstraction;
+import org.neo4j.io.pagecache.PageCache;
+import org.neo4j.io.pagecache.PageSwapperFactory;
+import org.neo4j.io.pagecache.impl.SingleFilePageSwapperFactory;
+import org.neo4j.io.pagecache.impl.muninn.MuninnPageCache;
+import org.neo4j.io.pagecache.tracing.DefaultPageCacheTracer;
+import org.neo4j.io.pagecache.tracing.PageCacheTracer;
 
 import static index.btree.RangePredicate.acceptAll;
 import static index.btree.RangePredicate.equalTo;
@@ -93,76 +98,52 @@ public class IndexSeekRangeTest extends TestUtils
     @Parameterized.Parameters
     public static List<Object[]> rangePredicates() throws IOException
     {
-        int pageSize = 256;
-        int cacheSize = 1000000;
-        String filePrefix = SCIndex.filePrefix + "01";
-        String fileSuffix = SCIndex.indexFileSuffix;
+        PageSwapperFactory swapper = new SingleFilePageSwapperFactory();
+        swapper.setFileSystemAbstraction( new DefaultFileSystemAbstraction() );
+        PageCacheTracer tracer = new DefaultPageCacheTracer();
+        int cachePageSize = 256;
+        int maxPages = 1000000 / cachePageSize; // 1 MB
 
-        ByteArrayPagedFile pagedFile = new ByteArrayPagedFile( pageSize );
-
-        PagedFile muninnPagedFile = mapTempFileWithMuninnPageCache( cacheSize, pageSize, filePrefix, fileSuffix );
+        PageCache pageCache = new MuninnPageCache( swapper, maxPages, cachePageSize, tracer );
 
         return Arrays.asList( new Object[][]{
                 {
-                        greaterOrEqual( 1l, 0l ), lower( 1, 5 ), 11, 16, pagedFile
+                        greaterOrEqual( 1l, 0l ), lower( 1, 5 ), 11, 16, pageCache
                 },
                 {
-                        greaterOrEqual( 1l, 0l ), lowerOrEqual( 1, 5 ), 11, 17, pagedFile
+                        greaterOrEqual( 1l, 0l ), lowerOrEqual( 1, 5 ), 11, 17, pageCache
                 },
                 {
-                        greater( 1l, 0l ), lower( 1, 5 ), 12, 16, pagedFile
+                        greater( 1l, 0l ), lower( 1, 5 ), 12, 16, pageCache
                 },
                 {
-                        greater( 1l, 0l ), lowerOrEqual( 1, 5 ), 12, 17, pagedFile
+                        greater( 1l, 0l ), lowerOrEqual( 1, 5 ), 12, 17, pageCache
                 },
                 {
-                        noLimit( 1l ), lowerOrEqual( 1, 5 ), 5, 17, pagedFile
+                        noLimit( 1l ), lowerOrEqual( 1, 5 ), 5, 17, pageCache
                 },
                 {
-                        noLimit( 1l ), noLimit( 1l ), 5, 18, pagedFile
+                        noLimit( 1l ), noLimit( 1l ), 5, 18, pageCache
                 },
                 {
-                        noLimit( 0l ), noLimit( 1l ), 0, 18, pagedFile
+                        noLimit( 0l ), noLimit( 1l ), 0, 18, pageCache
                 },
                 {
-                        equalTo( 1, 1 ), equalTo( 1, 1 ), 12, 13, pagedFile
+                        equalTo( 1, 1 ), equalTo( 1, 1 ), 12, 13, pageCache
                 },
                 {
-                        acceptAll(), acceptAll(), 0, 23, pagedFile
-                }, // USE MUNINN
-                {
-                        greaterOrEqual( 1l, 0l ), lower( 1, 5 ), 11, 16, muninnPagedFile
-                },
-                {
-                        greaterOrEqual( 1l, 0l ), lowerOrEqual( 1, 5 ), 11, 17, muninnPagedFile
-                },
-                {
-                        greater( 1l, 0l ), lower( 1, 5 ), 12, 16, muninnPagedFile
-                },
-                {
-                        greater( 1l, 0l ), lowerOrEqual( 1, 5 ), 12, 17, muninnPagedFile
-                },
-                {
-                        noLimit( 1l ), lowerOrEqual( 1, 5 ), 5, 17, muninnPagedFile
-                },
-                {
-                        noLimit( 1l ), noLimit( 1l ), 5, 18, muninnPagedFile
-                },
-                {
-                        noLimit( 0l ), noLimit( 1l ), 0, 18, muninnPagedFile
-                },
-                {
-                        equalTo( 1, 1 ), equalTo( 1, 1 ), 12, 13, muninnPagedFile
-                },
-                {
-                        acceptAll(), acceptAll(), 0, 23, muninnPagedFile
+                        acceptAll(), acceptAll(), 0, 23, pageCache
                 }
         } );
     }
 
-    public IndexSeekRangeTest( RangePredicate from, RangePredicate to, int fromPos, int toPos, PagedFile pagedFile ) throws IOException
+    public IndexSeekRangeTest( RangePredicate from, RangePredicate to, int fromPos, int toPos, PageCache pageCache )
+            throws IOException
     {
-        index = new Index( pagedFile, Mockito.mock( SCIndexDescription.class ) );
+        File indexFile = File.createTempFile( SCIndex.filePrefix, SCIndex.indexFileSuffix );
+        File metaFile = File.createTempFile( SCIndex.filePrefix, SCIndex.metaFileSuffix );
+        SCIndexDescription description = new SCIndexDescription();
+        index = new Index( pageCache, indexFile, metaFile, description, 256 );
         this.fromPos = fromPos;
         this.toPos = toPos;
         this.seeker = new RangeSeeker( from, to );

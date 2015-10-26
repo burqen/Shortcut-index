@@ -39,6 +39,7 @@ public class IndexTest extends TestUtils
     File metaFile;
     SCIndexDescription description = new SCIndexDescription( "A", "B", "R", Direction.OUTGOING, null, "prop" );
     List<SCResult> data;
+    List<SCResult> secondBatchData;
     int nbrOfInserts = 10000;
 
 
@@ -51,11 +52,16 @@ public class IndexTest extends TestUtils
         metaFile = File.createTempFile( SCIndex.filePrefix, SCIndex.metaFileSuffix );
 
         data = new ArrayList<>();
+        secondBatchData = new ArrayList<>();
 
         Random rnd = new Random( 1337 );
         for ( int i = 0; i < nbrOfInserts; i++ )
         {
             data.add( new SCResult(
+                            new SCKey( rnd.nextLong(), rnd.nextLong() ),
+                            new SCValue( rnd.nextLong(), rnd.nextLong() ) )
+            );
+            secondBatchData.add( new SCResult(
                             new SCKey( rnd.nextLong(), rnd.nextLong() ),
                             new SCValue( rnd.nextLong(), rnd.nextLong() ) )
             );
@@ -65,7 +71,6 @@ public class IndexTest extends TestUtils
     @After
     public void tearDown() throws IOException
     {
-        index.close();
         pageCache.close();
     }
 
@@ -73,14 +78,35 @@ public class IndexTest extends TestUtils
     public void createAndLoadNewIndexWithRandomValues() throws IOException
     {
         index = new Index( pageCache, indexFile, metaFile, description, cachePageSize );
-        writeData( index );
+        writeData( index, data );
         index.close();
 
         index = new Index( pageCache, indexFile, metaFile );
-        assertData( index );
+        assertData( index, data );
+        index.close();
     }
 
-    private void writeData( SCIndex index ) throws IOException
+    @Test
+    public void writeToLoadedIndex() throws IOException
+    {
+        index = new Index( pageCache, indexFile, metaFile, description, cachePageSize );
+        writeData( index, data );
+        index.close();
+
+        index = new Index( pageCache, indexFile, metaFile );
+        assertData( index, data );
+        writeData( index, secondBatchData );
+        assertData( index, data );
+        assertData( index, secondBatchData );
+        index.close();
+
+        index = new Index( pageCache, indexFile, metaFile );
+        assertData( index, secondBatchData );
+        assertData( index, data );
+        index.close();
+    }
+
+    private void writeData( SCIndex index, List<SCResult> data ) throws IOException
     {
         for ( SCResult toInsert: data )
         {
@@ -90,7 +116,7 @@ public class IndexTest extends TestUtils
         }
     }
 
-    private void assertData( SCIndex index ) throws IOException
+    private void assertData( SCIndex index, List<SCResult> data ) throws IOException
     {
         List<SCResult> resultList = new ArrayList<>();
         for ( SCResult inserted : data )

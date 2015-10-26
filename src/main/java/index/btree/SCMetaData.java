@@ -33,12 +33,14 @@ public class SCMetaData
     public final  SCIndexDescription description;
     public final int pageSize;
     public final long rootId;
+    public final long lastId;
 
-    public SCMetaData( SCIndexDescription description, int pageSize, long rootId )
+    public SCMetaData( SCIndexDescription description, int pageSize, long rootId, long lastId )
     {
         this.description = description;
         this.pageSize = pageSize;
         this.rootId = rootId;
+        this.lastId = lastId;
     }
 
     public static SCMetaData parseMeta( File metaFile ) throws IOException
@@ -48,12 +50,14 @@ public class SCMetaData
         String[] secondLabelLine;
         String pageSizeLine;
         String rootIdLine;
+        String lastIdLine;
         try ( BufferedReader br = new BufferedReader( new FileReader( metaFile ) ) ) {
             firstLabel = br.readLine();
             relTypeLine = br.readLine().split( separator );
             secondLabelLine = br.readLine().split( separator );
             pageSizeLine = br.readLine();
             rootIdLine = br.readLine();
+            lastIdLine = br.readLine();
 
             br.close();
         }
@@ -99,11 +103,13 @@ public class SCMetaData
 
         long rootId = Long.parseLong( rootIdLine );
 
-        return new SCMetaData( description, pageSize, rootId );
+        long lastId = Long.parseLong( lastIdLine );
+
+        return new SCMetaData( description, pageSize, rootId, lastId );
     }
 
-    public static void writeMetaData( File metaFile, SCIndexDescription description, int pageSize, long rootId )
-            throws FileNotFoundException
+    public static void writeMetaData( File metaFile, SCIndexDescription description,
+            int pageSize, long rootId, long lastId ) throws FileNotFoundException
     {
         String firstLabel = description.firstLabel;
         String direction;
@@ -128,6 +134,7 @@ public class SCMetaData
                                  ( description.nodePropertyKey != null ? description.nodePropertyKey : "" );
         String pageSizeLine = Integer.toString( pageSize );
         String rootIdLine = Long.toString( rootId );
+        String lastIdLine = Long.toString( lastId );
 
         PrintWriter out = new PrintWriter( metaFile );
         out.println( firstLabel );
@@ -135,6 +142,7 @@ public class SCMetaData
         out.println( secondLabelLine );
         out.println( pageSizeLine );
         out.println( rootIdLine );
+        out.println( lastIdLine );
         out.close();
     }
 

@@ -6,7 +6,9 @@ import index.SCIndexDescription;
 import index.SCResult;
 import index.Seeker;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -15,17 +17,17 @@ import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
 
-public class Index implements SCIndex, IdProvider
+public class Index implements SCIndex, IdProvider, Closeable
 {
     private final File metaFile;
     private final int pageSize;
 
-    private PagedFile pagedFile;
-    private SCIndexDescription description;
+    private final PagedFile pagedFile;
+    private final SCIndexDescription description;
     private long rootId;
-    private IndexInsert inserter;
-    private IdPool idPool;
-    private Node node;
+    private long lastId;
+    private final IndexInsert inserter;
+    private final Node node;
 
     /**
      * Initiate an already existing index from file and meta file
@@ -43,6 +45,7 @@ public class Index implements SCIndex, IdProvider
         this.pagedFile = pageCache.map( indexFile, pageSize );
         this.description = meta.description;
         this.rootId = meta.rootId;
+        this.lastId = meta.lastId;
         this.node = new Node( meta.pageSize );
         this.inserter = new IndexInsert( this, node );
     }
@@ -63,40 +66,14 @@ public class Index implements SCIndex, IdProvider
         this.pageSize = pageSize;
         this.pagedFile = pageCache.map( indexFile, pageSize );
         this.description = description;
-        this.idPool = new IdPool();
-        this.rootId = this.idPool.acquireNewId();
+        this.lastId = 0;
+        this.rootId = this.lastId;
         this.node = new Node( pageSize );
         this.inserter = new IndexInsert( this, node );
 
-        SCMetaData.writeMetaData( metaFile, description, pageSize, rootId );
+        SCMetaData.writeMetaData( metaFile, description, pageSize, rootId, lastId );
 
         // Initialize index root node to a leaf node.
-        PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
-        cursor.next();
-        node.initializeLeaf( cursor );
-        cursor.close();
-    }
-
-    /**
-     * THIS SHOULD ONLY BE USED FOR NONE PERSISTENT INDEXES
-     * DOES NOT SAVE META DATA
-     * @param pagedFile
-     * @param description
-     * @throws IOException
-     */
-    public Index( PagedFile pagedFile, SCIndexDescription description ) throws IOException
-    {
-        this.metaFile = null;
-        this.pageSize = pagedFile.pageSize();
-        this.pagedFile = pagedFile;
-        this.description = description;
-        this.idPool = new IdPool();
-        this.rootId = this.idPool.acquireNewId();
-        this.node = new Node( pagedFile.pageSize() );
-        this.inserter = new IndexInsert( this, node );
-
-
-        // Initialize index root node to a leaf node. This should be changed when moving to persistent index.
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
         node.initializeLeaf( cursor );
@@ -120,7 +97,7 @@ public class Index implements SCIndex, IdProvider
         if ( split != null )
         {
             // New root
-            rootId = idPool.acquireNewId();
+            rootId = acquireNewId();
             cursor.next( rootId );
 
             node.initializeInternal( cursor );
@@ -128,10 +105,9 @@ public class Index implements SCIndex, IdProvider
             node.setKeyCount( cursor, 1 );
             node.setChildAt( cursor, split.left, 0 );
             node.setChildAt( cursor, split.right, 1 );
-
             if ( metaFile != null )
             {
-                SCMetaData.writeMetaData( metaFile, description, pageSize, rootId );
+                SCMetaData.writeMetaData( metaFile, description, pageSize, rootId, lastId );
             }
         }
         cursor.close();
@@ -148,9 +124,14 @@ public class Index implements SCIndex, IdProvider
     }
 
     @Override
-    public long acquireNewId()
+    public long acquireNewId() throws FileNotFoundException
     {
-        return idPool.acquireNewId();
+        lastId++;
+        if ( metaFile != null )
+        {
+            SCMetaData.writeMetaData( metaFile, description, pageSize, rootId, lastId );
+        }
+        return lastId;
     }
 
     // Utility method

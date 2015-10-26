@@ -1,25 +1,40 @@
 package index;
 
 import index.btree.Index;
-import index.storage.ByteArrayPagedFile;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.neo4j.graphdb.Direction;
-import org.neo4j.io.pagecache.PagedFile;
+import org.neo4j.io.fs.DefaultFileSystemAbstraction;
+import org.neo4j.io.pagecache.PageCache;
+import org.neo4j.io.pagecache.PageSwapperFactory;
+import org.neo4j.io.pagecache.impl.SingleFilePageSwapperFactory;
+import org.neo4j.io.pagecache.impl.muninn.MuninnPageCache;
+import org.neo4j.io.pagecache.tracing.DefaultPageCacheTracer;
+import org.neo4j.io.pagecache.tracing.PageCacheTracer;
 
 import static junit.framework.TestCase.assertNotNull;
 
 public class SCIndexProviderTest
 {
-    private PagedFile pagedFile;
+    private File indexFile;
+    private File metaFile;
+    PageCache pageCache;
 
     @Before
-    public void setup()
+    public void setup() throws IOException
     {
-        pagedFile = new ByteArrayPagedFile( 32 );
+        PageSwapperFactory swapper = new SingleFilePageSwapperFactory();
+        swapper.setFileSystemAbstraction( new DefaultFileSystemAbstraction() );
+        PageCacheTracer tracer = new DefaultPageCacheTracer();
+
+        pageCache = new MuninnPageCache( swapper, 2, 256, tracer );
+
+        indexFile = File.createTempFile( SCIndex.filePrefix, SCIndex.indexFileSuffix );
+        metaFile = File.createTempFile( SCIndex.filePrefix, SCIndex.metaFileSuffix );
     }
 
     @Test
@@ -28,7 +43,8 @@ public class SCIndexProviderTest
         SCIndexProvider provider = new SCIndexProvider();
 
         SCIndexDescription desc = new SCIndexDescription( "a", "b", "c", Direction.OUTGOING, "d", null );
-        SCIndex index = new Index( pagedFile, desc );
+
+        SCIndex index = new Index( pageCache, indexFile, metaFile, desc, 0);
 
         provider.put( index );
 
@@ -41,7 +57,7 @@ public class SCIndexProviderTest
         SCIndexProvider provider = new SCIndexProvider();
 
         SCIndexDescription in = new SCIndexDescription( "a", "b", "c", Direction.OUTGOING, "d", null );
-        SCIndex index = new Index( pagedFile, in );
+        SCIndex index = new Index( pageCache, indexFile, metaFile, in, 0);
 
         provider.put( index );
 
