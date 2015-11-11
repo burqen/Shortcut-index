@@ -1,11 +1,14 @@
 package bench.util;
 
 import bench.queries.Query;
-import bench.queries.impl.lab.LabQuery1Kernel;
-import bench.queries.impl.ldbc.Query2Kernel;
-import bench.queries.impl.ldbc.Query4Kernel;
-import bench.queries.impl.ldbc.Query5Kernel;
-import bench.queries.impl.ldbc.Query6Kernel;
+import bench.util.arguments.DatasetParser;
+import bench.util.arguments.WorkloadParser;
+import com.martiansoftware.jsap.FlaggedOption;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
+import com.martiansoftware.jsap.SimpleJSAP;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,50 +33,73 @@ import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 public class InputDataGenerator
 {
 
-    public void run( String[] argv ) throws IOException
+    public void run( String[] argv ) throws IOException, JSAPException
     {
+        SimpleJSAP jsap = new SimpleJSAP(
+                "InputDataGenerator",
+                "Generate data for selected queries",
+                new Parameter[] {
+                        new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
+                                JSAP.NO_SHORTFLAG, "dataset",
+                                "Decide what dataset to use. ldbc1, ldbc10, lab8 40 200 400 800" ),
+                        new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
+                                JSAP.NO_SHORTFLAG, "workload",
+                                "What workload to use. Environment need to match dataset. " +
+                                "<ldbcall | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
+                                "lab100 | lab75 | lab50 | lab 25 | lab1>" ),
+                }
+        );
+
+        JSAPResult config = jsap.parse(argv);
+        if ( jsap.messagePrinted() ) System.exit( 1 );
+
+        Dataset dataset = (Dataset) config.getObject( "dataset" );
+        Workload workload = (Workload) config.getObject( "workload" );
+
+        // Make sure entire workload fits dataset
+        for ( Query query : workload.queries() )
+        {
+            if ( query.environment() != dataset.environment )
+            {
+                throw new IllegalStateException( "Environment for " + query.queryDescription().queryName() +
+                                                 " does not match environment of dataset " + dataset.dbName );
+            }
+        }
+
         if ( argv.length == 0 )
         {
             System.out.println( "Expected input of combination of query2, query4, query5, query6" );
             System.exit( 1 );
         }
 
-//        String dbName = Config.LDBC_SF001; // LDBC
-        String dbName = Config.LAB_8.dbName; // LAB_8
+        String dbName = dataset.dbName;
 
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( Config.GRAPH_DB_FOLDER, dbName );
 
-        for ( String arg : argv )
+        workload.queries();
+        for ( Query query : workload.queries() )
         {
-            switch ( arg )
-            {
-            case "query2":
-                generateInputForQuery( graphDb, new Query2Kernel() );
-                break;
-            case "query4":
-                generateInputForQuery( graphDb, new Query4Kernel() );
-                break;
-            case "query5":
-                generateInputForQuery( graphDb, new Query5Kernel() );
-                break;
-            case "query6":
-                generateInputForQuery( graphDb, new Query6Kernel() );
-                break;
-            case "labquery1":
-                generateInputForQuery( graphDb, new LabQuery1Kernel( 1 ) );
-                break;
-            default:
-                System.out.println( "Unexpected input. Only accept query2, query4, query5, query6" );
-            }
+            generateInputForQuery( graphDb, dataset.inputDataDir, query );
         }
     }
 
-    private void generateInputForQuery( GraphDatabaseService graphDb, Query query ) throws IOException
+    private void generateInputForQuery( GraphDatabaseService graphDb, String inputDataDir, Query query ) throws IOException
     {
+        if ( query.inputFile() == Config.NO_INPUT )
+        {
+            return;
+        }
+
+        String file = inputDataDir + query.inputFile();
         System.out.println( "Create input data for query with input header "
                             + Arrays.toString( query.inputDataHeader() ) );
-        System.out.print( "Open file " + query.inputFile() + "... " );
-        PrintWriter out = new PrintWriter( openOutputStream( query.inputFile() ) );
+        System.out.print( "Open file " + file + "... " );
+        FileOutputStream os = openOutputStream( file );
+        if ( os == null )
+        {
+            return;
+        }
+        PrintWriter out = new PrintWriter( os );
         System.out.print( "ok\n");
         System.out.print( "Generate random ids... " );
         List<Long> personIds = generateRandomIdsForLabel( graphDb, query.inputDataHeader()[0] );
@@ -211,7 +237,7 @@ public class InputDataGenerator
         return out;
     }
 
-    public static void main( String[] argv ) throws IOException
+    public static void main( String[] argv ) throws IOException, JSAPException
     {
         new InputDataGenerator().run( argv );
     }

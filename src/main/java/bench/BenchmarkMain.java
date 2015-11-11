@@ -60,7 +60,7 @@ public class BenchmarkMain
                                 "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
                                 .setList( false )
                                 .setHelp( "Decide which logger to use: simple, simpletime, latex, histo or histotime" ),
-                        new FlaggedOption( "warmup", JSAP.INTEGER_PARSER, "10", JSAP.NOT_REQUIRED, 'w', "warmup",
+                        new FlaggedOption( "warmup", JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'w', "warmup",
                                 "Number of warm up iterations"),
                         new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "10000", JSAP.NOT_REQUIRED, 's', "inputsize",
                                 "Max number of different input data per query, " +
@@ -71,7 +71,7 @@ public class BenchmarkMain
                                 JSAP.NO_SHORTFLAG, "cachesize", "Max size of index cache in MB" ),
                         new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "dataset",
-                                "Decide what dataset to use. ldbc1, lab8 40 200 400 800" ),
+                                "Decide what dataset to use. ldbc1, ldbc10, lab8 40 200 400 800" ),
                         new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +
@@ -80,7 +80,7 @@ public class BenchmarkMain
                         new FlaggedOption( "output", OutputtargetParser.INSTANCE, "system", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "output", "Name of output file to append result to. " +
                                                              "Default is system." ),
-                        new Switch( "forceNew", JSAP.NO_SHORTFLAG, "force", "Switch to force creation of new index." )
+                        new Switch( "forceNew", JSAP.NO_SHORTFLAG, "force", "Switch to force creation of new index." ),
                 }
         );
 
@@ -108,7 +108,7 @@ public class BenchmarkMain
         }
 
         // Setup run configurations
-        BenchConfig benchConfig = new BenchConfig( pageSize, cachePages, inputSize, nbrOfWarmup );
+        BenchConfig benchConfig = new BenchConfig( pageSize, cachePages, inputSize, nbrOfWarmup, dataset.inputDataDir );
 
         // Open database
         GraphDatabaseService graphDb = GraphDatabaseProvider.openDatabase( dataset.dbPath, dataset.dbName );
@@ -169,6 +169,7 @@ public class BenchmarkMain
             Map<String,List<long[]>> inputData, int nbrOfWarmup )
             throws IOException, EntityNotFoundException
     {
+        System.out.println( "Starting warmup." );
         // Warm up
         for ( int i = 0; i < nbrOfWarmup; i++ )
         {
@@ -178,12 +179,14 @@ public class BenchmarkMain
                         inputData.get( query.inputFile() ) );
             }
         }
+        System.out.println( "Warmup finished. Did " + nbrOfWarmup + " run(s).\nStarting live run." );
         // Live
         for ( Query query : queries )
         {
             benchmarkQuery( query, liveLogger, graphDb, threadToStatementContextBridge,
                     inputData.get( query.inputFile() ) );
         }
+        System.out.println( "Live run finished." );
     }
 
     private void benchmarkQuery( Query query, Logger logger, GraphDatabaseService graphDb,
@@ -219,7 +222,7 @@ public class BenchmarkMain
         {
             if ( !inputData.containsKey( query.inputFile() ) )
             {
-                List<long[]> data = inputDataLoader.load( query.inputFile(), query.inputDataHeader(),
+                List<long[]> data = inputDataLoader.load( benchConfig.inputDataDir(), query.inputFile(), query.inputDataHeader(),
                         benchConfig.inputSize() );
                 if ( data == null )
                 {

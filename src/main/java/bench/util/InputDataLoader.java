@@ -18,12 +18,12 @@ public class InputDataLoader
 {
     public static char csvSeparator = '|';
 
-    public List<long[]> load( String dataFileName, String[] expectedHeader, int inputSize ) throws FileNotFoundException
+    public List<long[]> load( String dataDir, String dataFileName, String[] expectedHeader, int inputSize ) throws FileNotFoundException
     {
         List<long[]> inputData = new ArrayList<>();
         if ( !dataFileName.equals( NO_INPUT ) )
         {
-            File file = new File( dataFileName );
+            File file = new File( dataDir + dataFileName );
             BufferedReader reader = new BufferedReader( new FileReader( file ) );
             String[] line;
 
