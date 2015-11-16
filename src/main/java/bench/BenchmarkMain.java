@@ -75,7 +75,7 @@ public class BenchmarkMain
                         new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +
-                                "<ldbcall | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
+                                "<ldbcall | ldbcholy | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
                                 "lab100 | lab75 | lab50 | lab 25 | lab1>" ),
                         new FlaggedOption( "output", OutputtargetParser.INSTANCE, "system", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "output", "Name of output file to append result to. " +
@@ -95,7 +95,6 @@ public class BenchmarkMain
         Dataset dataset = (Dataset) config.getObject( "dataset" );
         Workload workload = (Workload) config.getObject( "workload" );
         PrintStream output = (PrintStream) config.getObject( "output" );
-        //boolean forceNew = Config.getBooleanProperty( "forceNew" );
 
         // Make sure entire workload fits dataset
         for ( Query query : workload.queries() )

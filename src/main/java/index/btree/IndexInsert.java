@@ -169,8 +169,9 @@ public class IndexInsert
         // Initialize
         node.initializeInternal( cursor );
 
-        // Right sibling
+        // Siblings
         node.setRightSibling( cursor, oldRight );
+        node.setLeftSibling( cursor, fullNode );
 
         // Keys
         arrayOffset = (middle + 1) * Node.SIZE_KEY; // NOTE: (middle + 1) don't include middle
@@ -350,8 +351,9 @@ public class IndexInsert
         cursor.next( newRight );
         node.initializeLeaf( cursor );
 
-        // Sibling
+        // Siblings
         node.setRightSibling( cursor, oldRight );
+        node.setLeftSibling( cursor, left );
 
         // Keys
         int arrayOffset = middle * Node.SIZE_KEY;

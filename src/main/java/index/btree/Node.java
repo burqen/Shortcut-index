@@ -14,9 +14,9 @@ import org.neo4j.io.pagecache.PageCursor;
  *
  * # = empty space
  *
- * [             HEADER         ]|[      KEYS     ]|[     CHILDREN      ]
- * [TYPE][KEYCOUNT][RIGHTSIBLING]|[[KEY][KEY]...##]|[[CHILD][CHILD]...##]
- *  0     1         5              13
+ * [                    HEADER               ]|[      KEYS     ]|[     CHILDREN      ]
+ * [TYPE][KEYCOUNT][RIGHTSIBLING][LEFTSIBLING]|[[KEY][KEY]...##]|[[CHILD][CHILD]...##]
+ *  0     1         5             13            21
  *
  * Calc offset for key i (starting from 0)
  * HEADER_LENGTH + i * SIZE_KEY
@@ -28,9 +28,9 @@ import org.neo4j.io.pagecache.PageCursor;
  * Using Separate design the leaf nodes should look like
  *
  *
- * [             HEADER         ]|[      KEYS     ]|[       VALUES      ]
- * [TYPE][KEYCOUNT][RIGHTSIBLING]|[[KEY][KEY]...##]|[[VALUE][VALUE]...##]
- *  0     1         5              13
+ * [                   HEADER                ]|[      KEYS     ]|[       VALUES      ]
+ * [TYPE][KEYCOUNT][RIGHTSIBLING][LEFTSIBLING]|[[KEY][KEY]...##]|[[VALUE][VALUE]...##]
+ *  0     1         5             13            21
  *
  * Calc offset for key i (starting from 0)
  * HEADER_LENGTH + i * SIZE_KEY
@@ -44,7 +44,8 @@ public class Node
     public static final int BYTE_POS_TYPE = 0;
     public static final int BYTE_POS_KEYCOUNT = 1;
     public static final int BYTE_POS_RIGHTSIBLING = 5;
-    public static final int HEADER_LENGTH = 13;
+    public static final int BYTE_POS_LEFTSIBLING = 13;
+    public static final int HEADER_LENGTH = 21;
 
     public static final int SIZE_CHILD = 8;
     public static final int SIZE_KEY = 2 * 8;
@@ -82,6 +83,7 @@ public class Node
         setTypeLeaf( cursor );
         setKeyCount( cursor, 0 );
         setRightSibling( cursor, NO_NODE_FLAG );
+        setLeftSibling( cursor, NO_NODE_FLAG );
     }
 
     public void initializeInternal( PageCursor cursor )
@@ -89,6 +91,7 @@ public class Node
         setTypeInternal( cursor );
         setKeyCount( cursor, 0 );
         setRightSibling( cursor, NO_NODE_FLAG );
+        setLeftSibling( cursor, NO_NODE_FLAG );
     }
 
 
@@ -114,6 +117,11 @@ public class Node
         return cursor.getLong( BYTE_POS_RIGHTSIBLING );
     }
 
+    public long leftSibling( PageCursor cursor )
+    {
+        return cursor.getLong( BYTE_POS_LEFTSIBLING );
+    }
+
     public void setTypeLeaf( PageCursor cursor )
     {
         cursor.putByte( BYTE_POS_TYPE, LEAF_FLAG );
@@ -134,6 +142,10 @@ public class Node
         cursor.putLong( BYTE_POS_RIGHTSIBLING, rightSiblingId );
     }
 
+    public void setLeftSibling( PageCursor cursor, long leftSiblingId )
+    {
+        cursor.putLong( BYTE_POS_LEFTSIBLING, leftSiblingId );
+    }
 
     // BODY METHODS
 

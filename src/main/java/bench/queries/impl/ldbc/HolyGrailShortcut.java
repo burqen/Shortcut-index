@@ -6,11 +6,11 @@ import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCResult;
+import index.btree.CountPredicate;
 import index.btree.RangePredicate;
 import index.btree.RangeSeeker;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 import org.neo4j.graphdb.Direction;
@@ -35,15 +35,8 @@ public class HolyGrailShortcut extends AbstractHolyGrail
         SCIndex index = indexes.get( indexDescription );
 
         index.seek( new RangeSeeker( RangePredicate.noLimit( otherNode ),
-                        RangePredicate.lowerOrEqual( otherNode, limit ) ),
+                        RangePredicate.lowerOrEqual( otherNode, limit ), CountPredicate.max( 20 ), true ),
                 queryResult );
-
-        Iterator<SCResult> resultIterator = queryResult.iterator();
-        while ( resultIterator.hasNext() )
-        {
-            SCResult result = resultIterator.next();
-        }
-
     }
 
     @Override
