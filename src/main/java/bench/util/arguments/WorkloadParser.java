@@ -65,11 +65,11 @@ public class WorkloadParser extends StringParser
                 };
         Query[] shortcutHolyGrail = new Query[]
                 {
-                        new HolyGrailShortcut(),
+                        new HolyGrailShortcut( 0L ),
                 };
         Query[] kernelHolyGrail = new Query[]
                 {
-                        new HolyGrailKernel(),
+                        new HolyGrailKernel( 0L ),
                 };
 
 
