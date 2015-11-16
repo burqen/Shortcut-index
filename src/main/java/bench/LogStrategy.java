@@ -11,5 +11,5 @@ public interface LogStrategy
 
     void reportRow( PrintStream out, ResultRow resultRow );
 
-    void footer( PrintStream out );
+    void footer( PrintStream out, BenchConfig benchConfig, Dataset dataset );
 }

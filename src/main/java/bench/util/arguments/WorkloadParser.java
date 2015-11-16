@@ -3,6 +3,8 @@ package bench.util.arguments;
 import bench.queries.Query;
 import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.lab.LabQuery1Shortcut;
+import bench.queries.impl.ldbc.HolyGrailKernel;
+import bench.queries.impl.ldbc.HolyGrailShortcut;
 import bench.queries.impl.ldbc.Query1Kernel;
 import bench.queries.impl.ldbc.Query1Shortcut;
 import bench.queries.impl.ldbc.Query2Kernel;
@@ -61,10 +63,24 @@ public class WorkloadParser extends StringParser
                         new LabQuery1Kernel( 75 ),
                         new LabQuery1Kernel( 100 ),
                 };
+        Query[] shortcutHolyGrail = new Query[]
+                {
+                        new HolyGrailShortcut(),
+                };
+        Query[] kernelHolyGrail = new Query[]
+                {
+                        new HolyGrailKernel(),
+                };
+
 
         Workload workload;
         switch ( s )
         {
+        case "ldbcholy":
+            workload = new Workload( LDBC );
+            workload.addQueries( shortcutHolyGrail );
+            workload.addQueries( kernelHolyGrail );
+            break;
         case "ldbcall":
             workload = new Workload( LDBC );
             workload.addQueries( shortcutLDBCQueries );

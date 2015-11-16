@@ -12,13 +12,10 @@ import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
 import org.neo4j.kernel.api.index.IndexDescriptor;
-import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 
 public abstract class QueryKernel extends Query
 {
@@ -42,27 +39,7 @@ public abstract class QueryKernel extends Query
             int relType, int secondLabel,
             int propKey, List<SCResult> resultList );
 
-
     @Override
-    public void runQuery( ThreadToStatementContextBridge threadToStatementContextBridge, GraphDatabaseService graphDb,
-            Measurement measurement, long[] inputData )
-            throws EntityNotFoundException
-    {
-        long start = System.nanoTime();
-        List<SCResult> resultList;
-        try ( Transaction tx = graphDb.beginTx() )
-        {
-            ReadOperations readOperations = threadToStatementContextBridge.get().readOperations();
-
-            resultList = doRunQuery( readOperations, measurement, inputData );
-
-            tx.success();
-        }
-        measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
-
-        reportResult( resultList );
-    }
-
     protected List<SCResult> doRunQuery(
             ReadOperations operations, Measurement measurement, long[] inputData ) throws EntityNotFoundException
     {
@@ -85,11 +62,6 @@ public abstract class QueryKernel extends Query
 
         massageRawResult( resultList );
         return resultList;
-    }
-
-    protected void reportResult( List<SCResult> resultList )
-    {
-        // Do nothing here as default
     }
 
     protected void massageRawResult( List<SCResult> resultList )

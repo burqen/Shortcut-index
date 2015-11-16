@@ -6,6 +6,8 @@ import bench.Measurement;
 import org.HdrHistogram.Histogram;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,15 +24,7 @@ public class LogLatexTable implements LogStrategy
     {
         if ( !hasWrittenHeader )
         {
-            String caption = String.format( "Dataset: %s" +
-                                            ", page size: %d Bytes, cache pages: %,d, total cache size: %d MB, number of warm up runs: %d, " +
-                                            "input data size: %d",
-                    dataset.dbName,
-                    benchConfig.pageSize(),
-                    benchConfig.cachePages(),
-                    benchConfig.pageSize() * benchConfig.cachePages() / 1000000,
-                    benchConfig.numberOfWarmups(),
-                    benchConfig.inputSize() );
+            String caption = String.format( "Result table for %s", dataset.dbName );
             String label = String.format( "tbl:result" );
             String header = String.format( "\\begin{table}\n" +
                             "\\begin{center}\n" +
@@ -138,12 +132,50 @@ public class LogLatexTable implements LogStrategy
     }
 
     @Override
-    public void footer( PrintStream out )
+    public void footer( PrintStream out, BenchConfig benchConfig, Dataset dataset )
     {
-        String footer = "\\end{tabular}\n" +
-                        "\\end{center}\n" +
-                        "\\end{table}";
-        out.print( footer );
+        // get a RuntimeMXBean reference
+        RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+
+        // get the jvm's input arguments as a list of strings
+        List<String> inputArguments = runtimeMxBean.getInputArguments();
+
+        String heapParams = "";
+        for ( String param : inputArguments )
+        {
+            if ( param.contains( "Xmx" ) || param.contains( "Xms" ) )
+            {
+                heapParams = heapParams + param + " ";
+            }
+        }
+
+        String.format( "Dataset: %s" +
+                       ", page size: %d Bytes, cache pages: %,d, total cache size: %d MB, number of warm up runs: %d, " +
+                       "input data size: %d",
+                dataset.dbName,
+                benchConfig.pageSize(),
+                benchConfig.cachePages(),
+                benchConfig.pageSize() * benchConfig.cachePages() / 1000000,
+                benchConfig.numberOfWarmups(),
+                benchConfig.inputSize() );
+
+        String footer = String.format(
+                "\\multicolumn{5}{|c|}{ Setup } \\\\ \\thickhline\n" +
+                "\\multicolumn{2}{|c|}{Dataset} & \\multicolumn{3}{c|}{%s} \\\\ \\hline\n" +
+                "\\multicolumn{2}{|c|}{Page size} & \\multicolumn{3}{c|}{%dB} \\\\ \\hline\n" +
+                "\\multicolumn{2}{|c|}{Cache size} & \\multicolumn{3}{c|}{%dMB} \\\\ \\hline\n" +
+                "\\multicolumn{2}{|c|}{VM params} & \\multicolumn{3}{c|}{%s} \\\\\n" +
+                "\\thickhline\n" +
+                "\\end{tabular}\n" +
+                "\\end{center}\n" +
+                "\\end{table}",
+                dataset.dbName,
+                benchConfig.pageSize(),
+                benchConfig.pageSize() * benchConfig.cachePages() / 1000000,
+                heapParams.trim()
+        );
+
+        out.print( latexSafe( footer ) );
         out.print( "\n");
     }
 

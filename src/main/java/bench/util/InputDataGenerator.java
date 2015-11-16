@@ -45,7 +45,7 @@ public class InputDataGenerator
                         new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +
-                                "<ldbcall | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
+                                "<ldbcall | ldbcholy | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
                                 "lab100 | lab75 | lab50 | lab 25 | lab1>" ),
                 }
         );
@@ -102,7 +102,7 @@ public class InputDataGenerator
         PrintWriter out = new PrintWriter( os );
         System.out.print( "ok\n");
         System.out.print( "Generate random ids... " );
-        List<Long> personIds = generateRandomIdsForLabel( graphDb, query.inputDataHeader()[0] );
+        List<Long> randomIds = generateRandomIdsForLabel( graphDb, query.inputDataHeader()[0] );
         System.out.print( "ok\n" );
 
         char separator = InputDataLoader.csvSeparator;
@@ -113,9 +113,9 @@ public class InputDataGenerator
 
         // ... and shuffle the order and write to file...
         // CONTENT
-        Collections.shuffle( personIds );
+        Collections.shuffle( randomIds );
         System.out.print( "Writing to file..." );
-        personIds.forEach( out::println );
+        randomIds.forEach( out::println );
         System.out.print( "ok\n" );
 
         out.close();

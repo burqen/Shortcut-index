@@ -67,7 +67,7 @@ public class BenchmarkMain
                                 "decides how many time each query is run in every iteration." ),
                         new FlaggedOption( "pagesize", JSAP.INTEGER_PARSER, "8192", JSAP.NOT_REQUIRED, 'p', "pagesize",
                                 "What page size to use in B" ),
-                        new FlaggedOption( "cachesize", JSAP.INTEGER_PARSER, "2048", JSAP.NOT_REQUIRED,
+                        new FlaggedOption( "cachesize", JSAP.INTEGER_PARSER, "1024", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "cachesize", "Max size of index cache in MB" ),
                         new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "dataset",

@@ -114,7 +114,7 @@ public class BenchLogger implements Logger
         {
             logStrategy.reportRow( out, resultRow );
         }
-        logStrategy.footer( out );
+        logStrategy.footer( out, benchConfig, dataset );
         out.print( "\n" );
     }
 

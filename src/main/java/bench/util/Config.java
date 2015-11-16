@@ -19,6 +19,8 @@ public class Config
 
     public static final String QUERY6_PARAMETERS = "query_6_param.txt";
 
+    public static final String HOLY_GRAIL_PARAMETERS = "holy_grail_param.txt";
+
     public static final String LDBC_SF001 = "ldbc_sf001_p006_Neo4jDb";
 
     public static final String LDBC_SF010 = "ldbc_sf010_p006_Neo4jDb";

@@ -73,7 +73,7 @@ public class LogCompleteHistogram implements LogStrategy
     }
 
     @Override
-    public void footer( PrintStream out )
+    public void footer( PrintStream out, BenchConfig benchConfig, Dataset dataset )
     {
         // No footer
     }
