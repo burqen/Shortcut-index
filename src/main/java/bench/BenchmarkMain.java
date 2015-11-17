@@ -76,7 +76,7 @@ public class BenchmarkMain
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +
                                 "<ldbcall | ldbcholy | laball | ldbc1 | ldbc 2 | ldbc3 | ldbc4 | ldbc5 | ldbc6 | " +
-                                "lab100 | lab75 | lab50 | lab 25 | lab1>" ),
+                                "lab100 | lab75 | lab50 | lab 25 | lab1 | lablimit>" ),
                         new FlaggedOption( "output", OutputtargetParser.INSTANCE, "system", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "output", "Name of output file to append result to. " +
                                                              "Default is system." ),
@@ -172,11 +172,13 @@ public class BenchmarkMain
         // Warm up
         for ( int i = 0; i < nbrOfWarmup; i++ )
         {
+            System.out.print( "Warmup iteration " + (i+1) + "... " );
             for ( Query query : queries )
             {
                 benchmarkQuery( query, warmupLogger, graphDb, threadToStatementContextBridge,
                         inputData.get( query.inputFile() ) );
             }
+            System.out.println( " ok");
         }
         System.out.println( "Warmup finished. Did " + nbrOfWarmup + " run(s).\nStarting live run." );
         // Live

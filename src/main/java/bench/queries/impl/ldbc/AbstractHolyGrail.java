@@ -79,13 +79,20 @@ public abstract class AbstractHolyGrail extends Query
         {
             e.printStackTrace();
         }
-        return massageRawResult( queryResult );
+        return sortAndLimitResult( queryResult );
     }
 
-    protected List<SCResult> massageRawResult( List<SCResult> resultList )
+    protected List<SCResult> sortAndLimitResult( List<SCResult> resultList )
     {
         Collections.sort( resultList, ( o1, o2 ) -> -Long.compare( o1.getKey().getProp(), o2.getKey().getProp() ) );
-        return resultList.subList( 0, 20 );
+        if ( resultList.size() > 20 )
+        {
+            return resultList.subList( 0, 20 );
+        }
+        else
+        {
+            return resultList;
+        }
     }
 
     protected abstract void lastHop( ReadOperations operations, Measurement measurement, long[] inputData,

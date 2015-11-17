@@ -61,12 +61,18 @@ public abstract class QueryKernel extends Query
         }
 
         massageRawResult( resultList );
-        return resultList;
+        return limit( resultList );
     }
 
     protected void massageRawResult( List<SCResult> resultList )
     {
         // Do nothing here as default
+    }
+
+    protected List<SCResult> limit( List<SCResult> resultList )
+    {
+        // Do nothing here as default
+        return resultList;
     }
 
     protected PrimitiveLongIterator getNodeFromIndexLookup( ReadOperations operations,

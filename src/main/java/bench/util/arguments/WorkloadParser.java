@@ -3,6 +3,8 @@ package bench.util.arguments;
 import bench.queries.Query;
 import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.lab.LabQuery1Shortcut;
+import bench.queries.impl.lab.LabQuery2Kernel;
+import bench.queries.impl.lab.LabQuery2Shortcut;
 import bench.queries.impl.ldbc.HolyGrailKernel;
 import bench.queries.impl.ldbc.HolyGrailShortcut;
 import bench.queries.impl.ldbc.Query1Kernel;
@@ -53,7 +55,8 @@ public class WorkloadParser extends StringParser
                         new LabQuery1Shortcut( 25 ),
                         new LabQuery1Shortcut( 50 ),
                         new LabQuery1Shortcut( 75 ),
-                        new LabQuery1Shortcut( 100 )
+                        new LabQuery1Shortcut( 100 ),
+                        new LabQuery2Shortcut( 4 ),
                 };
         Query[] kernelLABQueries = new Query[]
                 {
@@ -62,6 +65,7 @@ public class WorkloadParser extends StringParser
                         new LabQuery1Kernel( 50 ),
                         new LabQuery1Kernel( 75 ),
                         new LabQuery1Kernel( 100 ),
+                        new LabQuery2Kernel( 4 ),
                 };
         Query[] shortcutHolyGrail = new Query[]
                 {
@@ -145,6 +149,11 @@ public class WorkloadParser extends StringParser
             workload = new Workload( LAB );
             workload.addQuery( shortcutLABQueries[4] );
             workload.addQuery( kernelLABQueries[4] );
+            break;
+        case "lablimit":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[5] );
+            workload.addQuery( kernelLABQueries[5] );
             break;
         default:
             throw new IllegalArgumentException( "Can not create workload from argument: " + s );

@@ -32,7 +32,7 @@ public class LogLatexTable implements LogStrategy
                             "\\label{%s}\n" +
                             "\\begin{tabular}{ | c | c | c | c | c | }\n" +
                             "\\thickhline\n" +
-                            "\\multicolumn{2}{|c|}{ Query } & Neo4j (µs) & Shortcut (µs)& Speedup  \\\\ \n" +
+                            "\\multicolumn{2}{|c|}{ Query } & Kernel (µs) & Shortcut (µs)& Speedup  \\\\ \n" +
                             "\\thickhline" , latexSafe( caption ), latexSafe( label ) );
             out.print( header );
             out.print( "\n" );

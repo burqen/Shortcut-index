@@ -3,11 +3,11 @@ package bench.queries.impl.description;
 import bench.queries.QueryDescription;
 import bench.util.Config;
 
-public class LABQuery1Description extends LABQueryDescription
+public class LabQuery1Description extends LABQueryDescription
 {
     private final int percentageOfRange;
 
-    public LABQuery1Description( int percentageOfRange )
+    public LabQuery1Description( int percentageOfRange )
     {
         this.percentageOfRange = percentageOfRange;
     }
@@ -41,6 +41,6 @@ public class LABQuery1Description extends LABQueryDescription
 
     public static QueryDescription instance( int percentageOfRange )
     {
-        return new LABQuery1Description( percentageOfRange );
+        return new LabQuery1Description( percentageOfRange );
     }
 }

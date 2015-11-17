@@ -2,32 +2,33 @@ package bench.queries.impl.lab;
 
 import bench.laboratory.LabEnvironmentGenerator;
 import bench.queries.QueryDescription;
-import bench.queries.impl.description.LabQuery1Description;
+import bench.queries.impl.description.LabQuery2Description;
 import index.SCIndexDescription;
 import index.Seeker;
+import index.btree.CountPredicate;
 import index.btree.RangePredicate;
 import index.btree.RangeSeeker;
 
 import org.neo4j.graphdb.Direction;
 
-public class LabQuery1Shortcut extends LabQueryShortcut
+public class LabQuery2Shortcut extends LabQueryShortcut
 {
-    private final int percentageOfRange;
+    private final int limit;
     public SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
             "CREATED", Direction.OUTGOING, null, "date" );
 
     private int lowerBoundary;
     private int upperBoundary;
 
-    public LabQuery1Shortcut( int percentageOfRange )
+    public LabQuery2Shortcut( int limit )
     {
-        this.percentageOfRange = percentageOfRange;
-        if ( percentageOfRange < 1 || percentageOfRange > 100 )
+        this.limit = limit;
+        if ( limit < 1 )
         {
-            throw new IllegalArgumentException( "Percentage is outside range 1-100: " + percentageOfRange );
+            throw new IllegalArgumentException( "Limit is less than one: " + limit );
         }
         lowerBoundary = 0;
-        upperBoundary = percentageOfRange * LabEnvironmentGenerator.RANGE_MAX / 100;
+        upperBoundary = LabEnvironmentGenerator.RANGE_MAX;
     }
 
     @Override
@@ -35,12 +36,12 @@ public class LabQuery1Shortcut extends LabQueryShortcut
     {
         return new RangeSeeker(
                 RangePredicate.greaterOrEqual( start, lowerBoundary ),
-                RangePredicate.lower( start, upperBoundary ) );
+                RangePredicate.lower( start, upperBoundary ), CountPredicate.max( limit ), false );
     }
 
     @Override
     public QueryDescription queryDescription()
     {
-        return LabQuery1Description.instance( percentageOfRange );
+        return LabQuery2Description.instance( limit );
     }
 }
