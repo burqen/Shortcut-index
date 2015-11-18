@@ -12,7 +12,6 @@ import index.btree.RangeSeeker;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -45,11 +44,8 @@ public class Query3Shortcut extends QueryShortcut
 
             SCIndex index = indexes.get( indexDescription );
 
-            index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.noLimit( start ) ),
+            index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.noLimit( start ), true ),
                     indexSeekResult );
-
-            // Reverse order will match "ORDER BY r.creationDate DESC"
-            Collections.reverse( indexSeekResult );
 
             Iterator<SCResult> resultIterator = indexSeekResult.iterator();
             while ( resultIterator.hasNext() )

@@ -178,7 +178,7 @@ public class BenchmarkMain
                 benchmarkQuery( query, warmupLogger, graphDb, threadToStatementContextBridge,
                         inputData.get( query.inputFile() ) );
             }
-            System.out.println( " ok");
+            System.out.println( "ok");
         }
         System.out.println( "Warmup finished. Did " + nbrOfWarmup + " run(s).\nStarting live run." );
         // Live

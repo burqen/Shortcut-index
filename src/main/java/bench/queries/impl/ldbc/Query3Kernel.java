@@ -6,7 +6,6 @@ import bench.queries.impl.framework.QueryKernelWithPropertyOnRelationship;
 import bench.util.SingleEntryPrimitiveLongIterator;
 import index.SCResult;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
@@ -82,7 +81,7 @@ public class Query3Kernel extends QueryKernelWithPropertyOnRelationship
     @Override
     protected void massageRawResult( List<SCResult> resultList )
     {
-        Collections.sort( resultList, (o1, o2) -> -1 * o1.getKey().compareTo( o2.getKey() ) );
+        resultList.sort( ( o1, o2) -> -Long.compare( o1.getKey().getProp(), o2.getKey().getProp() ) );
     }
 
     @Override
