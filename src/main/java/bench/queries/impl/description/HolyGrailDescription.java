@@ -34,5 +34,5 @@ public class HolyGrailDescription extends LDBCQueryDescription
         return Config.HOLY_GRAIL_PARAMETERS;
     }
 
-    public static QueryDescription INSTANCE = new Query2Description();
+    public static QueryDescription INSTANCE = new HolyGrailDescription();
 }

@@ -8,6 +8,7 @@ import index.SCResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.neo4j.graphdb.Direction;
@@ -78,7 +79,20 @@ public abstract class AbstractHolyGrail extends Query
         {
             e.printStackTrace();
         }
-        return queryResult;
+        return sortAndLimitResult( queryResult );
+    }
+
+    protected List<SCResult> sortAndLimitResult( List<SCResult> resultList )
+    {
+        Collections.sort( resultList, ( o1, o2 ) -> -Long.compare( o1.getKey().getProp(), o2.getKey().getProp() ) );
+        if ( resultList.size() > 20 )
+        {
+            return resultList.subList( 0, 20 );
+        }
+        else
+        {
+            return resultList;
+        }
     }
 
     protected abstract void lastHop( ReadOperations operations, Measurement measurement, long[] inputData,

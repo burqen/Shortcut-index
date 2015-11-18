@@ -3,6 +3,10 @@ package bench.util.arguments;
 import bench.queries.Query;
 import bench.queries.impl.lab.LabQuery1Kernel;
 import bench.queries.impl.lab.LabQuery1Shortcut;
+import bench.queries.impl.lab.LabQuery2Kernel;
+import bench.queries.impl.lab.LabQuery2Shortcut;
+import bench.queries.impl.lab.LabQuery3Kernel;
+import bench.queries.impl.lab.LabQuery3Shortcut;
 import bench.queries.impl.ldbc.HolyGrailKernel;
 import bench.queries.impl.ldbc.HolyGrailShortcut;
 import bench.queries.impl.ldbc.Query1Kernel;
@@ -53,7 +57,10 @@ public class WorkloadParser extends StringParser
                         new LabQuery1Shortcut( 25 ),
                         new LabQuery1Shortcut( 50 ),
                         new LabQuery1Shortcut( 75 ),
-                        new LabQuery1Shortcut( 100 )
+                        new LabQuery1Shortcut( 100 ),
+                        new LabQuery2Shortcut( 4 ),
+                        new LabQuery2Shortcut( 40 ),
+                        new LabQuery3Shortcut(),
                 };
         Query[] kernelLABQueries = new Query[]
                 {
@@ -62,14 +69,17 @@ public class WorkloadParser extends StringParser
                         new LabQuery1Kernel( 50 ),
                         new LabQuery1Kernel( 75 ),
                         new LabQuery1Kernel( 100 ),
+                        new LabQuery2Kernel( 4 ),
+                        new LabQuery2Kernel( 40 ),
+                        new LabQuery3Kernel(),
                 };
         Query[] shortcutHolyGrail = new Query[]
                 {
-                        new HolyGrailShortcut( 0L ),
+                        new HolyGrailShortcut( 1350748030859L ), // Largest value
                 };
         Query[] kernelHolyGrail = new Query[]
                 {
-                        new HolyGrailKernel( 0L ),
+                        new HolyGrailKernel( 1350748030859L ), // Largest value
                 };
 
 
@@ -145,6 +155,18 @@ public class WorkloadParser extends StringParser
             workload = new Workload( LAB );
             workload.addQuery( shortcutLABQueries[4] );
             workload.addQuery( kernelLABQueries[4] );
+            break;
+        case "lablimit":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[5] );
+            workload.addQuery( shortcutLABQueries[6] );
+            workload.addQuery( kernelLABQueries[5] );
+            workload.addQuery( kernelLABQueries[6] );
+            break;
+        case "labsort":
+            workload = new Workload( LAB );
+            workload.addQuery( shortcutLABQueries[7] );
+            workload.addQuery( kernelLABQueries[7] );
             break;
         default:
             throw new IllegalArgumentException( "Can not create workload from argument: " + s );

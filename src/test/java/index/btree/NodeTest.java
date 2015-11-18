@@ -99,13 +99,18 @@ public class NodeTest extends TestUtils
     }
 
     @Test
-    public void setAndGetRightSibling()
+    public void setAndGetSiblings()
     {
         long rightSiblingId = 456092;
+        long leftSiblingId = Long.MAX_VALUE - 1;
         node.setRightSibling( cursor, rightSiblingId );
-        long sibling = node.rightSibling( cursor );
-        assertEquals( "Expected right sibling to be " + rightSiblingId + " but was " + sibling,
-                rightSiblingId, sibling );
+        node.setLeftSibling( cursor, leftSiblingId );
+        long rightSibling = node.rightSibling( cursor );
+        long leftSibling = node.leftSibling( cursor );
+        assertEquals( "Expected right sibling to be " + rightSiblingId + " but was " + rightSibling,
+                rightSiblingId, rightSibling );
+        assertEquals( "Expected left sibling to be " + leftSiblingId + " but was " + leftSibling,
+                leftSiblingId, leftSibling );
     }
 
     @Test
@@ -116,6 +121,8 @@ public class NodeTest extends TestUtils
         assertEquals( "Expected node to have no keys", 0, node.keyCount( cursor ) );
         assertEquals( "Expected node to have no rightSibling", Node.NO_NODE_FLAG,
                 node.rightSibling( cursor ) );
+        assertEquals( "Expected node to have no leftSibling", Node.NO_NODE_FLAG,
+                node.leftSibling( cursor ) );
     }
 
     @Test
@@ -126,6 +133,8 @@ public class NodeTest extends TestUtils
         assertEquals( "Expected node to have no keys", 0, node.keyCount( cursor ) );
         assertEquals( "Expected node to have no rightSibling", Node.NO_NODE_FLAG,
                 node.rightSibling( cursor ) );
+        assertEquals( "Expected node to have no leftSibling", Node.NO_NODE_FLAG,
+                node.leftSibling( cursor ) );
     }
 
     @Test

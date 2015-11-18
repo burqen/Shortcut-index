@@ -195,8 +195,10 @@ public class IndexInsertTest extends TestUtils
 
         assertNotNull( "Expected split", split );
         assertSibling( split.right, node.rightSibling( cursor ) );
+        assertSibling( Node.NO_NODE_FLAG, node.leftSibling( cursor ) );
         cursor.next( split.right );
         assertSibling( Node.NO_NODE_FLAG, node.rightSibling( cursor ) );
+        assertSibling( split.left, node.leftSibling( cursor ) );
 
         // Assert left
         cursor.next( split.left );

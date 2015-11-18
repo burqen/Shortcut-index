@@ -1,28 +1,24 @@
-package bench.queries.impl.ldbc;
+package bench.queries.impl.lab;
 
 import bench.Measurement;
-import bench.queries.QueryDescription;
-import bench.queries.impl.description.Query3Description;
 import bench.queries.impl.framework.QueryShortcut;
 import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCResult;
-import index.btree.RangePredicate;
-import index.btree.RangeSeeker;
+import index.Seeker;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 
-public class Query3Shortcut extends QueryShortcut
+public abstract class LabQueryShortcut extends QueryShortcut
 {
-    public SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Post",
-            "LIKES_POST", Direction.OUTGOING, "creationDate", null );
+    public SCIndexDescription indexDescription = new SCIndexDescription( "Person", "Comment",
+            "CREATED", Direction.OUTGOING, null, "date" );
 
     @Override
     protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
@@ -44,18 +40,8 @@ public class Query3Shortcut extends QueryShortcut
 
             SCIndex index = indexes.get( indexDescription );
 
-            index.seek( new RangeSeeker( RangePredicate.noLimit( start ), RangePredicate.noLimit( start ), true ),
-                    indexSeekResult );
 
-            Iterator<SCResult> resultIterator = indexSeekResult.iterator();
-            while ( resultIterator.hasNext() )
-            {
-                SCResult result = resultIterator.next();
-                if ( filterResultRow( result ) )
-                {
-                    resultIterator.remove();
-                }
-            }
+            index.seek( seeker( start ), indexSeekResult );
         }
         catch ( EntityNotFoundException e )
         {
@@ -63,6 +49,8 @@ public class Query3Shortcut extends QueryShortcut
         }
         return indexSeekResult;
     }
+
+    protected abstract Seeker seeker( long start );
 
     @Override
     protected boolean filterResultRow( SCResult resultRow )
@@ -74,11 +62,5 @@ public class Query3Shortcut extends QueryShortcut
     public SCIndexDescription indexDescription()
     {
         return indexDescription;
-    }
-
-    @Override
-    public QueryDescription queryDescription()
-    {
-        return Query3Description.instance;
     }
 }
