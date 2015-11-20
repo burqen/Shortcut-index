@@ -41,22 +41,22 @@ public class RangeSeeker extends Seeker.CommonSeeker
         if ( !descending )
         {
             int pos = 0;
-            long[] key = node.keyAt( cursor, pos );
-            while ( pos < keyCount && fromPred.inRange( key ) < 0 )
+            node.keyAt( cursor, pos, keyHolder );
+            while ( pos < keyCount && fromPred.inRange( keyHolder ) < 0 )
             {
                 pos++;
-                key = node.keyAt( cursor, pos );
+                node.keyAt( cursor, pos, keyHolder );
             }
 
-            while ( pos < keyCount && toPred.inRange( key ) <= 0 && !countPred.reachedLimit( resultCount ) )
+            while ( pos < keyCount && toPred.inRange( keyHolder ) <= 0 && !countPred.reachedLimit( resultCount ) )
             {
-                long[] value = node.valueAt( cursor, pos );
-                if ( visitor.visit( key[0], key[1], value[0], value[1] ) )
+                node.valueAt( cursor, pos, valueHolder );
+                if ( visitor.visit( keyHolder[0], keyHolder[1], valueHolder[0], valueHolder[1] ) )
                 {
                     resultCount++;
                 }
                 pos++;
-                key = node.keyAt( cursor, pos );
+                node.keyAt( cursor, pos, keyHolder );
             }
 
             if ( pos < keyCount || countPred.reachedLimit( resultCount ) )
@@ -75,21 +75,21 @@ public class RangeSeeker extends Seeker.CommonSeeker
         else
         {
             int pos = keyCount - 1;
-            long[] key = node.keyAt( cursor, pos );
-            while ( pos > -1 && toPred.inRange( key ) > 0 )
+            node.keyAt( cursor, pos, keyHolder );
+            while ( pos > -1 && toPred.inRange( keyHolder ) > 0 )
             {
                 pos--;
                 if ( pos == -1 )
                 {
                     break;
                 }
-                key = node.keyAt( cursor, pos );
+                node.keyAt( cursor, pos, keyHolder );
             }
 
-            while ( pos > -1 && fromPred.inRange( key ) >= 0 && !countPred.reachedLimit( resultCount ) )
+            while ( pos > -1 && fromPred.inRange( keyHolder ) >= 0 && !countPred.reachedLimit( resultCount ) )
             {
-                long[] value = node.valueAt( cursor, pos );
-                if ( visitor.visit( key[0], key[1], value[0], value[1] ) )
+                node.valueAt( cursor, pos, valueHolder );
+                if ( visitor.visit( keyHolder[0], keyHolder[1], valueHolder[0], valueHolder[1] ) )
                 {
                     resultCount++;
                 }
@@ -98,7 +98,7 @@ public class RangeSeeker extends Seeker.CommonSeeker
                 {
                     break;
                 }
-                key = node.keyAt( cursor, pos );
+                node.keyAt( cursor, pos, keyHolder );
             }
 
             if ( pos > -1 || countPred.reachedLimit( resultCount ) )
@@ -124,11 +124,11 @@ public class RangeSeeker extends Seeker.CommonSeeker
         if ( !descending )
         {
             int pos = 0;
-            long[] key = node.keyAt( cursor, pos );
-            while ( pos < keyCount && fromPred.inRange( key ) < 0 )
+            node.keyAt( cursor, pos, keyHolder );
+            while ( pos < keyCount && fromPred.inRange( keyHolder ) < 0 )
             {
                 pos++;
-                key = node.keyAt( cursor, pos );
+                node.keyAt( cursor, pos, keyHolder );
             }
 
             cursor.next( node.childAt( cursor, pos ) );
@@ -138,15 +138,15 @@ public class RangeSeeker extends Seeker.CommonSeeker
         else
         {
             int pos = keyCount - 1;
-            long[] key = node.keyAt( cursor, pos );
-            while ( pos > -1 && toPred.inRange( key ) > 0 )
+            node.keyAt( cursor, pos, keyHolder );
+            while ( pos > -1 && toPred.inRange( keyHolder ) > 0 )
             {
                 pos--;
                 if ( pos == -1 )
                 {
                     break;
                 }
-                key = node.keyAt( cursor, pos );
+                node.keyAt( cursor, pos, keyHolder );
             }
 
             cursor.next( node.childAt( cursor, pos+1 ) );

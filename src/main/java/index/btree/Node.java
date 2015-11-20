@@ -149,6 +149,17 @@ public class Node
 
     // BODY METHODS
 
+    public void keyAt( PageCursor cursor, int pos, long[] key )
+    {
+        if ( key.length != 2 )
+        {
+            throw new IllegalArgumentException( "Key need to have length 2, was " + key.length );
+        }
+        cursor.setOffset( keyOffset( pos ) );
+        key[0] = cursor.getLong();
+        key[1] = cursor.getLong();
+    }
+
     public long[] keyAt( PageCursor cursor, int pos )
     {
         long[] key = new long[2];
@@ -177,6 +188,17 @@ public class Node
     {
         cursor.setOffset( keyOffset( pos ) );
         cursor.putBytes( keys );
+    }
+
+    public void valueAt( PageCursor cursor, int pos, long[] value )
+    {
+        if ( value.length != 2 )
+        {
+            throw new IllegalArgumentException( "Value need to have length 2, was " + value.length );
+        }
+        cursor.setOffset( valueOffset( pos ) );
+        value[0] = cursor.getLong();
+        value[1] = cursor.getLong();
     }
 
     public long[] valueAt( PageCursor cursor, int pos )

@@ -18,6 +18,14 @@ public interface Seeker
 
     public abstract class CommonSeeker implements Seeker
     {
+        protected long[] keyHolder;
+        protected long[] valueHolder;
+
+        public CommonSeeker()
+        {
+            keyHolder = new long[2];
+            valueHolder = new long[2];
+        }
 
         // TODO: A lot of time is spent in the seek method, both for seek and scan. Can we make it faster?
         // TODO: Maybe with binary search in IndexSearch.

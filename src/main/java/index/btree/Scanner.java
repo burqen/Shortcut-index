@@ -18,9 +18,9 @@ public class Scanner extends Seeker.CommonSeeker
             int keyCount = node.keyCount( cursor );
             for ( int i = 0; i < keyCount; i++ )
             {
-                long[] key = node.keyAt( cursor, i );
-                long[] value = node.valueAt( cursor, i );
-                visitor.visit( key[0], key[1], value[0], value[1] );
+                node.keyAt( cursor, i, keyHolder );
+                node.valueAt( cursor, i, valueHolder );
+                visitor.visit( keyHolder[0], keyHolder[1], valueHolder[0], valueHolder[1] );
             }
             long rightSibling = node.rightSibling( cursor );
             if ( rightSibling == Node.NO_NODE_FLAG )

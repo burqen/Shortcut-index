@@ -33,26 +33,32 @@ public class IndexInsert
      */
     public SplitResult insert( PageCursor cursor, long[] key, long[] value ) throws IOException
     {
+        return insert( cursor, key, value, new long[2], new long[2] );
+    }
+
+    private SplitResult insert( PageCursor cursor, long[] key, long[] value, long[] keyHolder, long[] valueHolder )
+            throws IOException
+    {
         if ( node.isLeaf( cursor ) )
         {
-            return insertInLeaf( cursor, key, value );
+            return insertInLeaf( cursor, key, value, keyHolder, valueHolder );
         }
         else
         {
             int keyCount = node.keyCount( cursor );
 
-            int pos = IndexSearch.search( cursor, node, key );
+            int pos = IndexSearch.search( cursor, node, key, keyHolder );
 
             long currentId = cursor.getCurrentPageId();
             cursor.next( node.childAt( cursor, pos ) );
 
-            SplitResult split = insert( cursor, key, value );
+            SplitResult split = insert( cursor, key, value, keyHolder, valueHolder );
 
             cursor.next( currentId );
 
             if ( split != null )
             {
-                return insertInInternal( cursor, currentId, keyCount, split.primKey, split.right );
+                return insertInInternal( cursor, currentId, keyCount, split.primKey, split.right, keyHolder, valueHolder );
             }
         }
         return null;
@@ -73,13 +79,14 @@ public class IndexInsert
      * @return              {@link index.btree.SplitResult} from insert to be used caller.
      * @throws IOException  on cursor failure
      */
-    private SplitResult insertInInternal( PageCursor cursor, long nodeId, int keyCount, long[] primKey, long rightChild )
+    private SplitResult insertInInternal( PageCursor cursor, long nodeId, int keyCount, long[] primKey, long rightChild,
+            long[] keyHolder, long[] valueHolder )
             throws IOException
     {
         if ( keyCount < node.internalMaxKeyCount() )
         {
             // No overflow
-            int pos = IndexSearch.search( cursor, node, primKey );
+            int pos = IndexSearch.search( cursor, node, primKey, keyHolder );
 
             // Insert and move keys
             byte[] tmp = node.keysFromTo( cursor, pos, keyCount );
@@ -99,7 +106,7 @@ public class IndexInsert
         else
         {
             // Overflow
-            return splitInternal( cursor, nodeId, primKey, rightChild, keyCount );
+            return splitInternal( cursor, nodeId, primKey, rightChild, keyCount, keyHolder, valueHolder );
 
         }
     }
@@ -119,7 +126,7 @@ public class IndexInsert
      * @throws IOException  on cursor failure
      */
     private SplitResult splitInternal( PageCursor cursor, long fullNode, long[] primKey, long newRightChild,
-            int keyCount )
+            int keyCount, long[] keyHolder, long[] valueHolder )
 
             throws IOException
     {
@@ -134,7 +141,7 @@ public class IndexInsert
         node.setRightSibling( cursor, newRight );
 
         // Find position to insert new key
-        int pos = IndexSearch.search( cursor, node, primKey );
+        int pos = IndexSearch.search( cursor, node, primKey, keyHolder );
 
         // Arrays to temporarily store keys and children in sorted order.
         byte[] allKeysIncludingNewPrimKey = readRecordsWithInsertRecordInPosition( cursor, primKey, pos, keyCount+1,
@@ -219,14 +226,15 @@ public class IndexInsert
      * @return              {@link index.btree.SplitResult} from insert to be used caller.
      * @throws IOException  on cursor failure
      */
-    private SplitResult insertInLeaf( PageCursor cursor, long[] key, long[] value ) throws IOException
+    private SplitResult insertInLeaf( PageCursor cursor, long[] key, long[] value, long[] keyHolder,
+            long[] valueHolder ) throws IOException
     {
         int keyCount = node.keyCount( cursor );
 
         if ( keyCount < node.leafMaxKeyCount() )
         {
             // No overflow, insert key and value
-            int pos = IndexSearch.search( cursor, node, key );
+            int pos = IndexSearch.search( cursor, node, key, keyHolder );
 
             // Insert and move keys
             byte[] tmp = node.keysFromTo( cursor, pos, keyCount );
@@ -246,7 +254,7 @@ public class IndexInsert
         else
         {
             // Overflow, split leaf
-            return splitLeaf( cursor, key, value, keyCount );
+            return splitLeaf( cursor, key, value, keyCount, keyHolder, valueHolder );
         }
     }
 
@@ -259,7 +267,8 @@ public class IndexInsert
      * @return              {@link SplitResult} with necessary information to inform parent
      * @throws IOException  if cursor.next( newRight ) fails
      */
-    private SplitResult splitLeaf( PageCursor cursor, long[] newKey, long[] newValue, int keyCount ) throws IOException
+    private SplitResult splitLeaf( PageCursor cursor, long[] newKey, long[] newValue, int keyCount,
+            long[] keyHolder, long[] valueHolder ) throws IOException
     {
         // To avoid moving cursor between pages we do all operations on left node first.
         // Save data that needs transferring and then add it to right node.
@@ -314,7 +323,7 @@ public class IndexInsert
         //
 
         // Position where newKey / newValue is to be inserted
-        int pos = IndexSearch.search( cursor, node, newKey );
+        int pos = IndexSearch.search( cursor, node, newKey, keyHolder );
 
         // arrays to temporarily store all keys and values
         byte[] allKeysIncludingNewKey = readRecordsWithInsertRecordInPosition( cursor, newKey, pos,
