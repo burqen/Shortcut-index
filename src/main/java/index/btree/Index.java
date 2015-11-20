@@ -3,7 +3,7 @@ package index.btree;
 import index.IdProvider;
 import index.SCIndex;
 import index.SCIndexDescription;
-import index.SCResult;
+import index.SCResultVisitor;
 import index.Seeker;
 
 import java.io.Closeable;
@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PageCursor;
@@ -114,12 +113,12 @@ public class Index implements SCIndex, IdProvider, Closeable
     }
 
     @Override
-    public void seek( Seeker seeker, List<SCResult> resultList ) throws IOException
+    public void seek( Seeker seeker, SCResultVisitor visitor ) throws IOException
     {
         PageCursor cursor = pagedFile.io( rootId, PagedFile.PF_EXCLUSIVE_LOCK );
         cursor.next();
 
-        seeker.seek( cursor, node, resultList );
+        seeker.seek( cursor, node, visitor );
         cursor.close();
     }
 

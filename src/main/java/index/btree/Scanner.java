@@ -1,12 +1,9 @@
 package index.btree;
 
-import index.SCKey;
-import index.SCResult;
-import index.SCValue;
+import index.SCResultVisitor;
 import index.Seeker;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.neo4j.io.pagecache.PageCursor;
 
@@ -14,7 +11,7 @@ public class Scanner extends Seeker.CommonSeeker
 {
 
     @Override
-    protected void seekLeaf( PageCursor cursor, Node node, List<SCResult> resultList ) throws IOException
+    protected void seekLeaf( PageCursor cursor, Node node, SCResultVisitor visitor ) throws IOException
     {
         while ( true )
         {
@@ -23,7 +20,7 @@ public class Scanner extends Seeker.CommonSeeker
             {
                 long[] key = node.keyAt( cursor, i );
                 long[] value = node.valueAt( cursor, i );
-                resultList.add( new SCResult( new SCKey( key[0], key[1] ), new SCValue( value[0], value[1] ) ) );
+                visitor.visit( key[0], key[1], value[0], value[1] );
             }
             long rightSibling = node.rightSibling( cursor );
             if ( rightSibling == Node.NO_NODE_FLAG )
@@ -35,9 +32,9 @@ public class Scanner extends Seeker.CommonSeeker
     }
 
     @Override
-    protected void seekInternal( PageCursor cursor, Node node, List<SCResult> resultList ) throws IOException
+    protected void seekInternal( PageCursor cursor, Node node, SCResultVisitor visitor ) throws IOException
     {
         cursor.next( node.childAt( cursor, 0 ) );
-        seek( cursor, node, resultList );
+        seek( cursor, node, visitor );
     }
 }

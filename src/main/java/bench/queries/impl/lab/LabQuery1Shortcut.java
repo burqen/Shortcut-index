@@ -4,6 +4,7 @@ import bench.laboratory.LabEnvironmentGenerator;
 import bench.queries.QueryDescription;
 import bench.queries.impl.description.LabQuery1Description;
 import index.SCIndexDescription;
+import index.SCResultVisitor;
 import index.Seeker;
 import index.btree.RangePredicate;
 import index.btree.RangeSeeker;
@@ -42,5 +43,11 @@ public class LabQuery1Shortcut extends LabQueryShortcut
     public QueryDescription queryDescription()
     {
         return LabQuery1Description.instance( percentageOfRange );
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

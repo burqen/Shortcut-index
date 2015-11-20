@@ -4,6 +4,7 @@ import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCKey;
 import index.SCResult;
+import index.SCResultVisitor;
 import index.SCValue;
 import index.btree.util.SeekerFactory;
 import org.junit.After;
@@ -124,7 +125,7 @@ public class IndexTest extends TestUtils
             long id = inserted.getKey().getId();
             long prop = inserted.getKey().getProp();
 
-            index.seek( SeekerFactory.exactMatch( id, prop ), resultList );
+            index.seek( SeekerFactory.exactMatch( id, prop ), SCResultVisitor.storeInListVisitor( resultList ) );
         }
 
         assertResultList( data, resultList );

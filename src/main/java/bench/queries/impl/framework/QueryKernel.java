@@ -6,8 +6,8 @@ import bench.queries.Query;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCResult;
+import index.SCResultVisitor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
@@ -32,15 +32,13 @@ public abstract class QueryKernel extends Query
     protected abstract PrimitiveLongIterator startingPoints(
             ReadOperations operations, long[] inputData, int firstLabel ) throws EntityNotFoundException;
 
-    protected abstract boolean filterResultRow( SCResult resultRow );
-
     protected abstract void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
             long startPoint,
             int relType, int secondLabel,
-            int propKey, List<SCResult> resultList );
+            int propKey, SCResultVisitor visitor );
 
     @Override
-    protected List<SCResult> doRunQuery(
+    protected long doRunQuery(
             ReadOperations operations, Measurement measurement, long[] inputData ) throws EntityNotFoundException
     {
         int firstLabel = operations.labelGetForName( firstLabel() );
@@ -48,7 +46,7 @@ public abstract class QueryKernel extends Query
         int secondLabel = operations.labelGetForName( secondLabel() );
         int propKey = operations.propertyKeyGetForName( propKey() );
 
-        List<SCResult> resultList = new ArrayList<>();
+        SCResultVisitor visitor = getVisitor();
 
         PrimitiveLongIterator startingPoints = startingPoints( operations, inputData, firstLabel );
 
@@ -57,16 +55,12 @@ public abstract class QueryKernel extends Query
             long startPoint = startingPoints.next();
 
             expandFromStart( operations, measurement, inputData, startPoint, relType, secondLabel, propKey,
-                    resultList );
+                    visitor );
         }
 
-        massageRawResult( resultList );
-        return limit( resultList );
-    }
-
-    protected void massageRawResult( List<SCResult> resultList )
-    {
-        // Do nothing here as default
+        visitor.massageRawResult();
+        visitor.limit();
+        return visitor.rowCount();
     }
 
     protected List<SCResult> limit( List<SCResult> resultList )

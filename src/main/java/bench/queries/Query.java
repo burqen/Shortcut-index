@@ -5,10 +5,9 @@ import bench.Measurement;
 import bench.QueryType;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
-import index.SCResult;
+import index.SCResultVisitor;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
@@ -46,26 +45,21 @@ public abstract class Query
             Measurement measurement, long[] inputData ) throws IOException, EntityNotFoundException
     {
         long start = System.nanoTime();
-        List<SCResult> resultList;
+        long rowCount;
         try ( Transaction tx = graphDb.beginTx() )
         {
             ReadOperations readOperations = threadToStatementContextBridge.get().readOperations();
 
-            resultList = doRunQuery( readOperations, measurement, inputData );
+            rowCount = doRunQuery( readOperations, measurement, inputData );
 
             tx.success();
         }
-        measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
-
-        reportResult( resultList );
+        measurement.queryFinished( ( System.nanoTime() - start ) / 1000, rowCount );
     }
 
-    protected void reportResult( List<SCResult> resultList )
-    {
-        // Do nothing here as default
-    }
+    protected abstract SCResultVisitor getVisitor();
 
-    protected abstract List<SCResult> doRunQuery(
+    protected abstract long doRunQuery(
             ReadOperations operations, Measurement measurement, long[] inputData )
             throws IOException, EntityNotFoundException;
 

@@ -4,6 +4,7 @@ import bench.laboratory.LabEnvironmentGenerator;
 import bench.queries.QueryDescription;
 import bench.queries.impl.description.LabQuery2Description;
 import index.SCIndexDescription;
+import index.SCResultVisitor;
 import index.Seeker;
 import index.btree.CountPredicate;
 import index.btree.RangePredicate;
@@ -43,5 +44,11 @@ public class LabQuery2Shortcut extends LabQueryShortcut
     public QueryDescription queryDescription()
     {
         return LabQuery2Description.instance( limit );
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

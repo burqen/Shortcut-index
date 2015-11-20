@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.impl.description.Query6Description;
 import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.SCResult;
+import index.SCResultVisitor;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -81,14 +81,14 @@ public class Query6Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    protected boolean filterResultRow( SCResult resultRow )
-    {
-        return false;
-    }
-
-    @Override
     public QueryDescription queryDescription()
     {
         return Query6Description.instance;
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

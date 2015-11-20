@@ -6,16 +6,13 @@ import bench.queries.impl.description.Query6Description;
 import bench.queries.impl.framework.QueryShortcut;
 import index.SCIndex;
 import index.SCIndexDescription;
-import index.SCResult;
+import index.SCResultVisitor;
 import index.btree.RangePredicate;
 import index.btree.RangeSeeker;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.Iterator;
-import java.util.List;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -39,10 +36,10 @@ public class Query6Shortcut extends QueryShortcut
     }
 
     @Override
-    protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
+    protected long doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
             throws IOException
     {
-        List<SCResult> indexSeekResult = new ArrayList<>();
+        SCResultVisitor visitor = getVisitor();
         try
         {
             int firstLabel = operations.labelGetForName( indexDescription.firstLabel );
@@ -58,36 +55,28 @@ public class Query6Shortcut extends QueryShortcut
 
             SCIndex index = indexes.get( indexDescription );
 
-
             index.seek( new RangeSeeker( RangePredicate.greaterOrEqual( start, lowerBoundary ),
-                    RangePredicate.lower( start, upperBoundary ) ), indexSeekResult );
-            Iterator<SCResult> resultIterator = indexSeekResult.iterator();
-            while ( resultIterator.hasNext() )
-            {
-                SCResult result = resultIterator.next();
-                if ( filterResultRow( result ) )
-                {
-                    resultIterator.remove();
-                }
-            }
+                    RangePredicate.lower( start, upperBoundary ) ), visitor );
         }
         catch ( EntityNotFoundException e )
         {
             e.printStackTrace();
         }
-        return indexSeekResult;
-    }
-
-    @Override
-    protected boolean filterResultRow( SCResult resultRow )
-    {
-        return false;
+        visitor.massageRawResult();
+        visitor.limit();
+        return visitor.rowCount();
     }
 
     @Override
     public SCIndexDescription indexDescription()
     {
         return indexDescription;
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 
     @Override

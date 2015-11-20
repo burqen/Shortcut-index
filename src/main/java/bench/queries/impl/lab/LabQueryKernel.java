@@ -2,7 +2,6 @@ package bench.queries.impl.lab;
 
 import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.SCResult;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -57,9 +56,4 @@ public abstract class LabQueryKernel extends QueryKernelWithPropertyOnNode
         }
     }
 
-    @Override
-    protected boolean filterResultRow( SCResult resultRow )
-    {
-        return false;
-    }
 }

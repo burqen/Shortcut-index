@@ -6,9 +6,12 @@ import index.SCIndexDescription;
 import index.SCIndexProvider;
 import index.SCKey;
 import index.SCResult;
+import index.SCResultVisitor;
 import index.SCValue;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.neo4j.graphdb.Direction;
@@ -26,7 +29,7 @@ public class HolyGrailKernel extends AbstractHolyGrail
 
     @Override
     protected void lastHop( ReadOperations operations, Measurement measurement, long[] inputData, long otherNode,
-            List<SCResult> queryResult, int propKey, int commentHasCreator, int commentLabel )
+            SCResultVisitor visitor, int propKey, int commentHasCreator, int commentLabel )
             throws IOException, EntityNotFoundException
     {
         RelationshipIterator relationships = operations.nodeGetRelationships( otherNode, Direction.BOTH,
@@ -49,13 +52,45 @@ public class HolyGrailKernel extends AbstractHolyGrail
                 {
                     return;
                 }
-
-                SCResult result = new SCResult(
-                        new SCKey( otherNode, prop ), new SCValue( relationship, comment ) );
-                // Valid result. Report
-                queryResult.add( result );
+                visitor.visit( otherNode, prop, relationship, comment );
             }
         }
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor()
+        {
+            List<SCResult> list = new ArrayList<>();
+
+            @Override
+            public boolean visit( long firstId, long keyProp, long relId, long secondId )
+            {
+                return list.add( new SCResult( new SCKey( firstId, keyProp ), new SCValue( relId, secondId ) ) );
+            }
+
+            @Override
+            public long rowCount()
+            {
+                return list.size();
+            }
+
+            @Override
+            public void massageRawResult()
+            {
+                Collections.sort( list, ( o1, o2 ) -> -Long.compare( o1.getKey().getProp(), o2.getKey().getProp() ) );
+            }
+
+            @Override
+            public void limit()
+            {
+                if ( list.size() > 20 )
+                {
+                    list = list.subList( 0, 20 );
+                }
+            }
+        };
     }
 
     @Override

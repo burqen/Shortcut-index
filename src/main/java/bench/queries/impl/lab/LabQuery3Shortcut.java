@@ -3,6 +3,7 @@ package bench.queries.impl.lab;
 import bench.queries.QueryDescription;
 import bench.queries.impl.description.LabQuery3Description;
 import index.SCIndexDescription;
+import index.SCResultVisitor;
 import index.Seeker;
 import index.btree.RangePredicate;
 import index.btree.RangeSeeker;
@@ -24,5 +25,11 @@ public class LabQuery3Shortcut extends LabQueryShortcut
     public QueryDescription queryDescription()
     {
         return LabQuery3Description.INSTANCE;
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

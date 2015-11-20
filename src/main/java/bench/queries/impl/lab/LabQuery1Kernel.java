@@ -3,6 +3,7 @@ package bench.queries.impl.lab;
 import bench.laboratory.LabEnvironmentGenerator;
 import bench.queries.QueryDescription;
 import bench.queries.impl.description.LabQuery1Description;
+import index.SCResultVisitor;
 
 public class LabQuery1Kernel extends LabQueryKernel
 {
@@ -31,5 +32,11 @@ public class LabQuery1Kernel extends LabQueryKernel
     public QueryDescription queryDescription()
     {
         return LabQuery1Description.instance( percentageOfRange );
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

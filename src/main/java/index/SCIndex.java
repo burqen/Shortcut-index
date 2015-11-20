@@ -2,7 +2,6 @@ package index;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 
 public interface SCIndex extends Closeable
 {
@@ -14,5 +13,5 @@ public interface SCIndex extends Closeable
 
     void insert( long[] key, long[] value ) throws IOException;
 
-    void seek( Seeker seeker, List<SCResult> resultList) throws IOException;
+    void seek( Seeker seeker, SCResultVisitor visitor ) throws IOException;
 }

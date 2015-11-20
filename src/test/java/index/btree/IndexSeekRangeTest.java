@@ -4,6 +4,7 @@ import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCKey;
 import index.SCResult;
+import index.SCResultVisitor;
 import index.Seeker;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,7 +84,7 @@ public class IndexSeekRangeTest extends TestUtils
     public void resultShouldMatchExpectation() throws IOException
     {
         List<SCResult> resultList = new ArrayList<>();
-        index.seek( seeker, resultList );
+        index.seek( seeker, SCResultVisitor.storeInListVisitor( resultList ) );
 
         assertTrue( "Expected result set to be of size " + (toPos - fromPos) + " but was " + resultList.size(),
                 resultList.size() == toPos - fromPos );

@@ -3,7 +3,7 @@ package bench.queries.impl.ldbc;
 import bench.queries.QueryDescription;
 import bench.queries.impl.description.Query1Description;
 import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
-import index.SCResult;
+import index.SCResultVisitor;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -26,12 +26,6 @@ public class Query1Kernel extends QueryKernelWithPropertyOnNode
     protected PrimitiveLongIterator startingPoints( ReadOperations operations, long[] inputData, int firstLabel )
     {
         return operations.nodesGetForLabel( firstLabel );
-    }
-
-    @Override
-    protected boolean filterResultRow( SCResult resultRow )
-    {
-        return false;
     }
 
     @Override
@@ -68,5 +62,11 @@ public class Query1Kernel extends QueryKernelWithPropertyOnNode
     public QueryDescription queryDescription()
     {
         return Query1Description.instance;
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

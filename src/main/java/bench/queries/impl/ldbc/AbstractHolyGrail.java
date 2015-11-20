@@ -4,12 +4,9 @@ import bench.Measurement;
 import bench.queries.Query;
 import bench.queries.QueryDescription;
 import bench.queries.impl.description.HolyGrailDescription;
-import index.SCResult;
+import index.SCResultVisitor;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -19,7 +16,6 @@ import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 
 public abstract class AbstractHolyGrail extends Query
 {
-
     protected final long limit;
 
     public AbstractHolyGrail( long limit )
@@ -33,20 +29,19 @@ public abstract class AbstractHolyGrail extends Query
     }
 
     @Override
-    protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
+    protected long doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
             throws IOException, EntityNotFoundException
     {
-        List<SCResult> queryResult = new ArrayList<>();
-
         int propKey = operations.propertyKeyGetForName( "creationDate" );
         int knows = operations.relationshipTypeGetForName( "KNOWS" );
         int commentHasCreator = operations.relationshipTypeGetForName( "COMMENT_HAS_CREATOR" );
         int commentLabel = operations.labelGetForName( "Comment" );
         int personLabel = operations.labelGetForName( "Person" );
 
+        SCResultVisitor visitor = getVisitor();
+
         try
         {
-
             final long start = inputData[0];
 
             if ( !operations.nodeHasLabel( start, personLabel ) )
@@ -70,7 +65,7 @@ public abstract class AbstractHolyGrail extends Query
                 if ( operations.nodeHasLabel( otherNode, personLabel ) )
                 {
                     // Last hop
-                    lastHop( operations, measurement, inputData, otherNode, queryResult, propKey, commentHasCreator,
+                    lastHop( operations, measurement, inputData, otherNode, visitor, propKey, commentHasCreator,
                             commentLabel );
                 }
             }
@@ -79,23 +74,13 @@ public abstract class AbstractHolyGrail extends Query
         {
             e.printStackTrace();
         }
-        return sortAndLimitResult( queryResult );
-    }
 
-    protected List<SCResult> sortAndLimitResult( List<SCResult> resultList )
-    {
-        Collections.sort( resultList, ( o1, o2 ) -> -Long.compare( o1.getKey().getProp(), o2.getKey().getProp() ) );
-        if ( resultList.size() > 20 )
-        {
-            return resultList.subList( 0, 20 );
-        }
-        else
-        {
-            return resultList;
-        }
+        visitor.massageRawResult();
+        visitor.limit();
+        return visitor.rowCount();
     }
 
     protected abstract void lastHop( ReadOperations operations, Measurement measurement, long[] inputData,
-            long otherNode, List<SCResult> queryResult, int propKey, int commentHasCreator, int commentLabel )
+            long otherNode, SCResultVisitor visitor, int propKey, int commentHasCreator, int commentLabel )
             throws IOException, EntityNotFoundException;
 }

@@ -6,13 +6,10 @@ import bench.queries.impl.description.Query1Description;
 import bench.queries.impl.framework.QueryShortcut;
 import index.SCIndex;
 import index.SCIndexDescription;
-import index.SCResult;
+import index.SCResultVisitor;
 import index.btree.util.SeekerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.kernel.api.ReadOperations;
@@ -23,35 +20,29 @@ public class Query1Shortcut extends QueryShortcut
             "COMMENT_HAS_CREATOR", Direction.INCOMING, null, "creationDate" );
 
     @Override
-    protected List<SCResult> doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
+    protected long doRunQuery( ReadOperations operations, Measurement measurement, long[] inputData )
             throws IOException
     {
         SCIndex index = indexes.get( indexDescription() );
 
-        List<SCResult> indexSeekResult = new ArrayList<>();
-        index.seek( SeekerFactory.scanner(), indexSeekResult );
-        Iterator<SCResult> resultIterator = indexSeekResult.iterator();
-        while ( resultIterator.hasNext() )
-        {
-            SCResult result = resultIterator.next();
-            if ( filterResultRow( result ) )
-            {
-                resultIterator.remove();
-            }
-        }
-        return indexSeekResult;
-    }
+        SCResultVisitor visitor = getVisitor();
+        index.seek( SeekerFactory.scanner(), visitor );
 
-    @Override
-    protected boolean filterResultRow( SCResult resultRow )
-    {
-        return false;
+        visitor.massageRawResult();
+        visitor.limit();
+        return visitor.rowCount();
     }
 
     @Override
     public SCIndexDescription indexDescription()
     {
         return indexDescription;
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 
     @Override

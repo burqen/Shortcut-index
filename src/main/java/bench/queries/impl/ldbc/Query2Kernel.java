@@ -4,7 +4,7 @@ import bench.queries.QueryDescription;
 import bench.queries.impl.description.Query2Description;
 import bench.queries.impl.framework.QueryKernelWithPropertyOnNode;
 import bench.util.SingleEntryPrimitiveLongIterator;
-import index.SCResult;
+import index.SCResultVisitor;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
@@ -86,14 +86,14 @@ public class Query2Kernel extends QueryKernelWithPropertyOnNode
     }
 
     @Override
-    protected boolean filterResultRow( SCResult resultRow )
-    {
-        return false;
-    }
-
-    @Override
     public QueryDescription queryDescription()
     {
         return Query2Description.instance;
+    }
+
+    @Override
+    protected SCResultVisitor getVisitor()
+    {
+        return new SCResultVisitor.CountingResultVisitor();
     }
 }

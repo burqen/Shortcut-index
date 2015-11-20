@@ -3,7 +3,6 @@ package bench.queries.impl.framework;
 import bench.QueryType;
 import bench.queries.Query;
 import index.SCIndexProvider;
-import index.SCResult;
 
 public abstract class QueryShortcut extends Query
 {
@@ -14,8 +13,6 @@ public abstract class QueryShortcut extends Query
     {
         this.indexes = indexes;
     }
-
-    protected abstract boolean filterResultRow( SCResult resultRow );
 
     @Override
     public QueryType type()

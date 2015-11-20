@@ -1,11 +1,7 @@
 package bench.queries.impl.framework;
 
 import bench.Measurement;
-import index.SCKey;
-import index.SCResult;
-import index.SCValue;
-
-import java.util.List;
+import index.SCResultVisitor;
 
 import org.neo4j.kernel.api.ReadOperations;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
@@ -21,7 +17,7 @@ public abstract class QueryKernelWithPropertyOnNode extends QueryKernel
 
     @Override
     protected void expandFromStart( ReadOperations operations, Measurement measurement, long[] inputData,
-            long startPoint, int relType, int secondLabel, int propKey, List<SCResult> resultList )
+            long startPoint, int relType, int secondLabel, int propKey, SCResultVisitor visitor )
     {
         try
         {
@@ -44,14 +40,7 @@ public abstract class QueryKernelWithPropertyOnNode extends QueryKernel
                     {
                         continue;
                     }
-
-                    SCResult result = new SCResult(
-                            new SCKey( startPoint, prop ), new SCValue( relationship, otherNode ) );
-                    if ( !filterResultRow( result ) )
-                    {
-                        // Valid result. Report
-                        resultList.add( result );
-                    }
+                    visitor.visit( startPoint, prop, relationship, otherNode );
                 }
             }
         }
