@@ -41,7 +41,7 @@ public class InputDataGenerator
                 new Parameter[] {
                         new FlaggedOption( "dataset", DatasetParser.INSTANCE, "ldbc1", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "dataset",
-                                "Decide what dataset to use. ldbc1, ldbc10, lab8 40 200 400 800" ),
+                                "Decide what dataset to use. ldbc1, ldbc10, lab8 40 200 400 800 1600" ),
                         new FlaggedOption( "workload", WorkloadParser.INSTANCE, "ldbcall", JSAP.NOT_REQUIRED,
                                 JSAP.NO_SHORTFLAG, "workload",
                                 "What workload to use. Environment need to match dataset. " +

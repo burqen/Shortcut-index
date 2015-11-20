@@ -106,5 +106,6 @@ public class LabEnvironmentGenerator
         LabEnvironmentGenerator.generate( path, Config.LAB_200, System.out );
         LabEnvironmentGenerator.generate( path, Config.LAB_400, System.out );
         LabEnvironmentGenerator.generate( path, Config.LAB_800, System.out );
+        LabEnvironmentGenerator.generate( path, Config.LAB_1600, System.out );
     }
 }

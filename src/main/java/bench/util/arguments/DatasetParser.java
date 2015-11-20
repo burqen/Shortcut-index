@@ -27,6 +27,8 @@ public class DatasetParser extends StringParser
             return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_400.dbName, Config.INPUT_DIR_LAB, Environment.LAB );
         case "lab800":
             return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_800.dbName, Config.INPUT_DIR_LAB, Environment.LAB );
+        case "lab1600":
+            return  new Dataset( Config.GRAPH_DB_FOLDER, Config.LAB_1600.dbName, Config.INPUT_DIR_LAB, Environment.LAB );
         default:
             return null;
         }
