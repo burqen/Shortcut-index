@@ -95,4 +95,22 @@ public class LogCompleteHistogram implements LogStrategy
         ;
         return sb.toString();
     }
+
+    public static String staticHistogramString( Histogram histogram, String name )
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append( String.format( "\t\t%15s\n", name ) )
+                .append( String.format( "\t\t%15s\t: %10d\n", "COUNT", histogram.getTotalCount() ) )
+                .append( String.format( "\t\t%15s\t: %10.0f\n", "MEAN", histogram.getMean() ) )
+                .append( String.format( "\t\t%15s\t: %10d\n", "MIN", histogram.getMinValue() ) )
+                .append( String.format( "\t\t%15s\t: %10d\n", "MAX", histogram.getMaxValue() ) )
+                .append( String.format( "\t\t%15s\t: %10d\n", "50th PERCENTILE", histogram.getValueAtPercentile( 50 ) ) )
+                .append( String.format( "\t\t%15s\t: %10d\n", "90th PERCENTILE", histogram.getValueAtPercentile( 90 ) ) )
+                .append( String.format( "\t\t%15s\t: %10d\n", "95th PERCENTILE", histogram.getValueAtPercentile( 95 )
+                ) )
+                .append(
+                        String.format( "\t\t%15s\t: %10d\n", "99th PERCENTILE", histogram.getValueAtPercentile( 99 ) ) )
+        ;
+        return sb.toString();
+    }
 }

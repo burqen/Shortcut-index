@@ -38,7 +38,7 @@ public class Config
     public static final Lab LAB_1600    = new Lab( "LAB_1600",  1600,   10000 );
 
     // COMMONS
-    public static final String GRAPH_DB_FOLDER = "src/main/resources/";
+    public static final String GRAPH_DB_FOLDER = "/Users/antonpersson/shortcut-index-data/";
 
     // BENCHMARK
     public static final String NO_INPUT = "";

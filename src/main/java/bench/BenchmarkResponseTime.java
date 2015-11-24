@@ -43,17 +43,17 @@ import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.api.exceptions.EntityNotFoundException;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 
-public class BenchmarkMain
+public class BenchmarkResponseTime
 {
     public static void main( String[] argv ) throws IOException, EntityNotFoundException, JSAPException
     {
-        new BenchmarkMain().run( argv );
+        new BenchmarkResponseTime().run( argv );
     }
 
     private void run( String[] argv ) throws IOException, EntityNotFoundException, JSAPException
     {
         SimpleJSAP jsap = new SimpleJSAP(
-                "BenchmarkMain",
+                "BenchmarkResponseTime",
                 "Run benchmarks on selected queries",
                 new Parameter[] {
                         new FlaggedOption( "logger", LoggerParser.INSTANCE,

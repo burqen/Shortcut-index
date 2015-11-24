@@ -1,6 +1,7 @@
 package bench.util;
 
 import bench.BenchConfig;
+import bench.IndexBuildLogger;
 import index.SCIndex;
 import index.SCIndexDescription;
 import index.SCIndexProvider;
@@ -135,26 +136,26 @@ public class IndexLoader
         indexes.put( index );
     }
 
-    private static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
-            SCIndexDescription desc ) throws IOException
+    public static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
+            SCIndexDescription desc, IndexBuildLogger logger ) throws IOException
     {
         if ( desc.nodePropertyKey != null )
         {
             populateShortcutIndex( graphDb, index, desc.firstLabel, desc.relationshipType, desc.direction,
-                    desc.secondLabel, desc.nodePropertyKey, false );
+                    desc.secondLabel, desc.nodePropertyKey, false, logger );
 
         }
         else
         {
             populateShortcutIndex( graphDb, index, desc.firstLabel, desc.relationshipType, desc.direction,
-                    desc.secondLabel, desc.relationshipPropertyKey, true );
+                    desc.secondLabel, desc.relationshipPropertyKey, true, logger );
         }
     }
 
     // TODO: Fix this to populate all indexes at once
-    private static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
-            String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
-            throws IOException
+    public static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
+            String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel,
+            IndexBuildLogger logger ) throws IOException
     {
         print( String.format( "INDEX PATTERN: %s\n", index.getDescription() ) );
         print( "Building... " );
@@ -185,13 +186,30 @@ public class IndexLoader
                         numberOfInsert++;
                         long prop = propOnRel ? ((Number) rel.getProperty( propName )).longValue() :
                                     ((Number) second.getProperty( propName )).longValue();
-                        index.insert( new long[]{first.getId(), prop }, new long[]{ rel.getId(), second.getId() } );
+
+                        logger.startInsert();
+                        index.insert( new long[]{first.getId(), prop}, new long[]{rel.getId(), second.getId()} );
+                        logger.finishInsert();
                     }
                 }
             }
             tx.success();
         }
         printMidLine( String.format( "OK [index size %d]\n", numberOfInsert ) );
+    }
+
+    private static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
+            String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
+            throws IOException
+    {
+        populateShortcutIndex( graphDb, index, firstLabelName, relTypeName, dir, secondLabelName, propName, propOnRel,
+                IndexBuildLogger.nullLogger() );
+    }
+
+    private static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
+            SCIndexDescription desc ) throws IOException
+    {
+        populateShortcutIndex( graphDb, index, desc, IndexBuildLogger.nullLogger() );
     }
 
     private static void print( String s )
