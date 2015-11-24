@@ -112,18 +112,14 @@ public class LogLatexTable implements LogStrategy
             avgSpeedup = 0;
         }
 
-        String format = String.format( "\\multirow{3}{*}{%s}\n" +
+        String format = String.format( "\\multirow{2}{*}{%s}\n" +
                                        "        & first & %,d & %,d & %,.2fx \\\\ \\cline{2-5}\n" +
-                                       "        & last & %,d & %,d & %,.2fx \\\\ \\cline{2-5}\n" +
                                        "        & avg & %,.0f & %,.0f & %,.2fx \\\\ \\cline{2-5}\n" +
                                        "        \\thickhline\n",
                 latexSafe( queryName ),
                 kernelFirst,
                 shortcutFirst,
                 firstSpeedup,
-                kernelLast,
-                shortcutLast,
-                lastSpeedup,
                 kernelAvg,
                 shortcutAvg,
                 avgSpeedup
