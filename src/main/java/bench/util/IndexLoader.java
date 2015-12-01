@@ -198,18 +198,10 @@ public class IndexLoader
         printMidLine( String.format( "OK [index size %d]\n", numberOfInsert ) );
     }
 
-    private static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index, String firstLabelName,
-            String relTypeName, Direction dir, String secondLabelName, String propName, boolean propOnRel )
-            throws IOException
-    {
-        populateShortcutIndex( graphDb, index, firstLabelName, relTypeName, dir, secondLabelName, propName, propOnRel,
-                IndexBuildLogger.nullLogger() );
-    }
-
     private static void populateShortcutIndex( GraphDatabaseService graphDb, SCIndex index,
             SCIndexDescription desc ) throws IOException
     {
-        populateShortcutIndex( graphDb, index, desc, IndexBuildLogger.nullLogger() );
+        populateShortcutIndex( graphDb, index, desc, IndexBuildLogger.NULL );
     }
 
     private static void print( String s )
