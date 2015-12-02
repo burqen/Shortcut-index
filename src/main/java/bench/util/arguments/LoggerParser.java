@@ -1,6 +1,7 @@
 package bench.util.arguments;
 
 import bench.util.LogCompleteHistogram;
+import bench.util.LogCompleteLog;
 import bench.util.LogLatexTable;
 import bench.util.LogSimple;
 import com.martiansoftware.jsap.ParseException;
@@ -25,6 +26,8 @@ public class LoggerParser extends StringParser
             return new LogCompleteHistogram( true );
         case "histotime":
             return new LogCompleteHistogram( false );
+        case "logtimes":
+            return new LogCompleteLog();
         default:
             return null;
         }

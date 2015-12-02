@@ -59,7 +59,8 @@ public class BenchmarkResponseTime
                         new FlaggedOption( "logger", LoggerParser.INSTANCE,
                                 "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
                                 .setList( false )
-                                .setHelp( "Decide which logger to use: simple, simpletime, latex, histo or histotime" ),
+                                .setHelp( "Decide which logger to use: simple, simpletime, latex, histo, histotime, " +
+                                          "logtimes" ),
                         new FlaggedOption( "warmup", JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'w', "warmup",
                                 "Number of warm up iterations"),
                         new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "10000", JSAP.NOT_REQUIRED, 's', "inputsize",

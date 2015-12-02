@@ -14,4 +14,5 @@ public interface Measurement
     void lastQueryFinished( long elapsedTime );
     long timeForFirstQuery();
     long timeForLastQuery();
+    long[] completeTimesLog();
 }

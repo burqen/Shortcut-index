@@ -74,6 +74,12 @@ public interface Logger
                 {
                     return 0;
                 }
+
+                @Override
+                public long[] completeTimesLog()
+                {
+                    return new long[0];
+                }
             };
         }
 

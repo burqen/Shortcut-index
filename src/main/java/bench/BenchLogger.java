@@ -32,13 +32,22 @@ public class BenchLogger implements Logger
             private long firstQueryFinished;
             private long lastQueryFinished;
             private String errorMessage;
-            private Histogram timeHistogram = new Histogram( TimeUnit.MICROSECONDS.convert( 1, TimeUnit.MINUTES ), 5 );
+            private long[] times = new long[10];
+            private int timeCount = 0;
+            private Histogram timeHistogram = null;
             private Histogram rowHistogram = new Histogram( 5 );
 
             @Override
             public void queryFinished( long elapsedTime, long rowCount )
             {
-                timeHistogram.recordValue( elapsedTime );
+                if ( timeCount >= times.length )
+                {
+                    long[] tmp = new long[times.length*2];
+                    System.arraycopy( times, 0, tmp, 0, times.length );
+                    times = tmp;
+                }
+                times[timeCount] = elapsedTime;
+                timeCount++;
                 rowHistogram.recordValue( rowCount );
             }
 
@@ -64,6 +73,14 @@ public class BenchLogger implements Logger
             @Override
             public Histogram timeHistogram()
             {
+                if ( timeHistogram == null )
+                {
+                    timeHistogram = new Histogram( TimeUnit.MICROSECONDS.convert( 1, TimeUnit.MINUTES ), 5 );
+                    for ( int i = 0; i < timeCount; i++ )
+                    {
+                        timeHistogram.recordValue( times[i] );
+                    }
+                }
                 return timeHistogram;
             }
 
@@ -95,6 +112,14 @@ public class BenchLogger implements Logger
             public long timeForLastQuery()
             {
                 return lastQueryFinished;
+            }
+
+            @Override
+            public long[] completeTimesLog()
+            {
+                long[] result = new long[timeCount];
+                System.arraycopy( times, 0, result, 0, timeCount );
+                return result;
             }
         };
         ResultRow resultRow = resultsToReport.get( queryDescription.queryName() );

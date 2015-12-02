@@ -20,7 +20,6 @@ public class LogCompleteHistogram implements LogStrategy
     @Override
     public void header( PrintStream out, BenchConfig benchConfig, Dataset dataset )
     {
-        // No header
         String runConfigurations = String.format( "Run configurations:\n" +
                                                   "Dataset: %s\n" +
                                                   "Page size: %d Bytes, Cache pages: %,d, Cache size: %d MB," +
