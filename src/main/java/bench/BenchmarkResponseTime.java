@@ -197,20 +197,11 @@ public class BenchmarkResponseTime
         // Start logging
         Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
 
-        // Start clock
-        long start = System.nanoTime();
-        boolean first = true;
         // Run query
         for ( long[] input : inputData )
         {
             query.runQuery( threadToStatementContextBridge, graphDb, measurement, input );
-            if ( first )
-            {
-                measurement.firstQueryFinished( (System.nanoTime() - start) / 1000 );
-                first = false;
-            }
         }
-        measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
     }
 
     private Map<String,List<long[]>> loadInputData( BenchConfig benchConfig, List<Query> queries )

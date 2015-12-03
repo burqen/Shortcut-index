@@ -52,25 +52,7 @@ public interface Logger
                 }
 
                 @Override
-                public void firstQueryFinished( long elapsedTime )
-                {
-
-                }
-
-                @Override
-                public void lastQueryFinished( long elapsedTime )
-                {
-
-                }
-
-                @Override
                 public long timeForFirstQuery()
-                {
-                    return 0;
-                }
-
-                @Override
-                public long timeForLastQuery()
                 {
                     return 0;
                 }

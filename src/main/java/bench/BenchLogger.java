@@ -30,14 +30,19 @@ public class BenchLogger implements Logger
         {
             private boolean error;
             private long firstQueryFinished;
-            private long lastQueryFinished;
             private String errorMessage;
             private Histogram timeHistogram = new Histogram( TimeUnit.MICROSECONDS.convert( 1, TimeUnit.MINUTES ), 5 );
             private Histogram rowHistogram = new Histogram( 5 );
+            public boolean firstQuery = true;
 
             @Override
             public void queryFinished( long elapsedTime, long rowCount )
             {
+                if ( firstQuery )
+                {
+                    firstQueryFinished = elapsedTime;
+                    firstQuery = false;
+                }
                 timeHistogram.recordValue( elapsedTime );
                 rowHistogram.recordValue( rowCount );
             }
@@ -74,27 +79,9 @@ public class BenchLogger implements Logger
             }
 
             @Override
-            public void firstQueryFinished( long elapsedTime )
-            {
-                firstQueryFinished = elapsedTime;
-            }
-
-            @Override
-            public void lastQueryFinished( long elapsedTime )
-            {
-                lastQueryFinished = elapsedTime;
-            }
-
-            @Override
             public long timeForFirstQuery()
             {
                 return firstQueryFinished;
-            }
-
-            @Override
-            public long timeForLastQuery()
-            {
-                return lastQueryFinished;
             }
         };
         ResultRow resultRow = resultsToReport.get( queryDescription.queryName() );

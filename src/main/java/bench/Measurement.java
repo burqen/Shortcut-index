@@ -10,8 +10,5 @@ public interface Measurement
     void error( String s );
     Histogram timeHistogram();
     Histogram rowHistogram();
-    void firstQueryFinished( long elapsedTime );
-    void lastQueryFinished( long elapsedTime );
     long timeForFirstQuery();
-    long timeForLastQuery();
 }
