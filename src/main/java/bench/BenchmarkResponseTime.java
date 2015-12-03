@@ -60,7 +60,7 @@ public class BenchmarkResponseTime
                                 "simple", JSAP.NOT_REQUIRED, 'l', "logger", "Decide which logger to use." )
                                 .setList( false )
                                 .setHelp( "Decide which logger to use: simple, simpletime, latex, histo, histotime, " +
-                                          "logtimes" ),
+                                          "logtimes, logtimes20" ),
                         new FlaggedOption( "warmup", JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'w', "warmup",
                                 "Number of warm up iterations"),
                         new FlaggedOption( "inputsize", JSAP.INTEGER_PARSER, "10000", JSAP.NOT_REQUIRED, 's', "inputsize",
@@ -169,26 +169,20 @@ public class BenchmarkResponseTime
             Map<String,List<long[]>> inputData, int nbrOfWarmup )
             throws IOException, EntityNotFoundException
     {
-        System.out.println( "Starting warmup." );
-        // Warm up
-        for ( int i = 0; i < nbrOfWarmup; i++ )
+        for ( Query query : queries )
         {
-            System.out.print( "Warmup iteration " + (i+1) + "... " );
-            for ( Query query : queries )
+            System.out.print( "Executing " + query.queryDescription().queryName() + "... " );
+            // Warm up
+            for ( int i = 0; i < nbrOfWarmup; i++ )
             {
                 benchmarkQuery( query, warmupLogger, graphDb, threadToStatementContextBridge,
                         inputData.get( query.inputFile() ) );
             }
-            System.out.println( "ok");
-        }
-        System.out.println( "Warmup finished. Did " + nbrOfWarmup + " run(s).\nStarting live run." );
-        // Live
-        for ( Query query : queries )
-        {
+            // Live
             benchmarkQuery( query, liveLogger, graphDb, threadToStatementContextBridge,
                     inputData.get( query.inputFile() ) );
+            System.out.println( "ok");
         }
-        System.out.println( "Live run finished." );
     }
 
     private void benchmarkQuery( Query query, Logger logger, GraphDatabaseService graphDb,
@@ -198,20 +192,11 @@ public class BenchmarkResponseTime
         // Start logging
         Measurement measurement = logger.startQuery( query.queryDescription(), query.type() );
 
-        // Start clock
-        long start = System.nanoTime();
-        boolean first = true;
         // Run query
         for ( long[] input : inputData )
         {
             query.runQuery( threadToStatementContextBridge, graphDb, measurement, input );
-            if ( first )
-            {
-                measurement.firstQueryFinished( (System.nanoTime() - start) / 1000 );
-                first = false;
-            }
         }
-        measurement.lastQueryFinished( (System.nanoTime() - start) / 1000 );
     }
 
     private Map<String,List<long[]>> loadInputData( BenchConfig benchConfig, List<Query> queries )

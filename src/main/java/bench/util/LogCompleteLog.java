@@ -12,6 +12,18 @@ import static bench.QueryType.SHORTCUT;
 
 public class LogCompleteLog implements LogStrategy
 {
+    private final int logFirst;
+
+    public LogCompleteLog()
+    {
+        logFirst = Integer.MAX_VALUE;
+    }
+
+    public LogCompleteLog( int logFirst )
+    {
+        this.logFirst = logFirst;
+    }
+
     @Override
     public void header( PrintStream out, BenchConfig benchConfig, Dataset dataset )
     {
@@ -53,9 +65,10 @@ public class LogCompleteLog implements LogStrategy
         StringBuilder toPrint = new StringBuilder( "" );
         toPrint.append( headline );
         long[] times = measurement.completeTimesLog();
-        for ( long time : times )
+        int numberOfRowsToLog = times.length < logFirst ? times.length : logFirst;
+        for ( int i = 0; i < numberOfRowsToLog; i++ )
         {
-            toPrint.append( time );
+            toPrint.append( times[i] );
             toPrint.append( "\n" );
         }
         out.print( toPrint );

@@ -55,7 +55,8 @@ public abstract class Query
 
             tx.success();
         }
-        measurement.queryFinished( ( System.nanoTime() - start ) / 1000, resultList.size() );
+        long elapsedTime = (System.nanoTime() - start) / 1000;
+        measurement.queryFinished( elapsedTime, resultList.size() );
 
         reportResult( resultList );
     }

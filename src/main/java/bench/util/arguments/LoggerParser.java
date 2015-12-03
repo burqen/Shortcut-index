@@ -28,6 +28,8 @@ public class LoggerParser extends StringParser
             return new LogCompleteHistogram( false );
         case "logtimes":
             return new LogCompleteLog();
+        case "logtimes20":
+            return new LogCompleteLog( 20 );
         default:
             return null;
         }

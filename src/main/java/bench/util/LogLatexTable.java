@@ -48,26 +48,21 @@ public class LogLatexTable implements LogStrategy
 
         String queryName = resultRow.query().queryName();
         long kernelFirst;
-        long kernelLast;
         double kernelAvg;
         long shortcutFirst;
-        long shortcutLast;
         double shortcutAvg;
         double avgSpeedup;
         double firstSpeedup;
-        double lastSpeedup;
 
         if ( kernel != null && !kernel.error() )
         {
             Histogram kernelTime = kernel.timeHistogram();
             kernelFirst = kernel.timeForFirstQuery();
-            kernelLast = kernel.timeForLastQuery();
             kernelAvg = kernelTime.getMean();
         }
         else
         {
             kernelFirst = -1;
-            kernelLast = -1;
             kernelAvg = -1;
         }
 
@@ -75,13 +70,11 @@ public class LogLatexTable implements LogStrategy
         {
             Histogram shortcutTime = shortcut.timeHistogram();
             shortcutFirst = shortcut.timeForFirstQuery();
-            shortcutLast = shortcut.timeForLastQuery();
             shortcutAvg = shortcutTime.getMean();
         }
         else
         {
             shortcutFirst = -1;
-            shortcutLast = -1;
             shortcutAvg = -1;
         }
 
@@ -92,15 +85,6 @@ public class LogLatexTable implements LogStrategy
         else
         {
             firstSpeedup = 0;
-        }
-
-        if ( kernelLast != -1 && shortcutLast != -1 )
-        {
-            lastSpeedup = (double) kernelLast / shortcutLast;
-        }
-        else
-        {
-            lastSpeedup = 0;
         }
 
         if ( kernelAvg != -1 && shortcutAvg != -1 )

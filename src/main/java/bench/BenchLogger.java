@@ -30,7 +30,6 @@ public class BenchLogger implements Logger
         {
             private boolean error;
             private long firstQueryFinished;
-            private long lastQueryFinished;
             private String errorMessage;
             private long[] times = new long[10];
             private int timeCount = 0;
@@ -45,6 +44,11 @@ public class BenchLogger implements Logger
                     long[] tmp = new long[times.length*2];
                     System.arraycopy( times, 0, tmp, 0, times.length );
                     times = tmp;
+                }
+
+                if ( timeCount == 0 )
+                {
+                    firstQueryFinished = elapsedTime;
                 }
                 times[timeCount] = elapsedTime;
                 timeCount++;
@@ -91,27 +95,9 @@ public class BenchLogger implements Logger
             }
 
             @Override
-            public void firstQueryFinished( long elapsedTime )
-            {
-                firstQueryFinished = elapsedTime;
-            }
-
-            @Override
-            public void lastQueryFinished( long elapsedTime )
-            {
-                lastQueryFinished = elapsedTime;
-            }
-
-            @Override
             public long timeForFirstQuery()
             {
                 return firstQueryFinished;
-            }
-
-            @Override
-            public long timeForLastQuery()
-            {
-                return lastQueryFinished;
             }
 
             @Override
