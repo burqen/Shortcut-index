@@ -28,11 +28,50 @@ public class IndexSearch
      */
     public static int search( PageCursor cursor, Node node, long[] key )
     {
-        int pos = 0;
         int keyCount = node.keyCount( cursor );
-        while ( pos < keyCount && Node.KEY_COMPARATOR.compare( key, node.keyAt( cursor, pos ) ) > 0 )
+
+        if ( keyCount == 0 )
         {
-            pos++;
+            return 0;
+        }
+
+        int lower = 0;
+        int higher = keyCount-1;
+        int pos;
+
+        // Compare key with lower and higher and sort out special cases
+        if ( Node.KEY_COMPARATOR.compare( key, node.keyAt( cursor, higher ) ) > 0 )
+        {
+            pos = keyCount;
+        }
+        else if ( Node.KEY_COMPARATOR.compare( key, node.keyAt( cursor, lower ) ) < 0 )
+        {
+            pos = 0;
+        }
+        else
+        {
+            // Start binary search
+            // If key <= keyAtPos -> move higher to pos
+            // If key > keyAtPos -> move lower to pos+1
+            // Terminate when lower == higher
+            while ( lower < higher )
+            {
+                pos = (lower + higher) / 2;
+                if ( Node.KEY_COMPARATOR.compare( key, node.keyAt( cursor, pos ) ) <= 0 )
+                {
+                    higher = pos;
+                }
+                else
+                {
+                    lower = pos+1;
+                }
+            }
+            if ( lower != higher )
+            {
+                throw new IllegalStateException( "Something went terribly wrong. The binary search terminated in an " +
+                                                 "unexpected way." );
+            }
+            pos = lower;
         }
         return pos;
     }
